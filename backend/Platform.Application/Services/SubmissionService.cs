@@ -1,0 +1,460 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Platform.Application.Common.Interfaces;
+using Platform.Application.Common.Utils;
+using Platform.Application.Features.Submissions.Dtos;
+using Platform.Domain.Entities;
+using Platform.Domain.Enums;
+
+namespace Platform.Application.Services;
+
+public class SubmissionService : ISubmissionService
+{
+    private readonly IApplicationDbContext _context;
+    private readonly ICodeExecutionService _executionService;
+    private readonly IGradingEngineDispatcher _gradingEngineDispatcher;
+    private readonly ILogger<SubmissionService> _logger;
+
+    public SubmissionService(
+        IApplicationDbContext context,
+        ICodeExecutionService executionService,
+        IGradingEngineDispatcher gradingEngineDispatcher,
+        ILogger<SubmissionService> logger)
+    {
+        _context = context;
+        _executionService = executionService;
+        _gradingEngineDispatcher = gradingEngineDispatcher;
+        _logger = logger;
+    }
+
+    public async Task<RunResultDto> RunCodeAsync(Guid taskId, RunCodeDto dto, CancellationToken cancellationToken = default)
+    {
+        var task = await _context.ProgrammingTasks.FindAsync(new object[] { taskId }, cancellationToken);
+        if (task == null)
+        {
+            throw new InvalidOperationException("Programming task not found.");
+        }
+
+        _logger.LogInformation("RunCodeAsync pure sandbox execution called for Task ID: {TaskId}.", task.Id);
+
+        // Execute code in isolation with zero test case grading or output comparison
+        var sandboxInput = !string.IsNullOrEmpty(dto.Input) ? dto.Input : (task.ExampleInput ?? string.Empty);
+        var singleCase = new List<TestCaseModel>
+        {
+            new TestCaseModel { Input = sandboxInput, ExpectedOutput = string.Empty }
+        };
+
+        var runResult = await _executionService.ExecuteAsync(dto.Code, singleCase, task.TimeLimitMs > 0 ? task.TimeLimitMs : 3000);
+        var testResult = runResult.TestResults.FirstOrDefault() ?? new TestCaseResult();
+
+        return new RunResultDto
+        {
+            Passed = string.IsNullOrEmpty(testResult.Error),
+            PassedCount = 0,
+            TotalCount = 0,
+            Feedback = string.IsNullOrEmpty(testResult.Error) ? "Execution completed." : "Execution encountered runtime error.",
+            Stdout = testResult.ActualOutput ?? string.Empty,
+            Stderr = testResult.Error ?? string.Empty,
+            Error = testResult.Error ?? string.Empty,
+            ExecutionTimeMs = runResult.ExecutionTimeMs,
+            Details = new List<RunResultDetailsDto>()
+        };
+    }
+
+    public async Task<SubmissionDto> SubmitCodeAsync(Guid studentId, Guid taskId, SubmitCodeDto dto, CancellationToken cancellationToken = default)
+    {
+        var task = await _context.ProgrammingTasks
+            .Include(t => t.Session)
+            .FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken);
+
+        if (task == null)
+        {
+            throw new InvalidOperationException("Programming task not found.");
+        }
+
+        _logger.LogInformation("SubmitCodeAsync called for Student: {StudentId}, Task ID: {TaskId}.", studentId, task.Id);
+
+        if (!task.Session.IsUnlocked)
+        {
+            throw new InvalidOperationException("Cannot submit to a locked session task.");
+        }
+
+        var attemptsCount = await _context.Submissions
+            .CountAsync(s => s.StudentId == studentId && s.TaskId == taskId, cancellationToken);
+
+        if (task.Mode == ProgrammingTaskMode.Homework)
+        {
+            if (DateTime.UtcNow > task.Deadline)
+            {
+                throw new InvalidOperationException("The deadline for this homework has passed.");
+            }
+
+            if (attemptsCount >= task.MaxAttempts)
+            {
+                throw new InvalidOperationException("You have reached the maximum allowed attempts for this homework.");
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.Code))
+        {
+            throw new InvalidOperationException("Submission code cannot be empty. Please write or upload valid code before submitting.");
+        }
+
+        var gradingContext = new GradingContext
+        {
+            Task = task,
+            StudentId = studentId,
+            Code = dto.Code,
+            AttemptNumber = attemptsCount + 1
+        };
+
+        var gradingResult = await _gradingEngineDispatcher.DispatchAsync(gradingContext, cancellationToken);
+
+        var submission = new Submission
+        {
+            Id = Guid.NewGuid(),
+            TaskId = taskId,
+            StudentId = studentId,
+            Code = dto.Code,
+            Grade = gradingResult.Grade,
+            Feedback = gradingResult.Feedback,
+            TeacherFeedback = string.Empty,
+            PassedPublicCases = gradingResult.PassedPublicCases,
+            TotalPublicCases = gradingResult.TotalPublicCases,
+            PassedHiddenCases = gradingResult.PassedHiddenCases,
+            TotalHiddenCases = gradingResult.TotalHiddenCases,
+            ExecutionTimeMs = gradingResult.ExecutionTimeMs,
+            ExecutionStatus = gradingResult.ExecutionStatus,
+            TestCaseResultsJson = gradingResult.TestCaseResultsJson,
+            AttemptNumber = attemptsCount + 1,
+            SubmittedAt = DateTime.UtcNow,
+            SimilarityScore = null,
+            ComparisonReport = null,
+            ConsoleOutput = gradingResult.ConsoleOutput,
+            ExpectedOutput = gradingResult.ExpectedOutput,
+            TeacherNotes = string.Empty
+        };
+
+        _context.Submissions.Add(submission);
+
+        // Trigger Notifications
+        var course = await _context.Courses
+            .Include(c => c.CourseTeachers)
+            .FirstOrDefaultAsync(c => c.Id == task.Session.CourseId, cancellationToken);
+        var student = await _context.Users.FindAsync(new object[] { studentId }, cancellationToken);
+        if (course != null && student != null)
+        {
+            var teacherIds = course.CourseTeachers.Select(ct => ct.TeacherId).ToList();
+            if (!teacherIds.Contains(course.TeacherId))
+            {
+                teacherIds.Add(course.TeacherId);
+            }
+
+            bool isLate = task.Mode == ProgrammingTaskMode.Homework && DateTime.UtcNow > task.Deadline;
+
+            foreach (var teacherId in teacherIds)
+            {
+                var msg = isLate
+                    ? $"{student.Name} submitted task '{task.Title}' LATE (Attempt #{submission.AttemptNumber})."
+                    : $"{student.Name} submitted task '{task.Title}' (Attempt #{submission.AttemptNumber}).";
+
+                _context.Notifications.Add(new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = teacherId,
+                    Message = msg,
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false
+                });
+
+                if (task.Mode == ProgrammingTaskMode.Homework && (attemptsCount + 1) >= task.MaxAttempts)
+                {
+                    _context.Notifications.Add(new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = teacherId,
+                        Message = $"{student.Name} reached maximum attempts ({task.MaxAttempts}) for task '{task.Title}'.",
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false
+                    });
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new SubmissionDto
+        {
+            Id = submission.Id,
+            TaskId = submission.TaskId,
+            TaskTitle = task.Title,
+            StudentId = submission.StudentId,
+            StudentName = student?.Name ?? "Student",
+            Code = submission.Code,
+            Grade = submission.Grade,
+            Feedback = submission.Feedback,
+            TeacherFeedback = submission.TeacherFeedback,
+            PassedPublicCases = submission.PassedPublicCases,
+            TotalPublicCases = submission.TotalPublicCases,
+            PassedHiddenCases = submission.PassedHiddenCases,
+            TotalHiddenCases = submission.TotalHiddenCases,
+            ExecutionTimeMs = submission.ExecutionTimeMs,
+            ExecutionStatus = submission.ExecutionStatus,
+            TestCaseResultsJson = submission.TestCaseResultsJson,
+            AttemptNumber = submission.AttemptNumber,
+            SubmittedAt = submission.SubmittedAt,
+            SimilarityScore = submission.SimilarityScore,
+            ComparisonReport = submission.ComparisonReport,
+            ConsoleOutput = submission.ConsoleOutput,
+            ExpectedOutput = submission.ExpectedOutput,
+            TeacherNotes = submission.TeacherNotes
+        };
+    }
+
+    public async Task<List<SubmissionDto>> GetStudentTaskSubmissionsAsync(Guid studentId, Guid taskId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Submissions
+            .Include(s => s.Task)
+            .Include(s => s.Student)
+            .Where(s => s.StudentId == studentId && s.TaskId == taskId)
+            .OrderByDescending(s => s.SubmittedAt)
+            .Select(s => new SubmissionDto
+            {
+                Id = s.Id,
+                TaskId = s.TaskId,
+                TaskTitle = s.Task.Title,
+                StudentId = s.StudentId,
+                StudentName = s.Student.Name,
+                Code = s.Code,
+                Grade = s.Grade,
+                Feedback = s.Feedback,
+                TeacherFeedback = s.TeacherFeedback,
+                PassedPublicCases = s.PassedPublicCases,
+                TotalPublicCases = s.TotalPublicCases,
+                PassedHiddenCases = s.PassedHiddenCases,
+                TotalHiddenCases = s.TotalHiddenCases,
+                ExecutionTimeMs = s.ExecutionTimeMs,
+                ExecutionStatus = s.ExecutionStatus,
+                TestCaseResultsJson = s.TestCaseResultsJson,
+                AttemptNumber = s.AttemptNumber,
+                SubmittedAt = s.SubmittedAt,
+                SimilarityScore = s.SimilarityScore,
+                ComparisonReport = s.ComparisonReport,
+                ConsoleOutput = s.ConsoleOutput,
+                ExpectedOutput = s.ExpectedOutput,
+                TeacherNotes = s.TeacherNotes
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<SubmissionDto>> GetTaskSubmissionsAsync(Guid taskId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Submissions
+            .Include(s => s.Task)
+            .Include(s => s.Student)
+            .Where(s => s.TaskId == taskId)
+            .OrderByDescending(s => s.SubmittedAt)
+            .Select(s => new SubmissionDto
+            {
+                Id = s.Id,
+                TaskId = s.TaskId,
+                TaskTitle = s.Task.Title,
+                StudentId = s.StudentId,
+                StudentName = s.Student.Name,
+                Code = s.Code,
+                Grade = s.Grade,
+                Feedback = s.Feedback,
+                TeacherFeedback = s.TeacherFeedback,
+                PassedPublicCases = s.PassedPublicCases,
+                TotalPublicCases = s.TotalPublicCases,
+                PassedHiddenCases = s.PassedHiddenCases,
+                TotalHiddenCases = s.TotalHiddenCases,
+                ExecutionTimeMs = s.ExecutionTimeMs,
+                ExecutionStatus = s.ExecutionStatus,
+                TestCaseResultsJson = s.TestCaseResultsJson,
+                AttemptNumber = s.AttemptNumber,
+                SubmittedAt = s.SubmittedAt,
+                SimilarityScore = s.SimilarityScore,
+                ComparisonReport = s.ComparisonReport,
+                ConsoleOutput = s.ConsoleOutput,
+                ExpectedOutput = s.ExpectedOutput,
+                TeacherNotes = s.TeacherNotes
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<object> GetTaskSubmissionsStatsAsync(Guid taskId, CancellationToken cancellationToken = default)
+    {
+        var task = await _context.ProgrammingTasks.FindAsync(new object[] { taskId }, cancellationToken);
+        if (task == null)
+        {
+            throw new InvalidOperationException("Task not found.");
+        }
+
+        var submissions = await _context.Submissions
+            .Where(s => s.TaskId == taskId)
+            .ToListAsync(cancellationToken);
+
+        var totalSubmissions = submissions.Count;
+        var uniqueStudents = submissions.Select(s => s.StudentId).Distinct().Count();
+
+        var grades = submissions.Select(s => s.Grade).ToList();
+        var avgGrade = grades.Count > 0 ? grades.Average() : 0;
+        var maxGrade = grades.Count > 0 ? grades.Max() : 0;
+        var minGrade = grades.Count > 0 ? grades.Min() : 0;
+
+        var attemptsPerStudent = submissions
+            .GroupBy(s => s.StudentId)
+            .Select(g => new { StudentId = g.Key, Attempts = g.Count() })
+            .ToList();
+
+        return new
+        {
+            TotalSubmissions = totalSubmissions,
+            UniqueStudentsSubmitted = uniqueStudents,
+            AverageGrade = Math.Round(avgGrade, 1),
+            HighestGrade = maxGrade,
+            LowestGrade = minGrade,
+            AttemptsPerStudent = attemptsPerStudent
+        };
+    }
+
+    public async Task<object> GetStudentTaskStatsAsync(Guid studentId, Guid taskId, CancellationToken cancellationToken = default)
+    {
+        var task = await _context.ProgrammingTasks.FindAsync(new object[] { taskId }, cancellationToken);
+        if (task == null)
+        {
+            throw new InvalidOperationException("Task not found.");
+        }
+
+        var submissions = await _context.Submissions
+            .Where(s => s.StudentId == studentId && s.TaskId == taskId)
+            .ToListAsync(cancellationToken);
+
+        var attemptsCount = submissions.Count;
+        var bestScore = submissions.Count > 0 ? submissions.Max(s => s.Grade) : 0;
+        var remainingAttempts = Math.Max(0, task.MaxAttempts - attemptsCount);
+
+        return new
+        {
+            BestScore = bestScore,
+            AttemptsCount = attemptsCount,
+            RemainingAttempts = task.Mode == ProgrammingTaskMode.InClass ? -1 : remainingAttempts, // -1 means infinite/InClass mode
+            MaxAttempts = task.Mode == ProgrammingTaskMode.InClass ? -1 : task.MaxAttempts,
+            Deadline = task.Deadline
+        };
+    }
+
+    public async Task<SubmissionDto> ReviewSubmissionAsync(Guid submissionId, ReviewSubmissionDto dto, CancellationToken cancellationToken = default)
+    {
+        var submission = await _context.Submissions
+            .Include(s => s.Task)
+            .Include(s => s.Student)
+            .FirstOrDefaultAsync(s => s.Id == submissionId, cancellationToken);
+
+        if (submission == null)
+        {
+            throw new InvalidOperationException("Submission not found.");
+        }
+
+        submission.Grade = dto.Grade;
+        submission.TeacherFeedback = dto.TeacherFeedback;
+        submission.TeacherNotes = dto.TeacherNotes;
+
+        // Send notification to student
+        _context.Notifications.Add(new Notification
+        {
+            Id = Guid.NewGuid(),
+            UserId = submission.StudentId,
+            Message = $"Your submission for '{submission.Task.Title}' has been graded. Grade: {submission.Grade}/{submission.Task.MaxGrade}.",
+            CreatedAt = DateTime.UtcNow,
+            IsRead = false
+        });
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new SubmissionDto
+        {
+            Id = submission.Id,
+            TaskId = submission.TaskId,
+            TaskTitle = submission.Task.Title,
+            StudentId = submission.StudentId,
+            StudentName = submission.Student.Name,
+            Code = submission.Code,
+            Grade = submission.Grade,
+            Feedback = submission.Feedback,
+            TeacherFeedback = submission.TeacherFeedback,
+            PassedPublicCases = submission.PassedPublicCases,
+            TotalPublicCases = submission.TotalPublicCases,
+            PassedHiddenCases = submission.PassedHiddenCases,
+            TotalHiddenCases = submission.TotalHiddenCases,
+            ExecutionTimeMs = submission.ExecutionTimeMs,
+            AttemptNumber = submission.AttemptNumber,
+            SubmittedAt = submission.SubmittedAt,
+            SimilarityScore = submission.SimilarityScore,
+            ComparisonReport = submission.ComparisonReport,
+            ConsoleOutput = submission.ConsoleOutput,
+            ExpectedOutput = submission.ExpectedOutput,
+            TeacherNotes = submission.TeacherNotes
+        };
+    }
+
+    private static SubmissionDto MapSubmissionToDto(Submission submission, string taskTitle, string studentName)
+    {
+        return new SubmissionDto
+        {
+            Id = submission.Id,
+            TaskId = submission.TaskId,
+            TaskTitle = taskTitle,
+            StudentId = submission.StudentId,
+            StudentName = studentName,
+            Code = submission.Code,
+            Grade = submission.Grade,
+            Feedback = submission.Feedback,
+            TeacherFeedback = submission.TeacherFeedback,
+            PassedPublicCases = submission.PassedPublicCases,
+            TotalPublicCases = submission.TotalPublicCases,
+            PassedHiddenCases = submission.PassedHiddenCases,
+            TotalHiddenCases = submission.TotalHiddenCases,
+            ExecutionTimeMs = submission.ExecutionTimeMs,
+            AttemptNumber = submission.AttemptNumber,
+            SubmittedAt = submission.SubmittedAt,
+            SimilarityScore = submission.SimilarityScore,
+            ComparisonReport = submission.ComparisonReport,
+            ConsoleOutput = submission.ConsoleOutput,
+            ExpectedOutput = submission.ExpectedOutput,
+            TeacherNotes = submission.TeacherNotes
+        };
+    }
+
+    private double CalculateJaccardSimilarity(string code1, string code2)
+    {
+        if (string.IsNullOrWhiteSpace(code1) || string.IsNullOrWhiteSpace(code2)) return 0;
+        var set1 = new HashSet<string>(code1.Split((char[])null, StringSplitOptions.RemoveEmptyEntries));
+        var set2 = new HashSet<string>(code2.Split((char[])null, StringSplitOptions.RemoveEmptyEntries));
+        if (set1.Count == 0 && set2.Count == 0) return 100.0;
+        double intersection = set1.Intersect(set2).Count();
+        double union = set1.Union(set2).Count();
+        return union > 0 ? (intersection / union) * 100.0 : 0.0;
+    }
+
+    private List<TestCaseModel> DeserializeTestCases(string json)
+    {
+        try
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<List<TestCaseModel>>(json, options) ?? new List<TestCaseModel>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deserializing test cases: {Json}", json);
+            return new List<TestCaseModel>();
+        }
+    }
+}
