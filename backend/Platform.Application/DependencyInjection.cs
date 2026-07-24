@@ -14,6 +14,8 @@ public static class DependencyInjection
         services.AddScoped<ISessionService, SessionService>();
         services.AddScoped<ITaskService, TaskService>();
         services.AddScoped<ISubmissionService, SubmissionService>();
+        services.AddScoped<IActivityLogger, ActivityLogger>();
+        services.AddScoped<IEmailService, EmailService>();
 
         // Version 2.0 Intelligent Education & Grading Services
         services.AddSingleton<ILanguageRegistry, LanguageRegistry>();

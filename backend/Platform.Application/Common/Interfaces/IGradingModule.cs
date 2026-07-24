@@ -40,6 +40,7 @@ public class GradingResult
     public int ExecutionTimeMs { get; set; }
     public string TestCaseResultsJson { get; set; } = "[]";
     public string Feedback { get; set; } = string.Empty;
+    public bool IsServiceUnavailable { get; set; }
 }
 
 public interface IGradingModule

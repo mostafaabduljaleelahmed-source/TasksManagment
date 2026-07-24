@@ -286,6 +286,7 @@ public class DashboardController : ControllerBase
 
         var task = await _context.ProgrammingTasks
             .Include(t => t.Session)
+            .ThenInclude(s => s.Course)
             .FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken);
 
         if (task == null)
@@ -329,6 +330,11 @@ public class DashboardController : ControllerBase
             int? execTime = null;
             double? similarity = null;
             Guid? submissionId = null;
+            string? submittedCode = null;
+            string? teacherFeedback = null;
+            string? teacherNotes = null;
+            string? consoleOutput = null;
+            string? expectedOutput = null;
 
             if (studentSubs.Any())
             {
@@ -338,6 +344,11 @@ public class DashboardController : ControllerBase
                 subTime = latest.SubmittedAt;
                 execTime = latest.ExecutionTimeMs;
                 similarity = latest.SimilarityScore;
+                submittedCode = latest.Code;
+                teacherFeedback = latest.TeacherFeedback;
+                teacherNotes = latest.TeacherNotes;
+                consoleOutput = latest.ConsoleOutput;
+                expectedOutput = latest.ExpectedOutput;
 
                 bool isGraded = !string.IsNullOrWhiteSpace(latest.TeacherFeedback) || latest.Grade > 0;
                 bool isLate = task.Mode == ProgrammingTaskMode.Homework && latest.SubmittedAt > task.Deadline;
@@ -382,12 +393,19 @@ public class DashboardController : ControllerBase
                 StudentId = student.Id,
                 StudentRegisterId = student.StudentId ?? "-",
                 StudentName = student.Name,
+                StudentAvatarUrl = student.AvatarUrl,
+                CourseName = task.Session?.Course?.Name ?? "Course",
                 Status = currentStatus,
                 Grade = grade,
                 Attempts = attempts,
                 SubmissionTime = subTime,
                 ExecutionTime = execTime,
-                SimilarityScore = similarity
+                SimilarityScore = similarity,
+                SubmittedCode = submittedCode,
+                TeacherFeedback = teacherFeedback,
+                TeacherNotes = teacherNotes,
+                ConsoleOutput = consoleOutput,
+                ExpectedOutput = expectedOutput
             });
         }
 
@@ -432,6 +450,8 @@ public class DashboardController : ControllerBase
         var sessionIds = sessions.Select(s => s.Id).ToList();
 
         var tasks = await _context.ProgrammingTasks
+            .Include(t => t.Session)
+            .ThenInclude(s => s.Course)
             .Where(t => sessionIds.Contains(t.SessionId))
             .ToListAsync(cancellationToken);
 
@@ -443,25 +463,57 @@ public class DashboardController : ControllerBase
         int pending = 0;
         int late = 0;
         var bestGrades = new List<object>();
+        var pendingAssignments = new List<object>();
+        var completedAssignmentsList = new List<object>();
 
         foreach (var task in tasks)
+        {
+            var taskSubs = submissions.Where(s => s.TaskId == task.Id).ToList();
+            bool hasSubmitted = taskSubs.Any();
+            bool isOverdue = DateTime.UtcNow > task.Deadline;
+
+            if (!hasSubmitted)
             {
-                var taskSubs = submissions.Where(s => s.TaskId == task.Id).ToList();
-                if (!taskSubs.Any())
+                pending++;
+                int attemptsUsed = taskSubs.Count;
+                int remainingAttempts = Math.Max(0, task.MaxAttempts - attemptsUsed);
+
+                pendingAssignments.Add(new
                 {
-                    pending++;
-                }
-                else
+                    TaskId = task.Id,
+                    Title = task.Title,
+                    CourseName = task.Session?.Course?.Name ?? "Course",
+                    SessionName = task.Session?.Title ?? "Session",
+                    Deadline = task.Deadline,
+                    RemainingAttempts = remainingAttempts,
+                    Status = isOverdue ? "Late" : "Pending"
+                });
+            }
+            else
+            {
+                completed++;
+                var latestSub = taskSubs.OrderByDescending(s => s.SubmittedAt).First();
+                var best = taskSubs.Max(s => s.Grade);
+                bestGrades.Add(new { TaskTitle = task.Title, BestGrade = best, MaxGrade = task.MaxGrade });
+                
+                completedAssignmentsList.Add(new
                 {
-                    completed++;
-                    var best = taskSubs.Max(s => s.Grade);
-                    bestGrades.Add(new { TaskTitle = task.Title, BestGrade = best, MaxGrade = task.MaxGrade });
-                    if (taskSubs.Any(s => s.SubmittedAt > task.Deadline))
-                    {
-                        late++;
-                    }
+                    TaskId = task.Id,
+                    TaskTitle = task.Title,
+                    CourseName = task.Session?.Course?.Name ?? "Course",
+                    SessionName = task.Session?.Title ?? "Session",
+                    Grade = latestSub.Grade,
+                    MaxGrade = task.MaxGrade,
+                    TeacherFeedback = !string.IsNullOrWhiteSpace(latestSub.TeacherFeedback) ? latestSub.TeacherFeedback : "No feedback written yet.",
+                    SubmittedAt = latestSub.SubmittedAt
+                });
+
+                if (taskSubs.Any(s => s.SubmittedAt > task.Deadline))
+                {
+                    late++;
                 }
             }
+        }
 
         var recentFeedback = submissions
             .Where(s => !string.IsNullOrEmpty(s.TeacherFeedback))
@@ -482,6 +534,8 @@ public class DashboardController : ControllerBase
             CompletedTasks = completed,
             PendingTasks = pending,
             LateTasks = late,
+            PendingAssignments = pendingAssignments,
+            CompletedAssignments = completedAssignmentsList,
             BestGrades = bestGrades,
             RecentFeedback = recentFeedback,
             History = submissions.OrderByDescending(s => s.SubmittedAt).Take(10).Select(s => new {
@@ -837,4 +891,576 @@ public class DashboardController : ControllerBase
             ByCompleted = sortedByCompleted
         });
     }
+
+    [HttpGet("teacher/summary")]
+    public async Task<IActionResult> GetTeacherSummary(CancellationToken cancellationToken)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || role != "Teacher")
+        {
+            return Forbid("Only teachers can access summary.");
+        }
+
+        var courses = await _context.Courses
+            .Where(c => c.TeacherId == teacherId)
+            .ToListAsync(cancellationToken);
+
+        var courseIds = courses.Select(c => c.Id).ToList();
+
+        var enrollments = await _context.Enrollments
+            .Where(e => courseIds.Contains(e.CourseId))
+            .ToListAsync(cancellationToken);
+
+        var uniqueStudentIds = enrollments.Select(e => e.StudentId).Distinct().ToList();
+
+        var sessions = await _context.Sessions
+            .Where(s => courseIds.Contains(s.CourseId))
+            .Select(s => s.Id)
+            .ToListAsync(cancellationToken);
+
+        var tasks = await _context.ProgrammingTasks
+            .Where(t => sessions.Contains(t.SessionId))
+            .ToListAsync(cancellationToken);
+
+        var taskIds = tasks.Select(t => t.Id).ToList();
+
+        var submissions = await _context.Submissions
+            .Where(s => taskIds.Contains(s.TaskId))
+            .ToListAsync(cancellationToken);
+
+        var today = DateTime.UtcNow.Date;
+        int submittedToday = submissions.Count(s => s.SubmittedAt >= today);
+
+        // Ungraded submissions count (distinct per student/task)
+        int pendingReviews = submissions
+            .Where(s => s.Grade == 0 && string.IsNullOrWhiteSpace(s.TeacherFeedback))
+            .Select(s => new { s.StudentId, s.TaskId })
+            .Distinct()
+            .Count();
+
+        // Missing submissions calculation: count tasks where enrolled student has 0 submissions
+        int missingSubmissions = 0;
+        foreach (var course in courses)
+        {
+            var courseSessionIds = await _context.Sessions
+                .Where(s => s.CourseId == course.Id)
+                .Select(s => s.Id)
+                .ToListAsync(cancellationToken);
+
+            var courseTaskIds = tasks.Where(t => courseSessionIds.Contains(t.SessionId)).Select(t => t.Id).ToList();
+            var courseStudentIds = enrollments.Where(e => e.CourseId == course.Id).Select(e => e.StudentId).ToList();
+
+            foreach (var studentId in courseStudentIds)
+            {
+                foreach (var taskId in courseTaskIds)
+                {
+                    if (!submissions.Any(s => s.StudentId == studentId && s.TaskId == taskId))
+                    {
+                        missingSubmissions++;
+                    }
+                }
+            }
+        }
+
+        int overdueAssignments = tasks.Count(t => t.Mode == ProgrammingTaskMode.Homework && t.Deadline < DateTime.UtcNow);
+
+        return Ok(new
+        {
+            PendingReviewsCount = pendingReviews,
+            MissingSubmissionsCount = missingSubmissions,
+            SubmittedTodayCount = submittedToday,
+            TotalGroupsCount = courses.Count,
+            TotalStudentsCount = uniqueStudentIds.Count,
+            OverdueAssignmentsCount = overdueAssignments
+        });
+    }
+
+    [HttpGet("teacher/groups")]
+    public async Task<IActionResult> GetTeacherGroups(CancellationToken cancellationToken)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || role != "Teacher")
+        {
+            return Forbid("Only teachers can access groups.");
+        }
+
+        var courses = await _context.Courses
+            .Where(c => c.TeacherId == teacherId)
+            .ToListAsync(cancellationToken);
+
+        var courseIds = courses.Select(c => c.Id).ToList();
+
+        var enrollments = await _context.Enrollments
+            .Where(e => courseIds.Contains(e.CourseId))
+            .ToListAsync(cancellationToken);
+
+        var sessions = await _context.Sessions
+            .Where(s => courseIds.Contains(s.CourseId))
+            .ToListAsync(cancellationToken);
+
+        var tasks = await _context.ProgrammingTasks
+            .Where(t => sessions.Select(s => s.Id).Contains(t.SessionId))
+            .ToListAsync(cancellationToken);
+
+        var submissions = await _context.Submissions
+            .Where(s => tasks.Select(t => t.Id).Contains(s.TaskId))
+            .ToListAsync(cancellationToken);
+
+        var result = new List<object>();
+
+        foreach (var c in courses)
+        {
+            var groupSessionIds = sessions.Where(s => s.CourseId == c.Id).Select(s => s.Id).ToList();
+            var groupTasks = tasks.Where(t => groupSessionIds.Contains(t.SessionId)).ToList();
+            var groupTaskIds = groupTasks.Select(t => t.Id).ToList();
+            var groupStudents = enrollments.Where(e => e.CourseId == c.Id).Select(e => e.StudentId).ToList();
+
+            var groupSubmissions = submissions.Where(s => groupTaskIds.Contains(s.TaskId)).ToList();
+
+            int pendingReviews = groupSubmissions
+                .Where(s => s.Grade == 0 && string.IsNullOrWhiteSpace(s.TeacherFeedback))
+                .Select(s => new { s.StudentId, s.TaskId })
+                .Distinct()
+                .Count();
+            
+            int missingSubmissions = 0;
+            foreach (var sId in groupStudents)
+            {
+                foreach (var tId in groupTaskIds)
+                {
+                    if (!groupSubmissions.Any(s => s.StudentId == sId && s.TaskId == tId))
+                    {
+                        missingSubmissions++;
+                    }
+                }
+            }
+
+            result.Add(new
+            {
+                GroupId = c.Id,
+                GroupName = c.Name,
+                GroupCode = c.CourseCode,
+                StudentsCount = groupStudents.Count,
+                AssignmentsCount = groupTasks.Count,
+                PendingReviewsCount = pendingReviews,
+                MissingSubmissionsCount = missingSubmissions
+            });
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("teacher/students")]
+    public async Task<IActionResult> GetTeacherStudents(CancellationToken cancellationToken)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || role != "Teacher")
+        {
+            return Forbid("Only teachers can access students roster.");
+        }
+
+        var courses = await _context.Courses
+            .Where(c => c.TeacherId == teacherId)
+            .ToListAsync(cancellationToken);
+
+        var courseIds = courses.Select(c => c.Id).ToList();
+
+        var enrollments = await _context.Enrollments
+            .Include(e => e.Student)
+            .Include(e => e.Course)
+            .Where(e => courseIds.Contains(e.CourseId))
+            .ToListAsync(cancellationToken);
+
+        var sessions = await _context.Sessions
+            .Where(s => courseIds.Contains(s.CourseId))
+            .ToListAsync(cancellationToken);
+
+        var tasks = await _context.ProgrammingTasks
+            .Where(t => sessions.Select(s => s.Id).Contains(t.SessionId))
+            .ToListAsync(cancellationToken);
+
+        var submissions = await _context.Submissions
+            .Where(s => tasks.Select(t => t.Id).Contains(s.TaskId))
+            .ToListAsync(cancellationToken);
+
+        var studentList = new List<object>();
+
+        foreach (var e in enrollments)
+        {
+            var student = e.Student;
+            if (student == null) continue;
+
+            var courseSessionIds = sessions.Where(s => s.CourseId == e.CourseId).Select(s => s.Id).ToList();
+            var courseTasks = tasks.Where(t => courseSessionIds.Contains(t.SessionId)).ToList();
+            var courseTaskIds = courseTasks.Select(t => t.Id).ToList();
+
+            var studentSubs = submissions.Where(s => s.StudentId == student.Id && courseTaskIds.Contains(s.TaskId)).ToList();
+
+            var bestPerTask = studentSubs
+                .GroupBy(s => s.TaskId)
+                .Select(g => g.Max(s => s.Grade))
+                .ToList();
+
+            double avgGrade = bestPerTask.Any() ? Math.Round(bestPerTask.Average(), 1) : 0;
+            int completedTasks = bestPerTask.Count;
+            int pendingTasks = Math.Max(0, courseTasks.Count - completedTasks);
+
+            int lateTasks = 0;
+            foreach (var t in courseTasks)
+            {
+                var taskSubs = studentSubs.Where(s => s.TaskId == t.Id).ToList();
+                if (taskSubs.Any(s => t.Mode == ProgrammingTaskMode.Homework && s.SubmittedAt > t.Deadline))
+                {
+                    lateTasks++;
+                }
+            }
+
+            studentList.Add(new
+            {
+                StudentId = student.Id,
+                Name = student.Name,
+                Email = student.Email,
+                StudentRegisterId = student.StudentId ?? "-",
+                AvatarUrl = student.AvatarUrl,
+                GroupName = e.Course.Name,
+                CourseId = e.CourseId,
+                AverageGrade = avgGrade,
+                CompletedAssignments = completedTasks,
+                PendingAssignments = pendingTasks,
+                LateAssignments = lateTasks
+            });
+        }
+
+        return Ok(studentList);
+    }
+
+    [HttpPost("teacher/students/{studentId}/reset-password")]
+    public async Task<IActionResult> ResetStudentPassword(
+        Guid studentId,
+        [FromBody] ResetPasswordDto dto,
+        [FromServices] IHashService hashService,
+        CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (role != "Teacher")
+        {
+            return Forbid("Only teachers can reset student passwords.");
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 4)
+        {
+            return BadRequest(new { message = "Password must be at least 4 characters long." });
+        }
+
+        var student = await _context.Users.FirstOrDefaultAsync(u => u.Id == studentId, cancellationToken);
+        if (student == null)
+        {
+            return NotFound(new { message = "Student not found." });
+        }
+
+        student.PasswordHash = hashService.HashPassword(dto.NewPassword);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return Ok(new { message = $"Password for student '{student.Name}' has been reset successfully." });
+    }
+
+    public class ResetPasswordDto
+    {
+        public string NewPassword { get; set; } = string.Empty;
+    }
+
+    [HttpGet("teacher/pending-reviews")]
+    public async Task<IActionResult> GetTeacherPendingReviews([FromQuery] string? sortBy, CancellationToken cancellationToken)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || role != "Teacher")
+        {
+            return Forbid("Only teachers can access pending reviews.");
+        }
+
+        var courses = await _context.Courses
+            .Where(c => c.TeacherId == teacherId)
+            .ToListAsync(cancellationToken);
+
+        var courseIds = courses.Select(c => c.Id).ToList();
+
+        var sessions = await _context.Sessions
+            .Where(s => courseIds.Contains(s.CourseId))
+            .ToListAsync(cancellationToken);
+
+        var tasks = await _context.ProgrammingTasks
+            .Where(t => sessions.Select(s => s.Id).Contains(t.SessionId))
+            .ToListAsync(cancellationToken);
+
+        var taskIds = tasks.Select(t => t.Id).ToList();
+
+        // Get submissions that are ungraded (grade == 0 and teacherFeedback is empty)
+        var pendingSubsRaw = await _context.Submissions
+            .Include(s => s.Student)
+            .Include(s => s.Task)
+            .ThenInclude(t => t.Session)
+            .ThenInclude(sess => sess.Course)
+            .Where(s => taskIds.Contains(s.TaskId) && s.Grade == 0 && string.IsNullOrEmpty(s.TeacherFeedback))
+            .ToListAsync(cancellationToken);
+
+        // Group by (StudentId, TaskId) and pick ONLY the latest attempt
+        var pendingSubs = pendingSubsRaw
+            .GroupBy(s => new { s.StudentId, s.TaskId })
+            .Select(g => g.OrderByDescending(s => s.SubmittedAt).First())
+            .ToList();
+
+        var items = pendingSubs.Select(s => new
+        {
+            SubmissionId = s.Id,
+            StudentId = s.StudentId,
+            StudentName = s.Student.Name,
+            StudentRegisterId = s.Student.StudentId ?? "-",
+            StudentAvatarUrl = s.Student.AvatarUrl,
+            TaskId = s.TaskId,
+            TaskTitle = s.Task.Title,
+            MaxGrade = s.Task.MaxGrade,
+            Deadline = s.Task.Deadline,
+            GroupName = s.Task.Session.Course.Name,
+            SubmittedAt = s.SubmittedAt,
+            AttemptNumber = s.AttemptNumber,
+            Code = s.Code
+        }).ToList();
+
+        // Sorting
+        var sorted = sortBy?.ToLowerInvariant() switch
+        {
+            "oldest" => items.OrderBy(x => x.SubmittedAt).ToList(),
+            "deadline" => items.OrderBy(x => x.Deadline).ToList(),
+            "group" => items.OrderBy(x => x.GroupName).ThenByDescending(x => x.SubmittedAt).ToList(),
+            "task" => items.OrderBy(x => x.TaskTitle).ThenByDescending(x => x.SubmittedAt).ToList(),
+            "student" => items.OrderBy(x => x.StudentName).ThenByDescending(x => x.SubmittedAt).ToList(),
+            _ => items.OrderByDescending(x => x.SubmittedAt).ToList() // default newest
+        };
+
+        return Ok(sorted);
+    }
+
+    [HttpGet("teacher/today-activity")]
+    public async Task<IActionResult> GetTeacherTodayActivity(CancellationToken cancellationToken)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || role != "Teacher")
+        {
+            return Forbid("Only teachers can access today's activity.");
+        }
+
+        var courses = await _context.Courses.Where(c => c.TeacherId == teacherId).ToListAsync(cancellationToken);
+        var courseIds = courses.Select(c => c.Id).ToList();
+        var sessions = await _context.Sessions.Where(s => courseIds.Contains(s.CourseId)).ToListAsync(cancellationToken);
+        var tasks = await _context.ProgrammingTasks.Where(t => sessions.Select(s => s.Id).Contains(t.SessionId)).ToListAsync(cancellationToken);
+        var taskIds = tasks.Select(t => t.Id).ToList();
+
+        var today = DateTime.UtcNow.Date;
+        var todaySubs = await _context.Submissions
+            .Include(s => s.Student)
+            .Include(s => s.Task)
+            .ThenInclude(t => t.Session)
+            .ThenInclude(sess => sess.Course)
+            .Where(s => taskIds.Contains(s.TaskId) && s.SubmittedAt >= today)
+            .OrderByDescending(s => s.SubmittedAt)
+            .Take(25)
+            .ToListAsync(cancellationToken);
+
+        var result = todaySubs.Select(s => new
+        {
+            SubmissionId = s.Id,
+            StudentId = s.StudentId,
+            StudentName = s.Student.Name,
+            StudentRegisterId = s.Student.StudentId ?? "-",
+            StudentAvatarUrl = s.Student.AvatarUrl,
+            TaskId = s.TaskId,
+            TaskTitle = s.Task.Title,
+            GroupName = s.Task.Session.Course.Name,
+            SubmittedAt = s.SubmittedAt,
+            Grade = s.Grade,
+            Status = s.Grade > 0 || !string.IsNullOrWhiteSpace(s.TeacherFeedback) ? "Graded" : "Pending Review"
+        });
+
+        return Ok(result);
+    }
+
+    [HttpGet("search")]
+    public async Task<IActionResult> GlobalSearch([FromQuery] string? q, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 1)
+        {
+            return Ok(new { students = new object[0], courses = new object[0], sessions = new object[0], assignments = new object[0] });
+        }
+
+        var query = q.Trim().ToLower();
+
+        // 1. Search Students
+        var students = await _context.Users
+            .Where(u => u.Role == UserRole.Student && (
+                u.Name.ToLower().Contains(query) ||
+                u.Email.ToLower().Contains(query) ||
+                (u.StudentId != null && u.StudentId.ToLower().Contains(query))
+            ))
+            .Take(8)
+            .Select(u => new
+            {
+                id = u.Id,
+                name = u.Name,
+                registerId = u.StudentId ?? "-",
+                avatarUrl = u.AvatarUrl,
+                email = u.Email
+            })
+            .ToListAsync(cancellationToken);
+
+        // 2. Search Courses
+        var courses = await _context.Courses
+            .Where(c => c.Name.ToLower().Contains(query) || c.CourseCode.ToLower().Contains(query) || c.Description.ToLower().Contains(query))
+            .Take(8)
+            .Select(c => new
+            {
+                id = c.Id,
+                name = c.Name,
+                courseCode = c.CourseCode,
+                description = c.Description
+            })
+            .ToListAsync(cancellationToken);
+
+        // 3. Search Sessions
+        var sessions = await _context.Sessions
+            .Include(s => s.Course)
+            .Where(s => s.Title.ToLower().Contains(query) || s.Course.Name.ToLower().Contains(query))
+            .Take(8)
+            .Select(s => new
+            {
+                id = s.Id,
+                title = s.Title,
+                order = s.Order,
+                courseId = s.CourseId,
+                courseName = s.Course.Name
+            })
+            .ToListAsync(cancellationToken);
+
+        // 4. Search Assignments (ProgrammingTasks)
+        var assignments = await _context.ProgrammingTasks
+            .Include(t => t.Session)
+            .ThenInclude(sess => sess.Course)
+            .Where(t => t.Title.ToLower().Contains(query) || t.Description.ToLower().Contains(query) || t.Session.Course.Name.ToLower().Contains(query))
+            .Take(8)
+            .Select(t => new
+            {
+                id = t.Id,
+                title = t.Title,
+                courseId = t.Session.CourseId,
+                courseName = t.Session.Course.Name,
+                sessionName = t.Session.Title,
+                deadline = t.Deadline,
+                maxGrade = t.MaxGrade
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(new
+        {
+            students,
+            courses,
+            sessions,
+            assignments
+        });
+    }
+
+    [HttpGet("teacher/assignments")]
+    public async Task<IActionResult> GetTeacherAssignmentsList(CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (role != "Teacher" || string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId))
+        {
+            return Forbid("Only teachers can access assignments list.");
+        }
+
+        var teacherCourses = await _context.Courses
+            .Where(c => c.TeacherId == teacherId)
+            .ToListAsync(cancellationToken);
+
+        var courseIds = teacherCourses.Select(c => c.Id).ToList();
+
+        var sessions = await _context.Sessions
+            .Include(s => s.Course)
+            .Where(s => courseIds.Contains(s.CourseId))
+            .ToListAsync(cancellationToken);
+
+        var sessionIds = sessions.Select(s => s.Id).ToList();
+
+        var tasks = await _context.ProgrammingTasks
+            .Include(t => t.Session)
+            .ThenInclude(s => s.Course)
+            .Where(t => sessionIds.Contains(t.SessionId) && !t.IsArchived)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var enrollments = await _context.Enrollments
+            .Where(e => courseIds.Contains(e.CourseId))
+            .ToListAsync(cancellationToken);
+
+        var taskIds = tasks.Select(t => t.Id).ToList();
+
+        var submissions = await _context.Submissions
+            .Where(s => taskIds.Contains(s.TaskId))
+            .ToListAsync(cancellationToken);
+
+        var result = new List<object>();
+
+        foreach (var task in tasks)
+        {
+            var courseId = task.Session.CourseId;
+            var courseStudentIds = enrollments.Where(e => e.CourseId == courseId).Select(e => e.StudentId).Distinct().ToList();
+            int totalStudents = courseStudentIds.Count;
+
+            var taskSubs = submissions.Where(s => s.TaskId == task.Id).ToList();
+            var submittedStudentIds = taskSubs.Select(s => s.StudentId).Distinct().ToList();
+
+            int submitted = submittedStudentIds.Count;
+            int missing = Math.Max(0, totalStudents - submitted);
+
+            int pendingReview = taskSubs
+                .Where(s => s.Grade == 0 && string.IsNullOrWhiteSpace(s.TeacherFeedback))
+                .Select(s => s.StudentId)
+                .Distinct()
+                .Count();
+
+            var bestGrades = taskSubs
+                .GroupBy(s => s.StudentId)
+                .Select(g => g.Max(s => s.Grade))
+                .ToList();
+
+            double averageGrade = bestGrades.Any() ? Math.Round(bestGrades.Average(), 1) : 0;
+
+            result.Add(new
+            {
+                Id = task.Id,
+                Title = task.Title,
+                Deadline = task.Deadline,
+                MaxGrade = task.MaxGrade,
+                TotalStudents = totalStudents,
+                Submitted = submitted,
+                Missing = missing,
+                PendingReview = pendingReview,
+                AverageGrade = averageGrade,
+                CourseName = task.Session.Course.Name,
+                SessionName = task.Session.Title
+            });
+        }
+
+        return Ok(result);
+    }
 }
+

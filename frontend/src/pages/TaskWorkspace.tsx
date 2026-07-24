@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Editor from '@monaco-editor/react';
-import { ArrowLeft, Play, Send, History, Loader2, Code, Clock, Award, ShieldAlert, Sparkles, Upload } from 'lucide-react';
+import { ArrowLeft, Play, Send, History, Loader2, Code, Clock, Award, ShieldAlert, Sparkles, Upload, Terminal, Trash2 } from 'lucide-react';
+import { RichTextViewer } from '../components/RichTextEditor';
 
 interface Task {
   id: string;
@@ -55,15 +56,28 @@ interface Submission {
   expectedOutput?: string;
 }
 
+interface TaskAttachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  contentType: string;
+  uploadedAt: string;
+}
+
 export const TaskWorkspace: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
   const { user } = useAuth();
   const toast = useToast();
 
   const [task, setTask] = useState<Task | null>(null);
+  const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [stats, setStats] = useState<StudentStats | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [code, setCode] = useState<string>(`# Write your Python code here\n# E.g. read input using input() and print result\n\ndef main():\n    n = input()\n    print(n)\n\nif __name__ == '__main__':\n    main()`);
+  
+  // Default to empty string (no boilerplate comments or template code)
+  const [code, setCode] = useState<string>('');
 
   // Loading & logs state
   const [loading, setLoading] = useState(true);
@@ -78,6 +92,7 @@ export const TaskWorkspace: React.FC = () => {
     detailsMessage?: string;
     teacherFeedback?: string;
     stdout?: string;
+    executionTimeMs?: number;
   } | null>(null);
 
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
@@ -93,6 +108,13 @@ export const TaskWorkspace: React.FC = () => {
       if (!taskRes.ok) throw new Error('Failed to load task details');
       const taskData = await taskRes.json();
       setTask(taskData);
+      if (taskData.attachmentsJson) {
+        try {
+          setAttachments(JSON.parse(taskData.attachmentsJson));
+        } catch (e) {
+          setAttachments([]);
+        }
+      }
 
       // 2. Fetch Student stats
       const statsRes = await fetch(`${API_URL}/submissions/task/${taskId}/student-stats`, {
@@ -104,12 +126,25 @@ export const TaskWorkspace: React.FC = () => {
       }
 
       // 3. Fetch submissions list
+      let historyData: Submission[] = [];
       const historyRes = await fetch(`${API_URL}/submissions/task/${taskId}/history`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (historyRes.ok) {
-        const historyData = await historyRes.json();
+        historyData = await historyRes.json();
         setSubmissions(historyData);
+      }
+
+      // 4. Preserve User Code (localStorage Drafts or Previous Submission)
+      const draftKey = `draft_${user.id}_${taskId}`;
+      const savedDraft = localStorage.getItem(draftKey);
+
+      if (savedDraft !== null) {
+        setCode(savedDraft);
+      } else if (historyData && historyData.length > 0) {
+        setCode(historyData[0].code);
+      } else {
+        setCode('');
       }
     } catch (err: any) {
       console.error(err);
@@ -122,6 +157,14 @@ export const TaskWorkspace: React.FC = () => {
   useEffect(() => {
     fetchTaskDetails();
   }, [taskId, user]);
+
+  const handleCodeChange = (newVal: string | undefined) => {
+    const val = newVal || '';
+    setCode(val);
+    if (user && taskId) {
+      localStorage.setItem(`draft_${user.id}_${taskId}`, val);
+    }
+  };
 
   const handleRunCode = async () => {
     if (!taskId || running) return;
@@ -144,6 +187,7 @@ export const TaskWorkspace: React.FC = () => {
       setConsoleOutput({
         type: 'run',
         summary: `${data.executionTimeMs}ms`,
+        executionTimeMs: data.executionTimeMs,
         generalError: data.stderr || data.error,
         detailsMessage: data.stdout
       });
@@ -160,7 +204,7 @@ export const TaskWorkspace: React.FC = () => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCodeFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.name.endsWith('.py')) {
@@ -171,7 +215,7 @@ export const TaskWorkspace: React.FC = () => {
     reader.onload = (event) => {
       const content = event.target?.result as string;
       if (content !== undefined) {
-        setCode(content);
+        handleCodeChange(content);
         setConsoleOutput({
           type: 'run',
           summary: `Loaded File: ${file.name}`,
@@ -198,7 +242,13 @@ export const TaskWorkspace: React.FC = () => {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Submission failed');
+        const errorMsg = data.message || 'Submission failed';
+        const errorDetails = data.details ? `${errorMsg}\nDetails: ${data.details}` : errorMsg;
+        throw new Error(errorDetails);
+      }
+
+      if (user && taskId) {
+        localStorage.setItem(`draft_${user.id}_${taskId}`, code);
       }
 
       setConsoleOutput({
@@ -207,6 +257,7 @@ export const TaskWorkspace: React.FC = () => {
         detailsMessage: `Your code was permanently saved at ${new Date(data.submittedAt).toLocaleTimeString()}. Your teacher will review and enter your grade & feedback.`,
         teacherFeedback: data.teacherFeedback || data.feedback,
         stdout: data.consoleOutput,
+        executionTimeMs: data.executionTimeMs,
       });
 
       toast.success(`Submission Attempt #${data.attemptNumber} turned in successfully!`);
@@ -233,6 +284,66 @@ export const TaskWorkspace: React.FC = () => {
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !taskId || !user) return;
+
+    const maxSizeBytes = 25 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      toast.error('File size exceeds the 25 MB limit.');
+      return;
+    }
+
+    const allowed = ['.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.docx', '.doc', '.zip', '.rar', '.7z', '.pptx', '.ppt'];
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!allowed.includes(ext)) {
+      toast.error(`File extension '${ext}' is not allowed. Supported formats: PDF, Images, DOCX, ZIP, PPTX.`);
+      return;
+    }
+
+    setUploadingAttachment(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(`${API_URL}/tasks/${taskId}/attachments`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${user.token}` },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || 'Upload failed');
+      }
+
+      const updated = await res.json();
+      setAttachments(updated);
+      toast.success('Attachment uploaded successfully!');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload attachment');
+    } finally {
+      setUploadingAttachment(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!user || !taskId) return;
+    try {
+      const res = await fetch(`${API_URL}/tasks/${taskId}/attachments/${attachmentId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (!res.ok) throw new Error('Failed to delete attachment');
+      const updated = await res.json();
+      setAttachments(updated);
+      toast.success('Attachment deleted.');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete attachment');
     }
   };
 
@@ -273,168 +384,215 @@ export const TaskWorkspace: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#0F0F11] text-zinc-200 flex flex-col overflow-hidden h-screen">
       {/* Top bar */}
-      <header className="bg-[#16161A] border-b border-[#24242B] px-6 py-3 flex items-center justify-between shrink-0">
+      <header className="bg-[#16161A] border-b border-[#24242B] px-6 py-2.5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <Link
             to={task ? `/course/${task.sessionId}` : '/'}
-            className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"
+            className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"
             title="Back to syllabus"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </Link>
-          <span className="text-sm font-semibold text-zinc-400">Task Workspace</span>
+          <span className="text-xs font-semibold text-zinc-400">Workspace</span>
           <span className="text-zinc-600">/</span>
-          <span className="text-sm font-bold text-white">{task.title}</span>
+          <span className="text-xs font-bold text-white truncate max-w-[200px] sm:max-w-none">{task.title}</span>
         </div>
 
         {/* Stats Summary Bar */}
-        <div className="flex items-center gap-4 text-xs font-semibold">
-          <span className="text-amber-300 bg-amber-600/20 border border-amber-500/30 px-2.5 py-1 rounded-md text-2xs font-extrabold uppercase tracking-wider flex items-center gap-1 shadow-sm">
+        <div className="flex items-center gap-3 text-xs font-semibold">
+          <span className="text-amber-300 bg-amber-600/20 border border-amber-500/30 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider flex items-center gap-1">
             📝 Manual Review
           </span>
 
-          <span className="text-indigo-300 bg-indigo-600/20 border border-indigo-500/30 px-2.5 py-1 rounded-md text-2xs font-bold uppercase tracking-wider">
+          <span className="text-indigo-300 bg-indigo-600/20 border border-indigo-500/30 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
             Python 3.11
           </span>
 
-          <div className="flex items-center gap-1 bg-zinc-800/50 border border-zinc-700/40 px-2.5 py-1 rounded-md text-zinc-300">
+          <div className="flex items-center gap-1 bg-zinc-800/50 border border-zinc-700/40 px-2.5 py-0.5 rounded text-zinc-300 text-[11px]">
             <Award className="w-3.5 h-3.5 text-indigo-400" />
             Max Grade: {task.maxGrade} pts
           </div>
           {isHomework && (
             <>
-              <div className="flex items-center gap-1 bg-zinc-800/50 border border-zinc-700/40 px-2.5 py-1 rounded-md text-zinc-300">
-                <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+              <div className="hidden sm:flex items-center gap-1 bg-zinc-800/50 border border-zinc-700/40 px-2.5 py-0.5 rounded text-zinc-300 text-[11px]">
+                <Sparkles className="w-3 h-3 text-violet-400" />
                 Best Score: {stats?.bestScore ?? 0} pts
               </div>
-              <div className="flex items-center gap-1 bg-zinc-800/50 border border-zinc-700/40 px-2.5 py-1 rounded-md text-zinc-300">
-                <Clock className="w-3.5 h-3.5 text-rose-400" />
+              <div className="hidden sm:flex items-center gap-1 bg-zinc-800/50 border border-zinc-700/40 px-2.5 py-0.5 rounded text-zinc-300 text-[11px]">
+                <Clock className="w-3 h-3 text-rose-400" />
                 {getCountdown()}
               </div>
-              <div className="flex items-center gap-1 bg-zinc-800/50 border border-zinc-700/40 px-2.5 py-1 rounded-md text-zinc-300">
-                Remaining attempts: {stats?.remainingAttempts} / {stats?.maxAttempts}
-              </div>
             </>
-          )}
-          {!isHomework && (
-            <span className="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] tracking-wider uppercase font-bold">
-              Practice (In-Class)
-            </span>
           )}
         </div>
       </header>
 
-      {/* Pane Splitter */}
+      {/* Workspace Split Layout: Compact Description (30%) + Large Coding Area (70%) */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
-        {/* Left Side: Description / History */}
-        <div className="w-full md:w-1/2 flex flex-col border-r border-[#24242B] bg-[#16161A] overflow-hidden min-h-0">
+        {/* Left Side: Compact Description / History */}
+        <div className="w-full md:w-[30%] lg:w-[28%] flex flex-col border-r border-[#24242B] bg-[#16161A] overflow-hidden min-h-0 shrink-0">
           <div className="flex border-b border-[#24242B] shrink-0 bg-[#1A1A22]/50">
             <button
               onClick={() => setActiveTab('description')}
-              className={`flex items-center gap-2 px-6 py-3 text-sm font-semibold border-b-2 transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold border-b-2 transition-all ${
                 activeTab === 'description'
                   ? 'border-violet-500 text-white bg-[#1F1F28]/50'
                   : 'border-transparent text-zinc-400 hover:text-white'
               }`}
             >
-              <Code className="w-4 h-4" />
+              <Code className="w-3.5 h-3.5" />
               Description
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`flex items-center gap-2 px-6 py-3 text-sm font-semibold border-b-2 transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold border-b-2 transition-all ${
                 activeTab === 'history'
                   ? 'border-violet-500 text-white bg-[#1F1F28]/50'
                   : 'border-transparent text-zinc-400 hover:text-white'
               }`}
             >
-              <History className="w-4 h-4" />
+              <History className="w-3.5 h-3.5" />
               Submissions ({submissions.length})
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 min-h-0">
+          <div className="flex-1 overflow-y-auto p-4 min-h-0 space-y-4">
             {activeTab === 'description' ? (
-              <div className="space-y-6">
+              <div className="space-y-4 text-xs">
                 <div>
-                  <h2 className="text-2xl font-extrabold text-white tracking-tight">{task.title}</h2>
+                  <h2 className="text-lg font-extrabold text-white tracking-tight">{task.title}</h2>
                 </div>
 
-                <div className="prose prose-invert max-w-none text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap">
-                  {task.description}
+                <div className="prose prose-invert max-w-none text-zinc-300 text-xs leading-relaxed">
+                  <RichTextViewer content={task.description} />
                 </div>
 
-                {/* Example Blocks or Expected Output for Basic Exercises */}
+                {/* Example Blocks */}
                 {!task.exampleInput && task.exampleOutput ? (
-                  <div className="space-y-3">
-                    <h4 className="text-xs uppercase tracking-wider font-bold text-zinc-400">Expected Output</h4>
-                    <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-4 font-mono text-xs">
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Expected Output</h4>
+                    <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-3 font-mono text-[11px]">
                       <pre className="text-emerald-400 whitespace-pre-wrap">{task.exampleOutput}</pre>
                     </div>
                   </div>
                 ) : task.exampleInput ? (
-                  <div className="space-y-3">
-                    <h4 className="text-xs uppercase tracking-wider font-bold text-zinc-400">Example Input/Output</h4>
-                    <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-4 space-y-3 font-mono text-xs">
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Example Input/Output</h4>
+                    <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-3 space-y-2 font-mono text-[11px]">
                       <div>
-                        <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider mb-1">Input</p>
+                        <p className="text-zinc-500 text-[9px] uppercase font-bold tracking-wider mb-1">Input</p>
                         <pre className="text-white whitespace-pre-wrap">{task.exampleInput}</pre>
                       </div>
-                      <div className="border-t border-[#2F2F37] pt-3">
-                        <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider mb-1">Output</p>
+                      <div className="border-t border-[#2F2F37] pt-2">
+                        <p className="text-zinc-500 text-[9px] uppercase font-bold tracking-wider mb-1">Output</p>
                         <pre className="text-emerald-400 whitespace-pre-wrap">{task.exampleOutput}</pre>
                       </div>
                     </div>
                   </div>
                 ) : null}
+
+                {/* Attachments Section */}
+                <div className="space-y-3 pt-3 border-t border-[#24242B]">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                      <Upload className="w-4 h-4 text-blue-400" />
+                      Task Attachments ({attachments.length})
+                    </h4>
+                    {user?.role === 'Teacher' && (
+                      <label className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-[11px] cursor-pointer transition-colors flex items-center gap-1">
+                        {uploadingAttachment ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                        Upload File
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.svg,.docx,.doc,.zip,.rar,.7z,.pptx,.ppt"
+                          onChange={handleFileUpload}
+                          disabled={uploadingAttachment}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {attachments.length === 0 ? (
+                    <p className="text-zinc-500 text-[11px] italic">No attachments attached to this task.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {attachments.map((att) => (
+                        <div
+                          key={att.id}
+                          className="flex items-center justify-between p-2.5 bg-[#1C1C24] border border-[#2B2B36] rounded-xl hover:border-blue-500/40 transition-colors text-xs"
+                        >
+                          <div className="flex items-center gap-2.5 truncate flex-1">
+                            <span className="p-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg shrink-0 font-bold uppercase text-[9px]">
+                              {att.fileName.split('.').pop()}
+                            </span>
+                            <div className="truncate">
+                              <p className="text-white font-semibold truncate text-[11px]">{att.fileName}</p>
+                              <p className="text-[10px] text-zinc-500">{(att.fileSize / (1024 * 1024)).toFixed(2)} MB</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <a
+                              href={`${API_URL.replace('/api', '')}${att.fileUrl}`}
+                              download={att.fileName}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1 bg-zinc-800 hover:bg-blue-600 text-zinc-300 hover:text-white font-bold rounded-lg text-[11px] transition-colors"
+                            >
+                              Download
+                            </a>
+                            {user?.role === 'Teacher' && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteAttachment(att.id)}
+                                className="p-1 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 rounded-lg transition-colors"
+                                title="Delete Attachment"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-white mb-2">Past Submission History</h3>
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-white">Past Submission History</h3>
                 {submissions.length === 0 ? (
-                  <p className="text-zinc-500 text-sm py-4">No submissions made yet.</p>
+                  <p className="text-zinc-500 text-xs py-4">No submissions made yet.</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     {submissions.map((sub) => {
                       const isGraded = !!(sub.teacherFeedback || sub.grade > 0);
                       return (
                         <div
                           key={sub.id}
                           onClick={() => setSelectedSubmission(sub)}
-                          className="bg-[#1F1F24] border border-[#2F2F37] hover:border-violet-500/40 rounded-xl p-4 cursor-pointer hover:bg-zinc-800/30 transition-all flex flex-col gap-2 group"
+                          className="bg-[#1F1F24] border border-[#2F2F37] hover:border-violet-500/40 rounded-xl p-3 cursor-pointer hover:bg-zinc-800/30 transition-all flex flex-col gap-1.5 group"
                         >
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-white">Attempt #{sub.attemptNumber}</span>
-                              <span className="text-[10px] bg-zinc-800 text-zinc-400 py-0.5 px-2 rounded-md font-semibold flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-zinc-500" />
-                                {new Date(sub.submittedAt).toLocaleDateString()} {new Date(sub.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            <span className="text-xs font-bold text-white">Attempt #{sub.attemptNumber}</span>
+                            {isGraded ? (
+                              <span className="text-[10px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded">
+                                {sub.grade}/{task.maxGrade} pts
                               </span>
-                            </div>
-                            <div className="shrink-0">
-                              {isGraded ? (
-                                <span className="text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg">
-                                  Graded: {sub.grade}/{task.maxGrade} pts
-                                </span>
-                              ) : (
-                                <span className="text-xs font-semibold bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2.5 py-1 rounded-lg">
-                                  Pending Grade
-                                </span>
-                              )}
-                            </div>
+                            ) : (
+                              <span className="text-[10px] font-semibold bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2 py-0.5 rounded">
+                                Pending Grade
+                              </span>
+                            )}
                           </div>
 
-                          {sub.teacherFeedback ? (
-                            <div className="bg-[#17171E] border border-violet-500/20 rounded-lg p-2.5 mt-1">
-                              <p className="text-[10px] uppercase tracking-wider font-bold text-violet-400">Teacher Feedback:</p>
-                              <p className="text-xs text-zinc-200 mt-0.5 whitespace-pre-wrap">{sub.teacherFeedback}</p>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-zinc-500 italic">No teacher feedback entered yet.</p>
-                          )}
+                          <span className="text-[10px] text-zinc-400">
+                            {new Date(sub.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
 
-                          <div className="flex justify-end items-center text-xs text-violet-400 font-semibold pt-1">
-                            <span>View Submitted Code &rarr;</span>
+                          <div className="flex justify-end items-center text-[11px] text-violet-400 font-semibold pt-1">
+                            <span>Inspect &rarr;</span>
                           </div>
                         </div>
                       );
@@ -446,34 +604,35 @@ export const TaskWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Side: Monaco Code Editor & Console */}
-        <div className="w-full md:w-1/2 flex flex-col bg-[#0F0F11] overflow-hidden min-h-0">
-          <div className="flex-1 flex flex-col min-h-0 relative">
-            <Editor
-              height="100%"
-              defaultLanguage="python"
-              theme="vs-dark"
-              value={code}
-              onChange={(val) => setCode(val || '')}
-              options={{
-                fontSize: 14,
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                lineNumbers: 'on',
-                fontFamily: 'Consolas, monospace',
-                automaticLayout: true,
-              }}
-            />
+        {/* Right Side: Monaco Code Editor (Large) & Execution Console (Medium) */}
+        <div className="w-full md:w-[70%] lg:w-[72%] flex flex-col bg-[#0F0F11] overflow-hidden min-h-0 h-full" dir="ltr" style={{ direction: 'ltr', unicodeBidi: 'isolate' }}>
+          {/* Action Toolbar Header */}
+          <div className="flex items-center justify-between px-4 py-2 bg-[#16161A] border-b border-[#24242B] shrink-0" dir="ltr" style={{ direction: 'ltr' }}>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-zinc-300 font-mono flex items-center gap-2">
+                <Code className="w-4 h-4 text-violet-400" />
+                <span>solution.py</span>
+              </span>
+              {code.trim() !== '' && (
+                <button
+                  onClick={() => handleCodeChange('')}
+                  className="text-[10px] text-zinc-500 hover:text-red-400 transition-colors flex items-center gap-1"
+                  title="Clear Code"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Clear
+                </button>
+              )}
+            </div>
 
-            {/* Run / Upload / Submit Action Panel overlayed top-right */}
-            <div className="absolute top-3 right-5 z-20 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <label className="flex items-center gap-1.5 bg-[#1F1F24] hover:bg-zinc-800 border border-[#2F2F37] text-zinc-200 font-semibold py-1.5 px-3 rounded-lg text-xs cursor-pointer transition-all">
                 <Upload className="w-3.5 h-3.5 text-violet-400" />
                 <span>Upload .py File</span>
                 <input
                   type="file"
                   accept=".py"
-                  onChange={handleFileUpload}
+                  onChange={handleCodeFileUpload}
                   className="hidden"
                 />
               </label>
@@ -492,6 +651,7 @@ export const TaskWorkspace: React.FC = () => {
                   </>
                 )}
               </button>
+
               <button
                 onClick={handleSubmitCode}
                 disabled={running || submitting || attemptsDisabled || deadlinePassed}
@@ -510,75 +670,104 @@ export const TaskWorkspace: React.FC = () => {
             </div>
           </div>
 
-          {/* Bottom Console Panel */}
-          <div className="h-60 border-t border-[#24242B] bg-[#16161A] flex flex-col shrink-0 overflow-hidden">
-            <div className="bg-[#1E1E24]/30 border-b border-[#24242B] px-5 py-2 flex items-center justify-between shrink-0">
-              <span className="text-xs uppercase tracking-wider font-bold text-zinc-400">Execution Console</span>
+          {/* Monaco Editor Container (Large main focus area) */}
+          <div className="flex-1 w-full min-h-[300px] relative overflow-hidden" dir="ltr" style={{ direction: 'ltr', unicodeBidi: 'isolate' }}>
+            <Editor
+              height="100%"
+              width="100%"
+              defaultLanguage="python"
+              language="python"
+              theme="vs-dark"
+              value={code}
+              onChange={handleCodeChange}
+              onMount={(editor) => {
+                setTimeout(() => {
+                  editor.layout();
+                  editor.setPosition({ lineNumber: 1, column: 1 });
+                  editor.focus();
+                }, 100);
+              }}
+              loading={
+                <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-xs bg-[#0F0F11]">
+                  <Loader2 className="w-6 h-6 animate-spin text-violet-500 mb-2" />
+                  <span>Loading Editor...</span>
+                </div>
+              }
+              options={{
+                fontSize: 15,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                lineNumbers: 'on',
+                fontFamily: 'Consolas, "Fira Code", monospace',
+                automaticLayout: true,
+                smoothScrolling: true,
+                wordWrap: 'off',
+                padding: { top: 12, bottom: 12 }
+              }}
+            />
+          </div>
+
+          {/* Execution Console (Medium height with monospace Output & StdErr) */}
+          <div className="h-64 border-t border-[#24242B] bg-[#16161A] flex flex-col shrink-0 overflow-hidden">
+            <div className="bg-[#1E1E24]/40 border-b border-[#24242B] px-4 py-2 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider font-bold text-zinc-300">
+                <Terminal className="w-4 h-4 text-violet-400" />
+                <span>Execution Console</span>
+                {consoleOutput?.executionTimeMs !== undefined && (
+                  <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono">
+                    ⚡ {consoleOutput.executionTimeMs}ms
+                  </span>
+                )}
+              </div>
               {consoleOutput && (
                 <button
                   onClick={() => setConsoleOutput(null)}
                   className="text-xs text-zinc-500 hover:text-white transition-colors"
                 >
-                  Clear
+                  Clear Console
                 </button>
               )}
             </div>
 
-            <div className="flex-1 p-5 overflow-y-auto font-mono text-xs min-h-0 space-y-3">
+            <div className="flex-1 p-4 overflow-y-auto font-mono text-xs min-h-0 space-y-3">
               {!consoleOutput ? (
                 <div className="text-zinc-500 flex flex-col items-center justify-center h-full">
-                  <Code className="w-8 h-8 text-zinc-700 mb-2" />
-                  <p>Run public tests locally or Submit to grade your code.</p>
+                  <Terminal className="w-8 h-8 text-zinc-700 mb-2" />
+                  <p className="text-xs">Click Run Code to execute locally, or Submit to turn in your assignment.</p>
                 </div>
               ) : consoleOutput.type === 'error' ? (
-                <div className="text-red-400">
-                  <p className="font-semibold text-sm mb-1">{consoleOutput.summary}</p>
-                  <pre className="bg-red-950/20 border border-red-900/20 rounded p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre-wrap">
+                <div className="text-red-400 space-y-2">
+                  <p className="font-bold text-sm">{consoleOutput.summary}</p>
+                  <pre className="bg-red-950/20 border border-red-900/30 rounded-xl p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre-wrap text-red-300 font-mono">
                     {consoleOutput.generalError}
                   </pre>
                 </div>
               ) : consoleOutput.type === 'submit' ? (
                 <div className="text-zinc-200 space-y-3">
-                  <p className="font-semibold text-violet-400 text-sm mb-2">{consoleOutput.summary}</p>
+                  <p className="font-bold text-violet-400 text-sm mb-2">{consoleOutput.summary}</p>
                   
-                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-4 space-y-2">
-                    <p className="text-zinc-400 text-[11px] uppercase font-bold tracking-wider">Student Feedback</p>
+                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-3.5 space-y-1.5">
+                    <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Submission Status</p>
                     <pre className="text-zinc-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">
                       {consoleOutput.detailsMessage}
                     </pre>
                   </div>
-
-                  {user?.role === 'Teacher' && consoleOutput.teacherFeedback && (
-                    <div className="bg-[#1D1D2C] border border-[#2B2B47] rounded-xl p-4 space-y-2">
-                      <p className="text-indigo-400 text-[11px] uppercase font-bold tracking-wider">Teacher Comparison Log</p>
-                      <pre className="text-indigo-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">
-                        {consoleOutput.teacherFeedback}
-                      </pre>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="text-zinc-200 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-sm text-white">Execution Sandbox</span>
-                    <span className="text-3xs bg-zinc-800 border border-zinc-700 text-zinc-400 font-medium px-2 py-0.5 rounded">
-                      Time: {consoleOutput.summary}
-                    </span>
-                  </div>
-
                   {consoleOutput.generalError && (
-                    <div className="bg-red-950/10 border border-red-900/30 rounded-xl p-4 space-y-1.5">
-                      <p className="text-red-400 text-[10px] uppercase font-bold tracking-wider">Standard Error / Runtime Error</p>
+                    <div className="bg-red-950/20 border border-red-900/30 rounded-xl p-3.5 space-y-1">
+                      <p className="text-red-400 text-[10px] uppercase font-bold tracking-wider">Standard Error (stderr)</p>
                       <pre className="text-red-300 font-mono text-xs whitespace-pre-wrap leading-relaxed overflow-x-auto">
                         {consoleOutput.generalError}
                       </pre>
                     </div>
                   )}
 
-                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-4 space-y-1.5">
-                    <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Standard Output</p>
-                    <pre className="text-emerald-400 font-mono text-xs whitespace-pre-wrap leading-relaxed overflow-x-auto min-h-[60px]">
-                      {consoleOutput.detailsMessage || 'Program executed with no console output.'}
+                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-3.5 space-y-1">
+                    <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Standard Output (stdout)</p>
+                    <pre className="text-emerald-400 font-mono text-xs whitespace-pre-wrap leading-relaxed overflow-x-auto min-h-[50px]">
+                      {consoleOutput.detailsMessage || 'Program executed successfully with no output.'}
                     </pre>
                   </div>
                 </div>
@@ -595,7 +784,7 @@ export const TaskWorkspace: React.FC = () => {
             <div className="flex justify-between items-center pb-4 mb-4 border-b border-[#24242B]">
               <div>
                 <h3 className="text-lg font-bold text-white">Submission Review (Attempt #{selectedSubmission.attemptNumber})</h3>
-                <p className="text-zinc-500 text-2xs mt-0.5">Submitted at: {new Date(selectedSubmission.submittedAt).toLocaleString()}</p>
+                <p className="text-zinc-500 text-xs mt-0.5">Submitted at: {new Date(selectedSubmission.submittedAt).toLocaleString()}</p>
               </div>
               {task && (
                 <div className="bg-violet-500/10 border border-violet-500/20 text-violet-400 px-3 py-1 rounded-lg text-xs font-bold">
@@ -607,21 +796,24 @@ export const TaskWorkspace: React.FC = () => {
             <div className="flex-1 flex flex-col md:flex-row gap-6 min-h-0">
               {/* Code Editor */}
               <div className="flex-1 flex flex-col bg-[#0F0F11] border border-[#2F2F37] rounded-xl overflow-hidden min-h-[300px] md:min-h-0">
-                <div className="bg-[#1E1E24]/30 border-b border-[#24242B] px-4 py-1.5 flex justify-between items-center text-3xs uppercase font-bold text-zinc-500">
+                <div className="bg-[#1E1E24]/30 border-b border-[#24242B] px-4 py-1.5 flex justify-between items-center text-[10px] uppercase font-bold text-zinc-500">
                   <span>Submitted Python Code</span>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-h-[250px] relative" dir="ltr" style={{ direction: 'ltr' }}>
                   <Editor
                     height="100%"
+                    width="100%"
                     defaultLanguage="python"
+                    language="python"
                     theme="vs-dark"
-                    value={selectedSubmission.code}
+                    value={selectedSubmission.code || ''}
                     options={{
                       readOnly: true,
                       minimap: { enabled: false },
-                      fontSize: 12,
+                      fontSize: 13,
                       lineNumbers: 'on',
                       fontFamily: 'Consolas, monospace',
+                      automaticLayout: true,
                     }}
                   />
                 </div>
@@ -630,28 +822,10 @@ export const TaskWorkspace: React.FC = () => {
               {/* Execution Details Panel */}
               <div className="w-full md:w-80 flex flex-col gap-4 overflow-y-auto min-h-0 pr-1">
                 {selectedSubmission.feedback && (
-                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-4 space-y-1.5">
-                    <p className="text-zinc-400 text-3xs uppercase font-bold tracking-wider">Evaluation Feedback</p>
-                    <pre className="text-zinc-300 font-mono text-[11px] whitespace-pre-wrap leading-relaxed">
+                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-4 space-y-1">
+                    <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Evaluation Feedback</p>
+                    <pre className="text-zinc-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">
                       {selectedSubmission.feedback}
-                    </pre>
-                  </div>
-                )}
-
-                {selectedSubmission.expectedOutput && (
-                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-4 space-y-1.5">
-                    <p className="text-zinc-400 text-3xs uppercase font-bold tracking-wider">Expected Output (First Failed/Last Public)</p>
-                    <pre className="text-zinc-500 font-mono text-[11px] whitespace-pre-wrap leading-relaxed overflow-x-auto bg-[#16161A] p-2.5 rounded border border-[#24242B] min-h-[40px]">
-                      {selectedSubmission.expectedOutput}
-                    </pre>
-                  </div>
-                )}
-
-                {selectedSubmission.consoleOutput && (
-                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-4 space-y-1.5">
-                    <p className="text-zinc-400 text-3xs uppercase font-bold tracking-wider">Console Output / Actual Output</p>
-                    <pre className="text-emerald-400 font-mono text-[11px] whitespace-pre-wrap leading-relaxed overflow-x-auto bg-[#16161A] p-2.5 rounded border border-[#24242B] min-h-[40px]">
-                      {selectedSubmission.consoleOutput}
                     </pre>
                   </div>
                 )}
@@ -662,17 +836,17 @@ export const TaskWorkspace: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setCode(selectedSubmission.code);
+                  handleCodeChange(selectedSubmission.code);
                   setSelectedSubmission(null);
                 }}
-                className="bg-violet-600 hover:bg-violet-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-all"
+                className="bg-violet-600 hover:bg-violet-500 text-white font-semibold py-2 px-4 rounded-lg text-xs transition-all"
               >
                 Restore to Workspace
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedSubmission(null)}
-                className="bg-[#1F1F24] border border-[#2F2F37] text-zinc-400 hover:text-white rounded-lg py-2 px-4 text-sm font-medium transition-all"
+                className="bg-[#1F1F24] border border-[#2F2F37] text-zinc-400 hover:text-white rounded-lg py-2 px-4 text-xs font-medium transition-all"
               >
                 Close
               </button>

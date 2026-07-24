@@ -27,6 +27,8 @@ public class ProgrammingTask
     public EvaluationMode EvaluationMode { get; set; } = EvaluationMode.ManualReview;
     public string Language { get; set; } = "python";
     public bool IgnoreMultipleSpaces { get; set; } = true;
+    public string AttachmentsJson { get; set; } = "[]";
+    public bool IsArchived { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<Submission> Submissions { get; set; } = new List<Submission>();

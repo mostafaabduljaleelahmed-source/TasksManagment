@@ -67,6 +67,7 @@ public class AuthService : IAuthService
             Email = user.Email,
             Role = user.Role.ToString(),
             StudentId = user.StudentId,
+            AvatarUrl = user.AvatarUrl,
             Token = token
         };
     }
@@ -94,6 +95,7 @@ public class AuthService : IAuthService
             Email = user.Email,
             Role = user.Role.ToString(),
             StudentId = user.StudentId,
+            AvatarUrl = user.AvatarUrl,
             Token = token
         };
     }

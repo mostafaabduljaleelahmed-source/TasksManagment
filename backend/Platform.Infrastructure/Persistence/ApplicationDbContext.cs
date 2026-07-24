@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Submission> Submissions => Set<Submission>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<UserTaskView> UserTaskViews => Set<UserTaskView>();
+    public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Platform.Application.Common.Interfaces;
+using Platform.Application.Common.Utils;
 using Platform.Domain.Enums;
 
 namespace Platform.Application.Services.Grading;
@@ -44,6 +45,7 @@ public class Judge0AutoGradingModule : IGradingModule
         int totalPublic = publicCases.Count;
         int totalHidden = hiddenCases.Count;
         double maxTimeSeconds = 0;
+        int maxMemoryKb = 0;
         string overallStatus = "Accepted";
         string firstConsoleOutput = string.Empty;
         string firstExpectedOutput = string.Empty;
@@ -64,16 +66,34 @@ public class Judge0AutoGradingModule : IGradingModule
             };
 
             var execRes = await _executionService.ExecuteAsync(req, cancellationToken);
-            if (execRes.TimeSeconds > maxTimeSeconds) maxTimeSeconds = execRes.TimeSeconds;
+            if (execRes.IsServiceUnavailable)
+            {
+                return new GradingResult
+                {
+                    Grade = 0,
+                    IsServiceUnavailable = true,
+                    ExecutionStatus = "Service Unavailable",
+                    Feedback = "Automatic grading service is unavailable.",
+                    ConsoleOutput = execRes.Stdout,
+                    ExpectedOutput = execRes.Stderr
+                };
+            }
 
-            bool passed = execRes.Passed || (execRes.Stdout.Trim().Equals(tc.Output.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (execRes.TimeSeconds > maxTimeSeconds) maxTimeSeconds = execRes.TimeSeconds;
+            if (execRes.MemoryKb > maxMemoryKb) maxMemoryKb = execRes.MemoryKb;
+
+            // Output Normalization Comparison (Trim trailing spaces, normalize line endings, ignore final empty line)
+            string normActual = OutputNormalizer.Normalize(execRes.Stdout);
+            string normExpected = OutputNormalizer.Normalize(tc.Output);
+
+            bool passed = execRes.Passed || string.Equals(normActual, normExpected, StringComparison.Ordinal);
             if (passed) passedPublic++;
-            else if (overallStatus == "Accepted") overallStatus = execRes.StatusDescription;
+            else if (overallStatus == "Accepted") overallStatus = string.IsNullOrEmpty(execRes.StatusDescription) ? "Wrong Answer" : execRes.StatusDescription;
 
             if (string.IsNullOrEmpty(firstConsoleOutput))
             {
-                firstConsoleOutput = string.IsNullOrEmpty(execRes.Stderr) ? execRes.Stdout : execRes.Stderr;
-                firstExpectedOutput = tc.Output;
+                firstConsoleOutput = execRes.Stdout;
+                firstExpectedOutput = !string.IsNullOrWhiteSpace(execRes.CompileOutput) ? execRes.CompileOutput : execRes.Stderr;
             }
 
             testCaseDetails.Add(new TestCaseExecutionDetail
@@ -103,11 +123,28 @@ public class Judge0AutoGradingModule : IGradingModule
             };
 
             var execRes = await _executionService.ExecuteAsync(req, cancellationToken);
-            if (execRes.TimeSeconds > maxTimeSeconds) maxTimeSeconds = execRes.TimeSeconds;
+            if (execRes.IsServiceUnavailable)
+            {
+                return new GradingResult
+                {
+                    Grade = 0,
+                    IsServiceUnavailable = true,
+                    ExecutionStatus = "Service Unavailable",
+                    Feedback = "Automatic grading service is unavailable.",
+                    ConsoleOutput = execRes.Stdout,
+                    ExpectedOutput = execRes.Stderr
+                };
+            }
 
-            bool passed = execRes.Passed || (execRes.Stdout.Trim().Equals(tc.Output.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (execRes.TimeSeconds > maxTimeSeconds) maxTimeSeconds = execRes.TimeSeconds;
+            if (execRes.MemoryKb > maxMemoryKb) maxMemoryKb = execRes.MemoryKb;
+
+            string normActual = OutputNormalizer.Normalize(execRes.Stdout);
+            string normExpected = OutputNormalizer.Normalize(tc.Output);
+
+            bool passed = execRes.Passed || string.Equals(normActual, normExpected, StringComparison.Ordinal);
             if (passed) passedHidden++;
-            else if (overallStatus == "Accepted") overallStatus = execRes.StatusDescription;
+            else if (overallStatus == "Accepted") overallStatus = string.IsNullOrEmpty(execRes.StatusDescription) ? "Wrong Answer" : execRes.StatusDescription;
 
             testCaseDetails.Add(new TestCaseExecutionDetail
             {
@@ -122,7 +159,7 @@ public class Judge0AutoGradingModule : IGradingModule
             });
         }
 
-        // Calculate Grade
+        // Grade Calculation: Score = (Passed Test Cases / Total Test Cases) * Max Grade
         int totalCases = totalPublic + totalHidden;
         int passedTotal = passedPublic + passedHidden;
         int calculatedGrade = context.Task.MaxGrade;
@@ -149,7 +186,8 @@ public class Judge0AutoGradingModule : IGradingModule
             TotalHiddenCases = totalHidden,
             ExecutionTimeMs = (int)(maxTimeSeconds * 1000),
             TestCaseResultsJson = JsonSerializer.Serialize(testCaseDetails),
-            Feedback = feedbackText
+            Feedback = feedbackText,
+            IsServiceUnavailable = false
         };
     }
 

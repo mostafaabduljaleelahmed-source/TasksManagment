@@ -81,6 +81,7 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors("AllowAll");
+app.UseStaticFiles();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

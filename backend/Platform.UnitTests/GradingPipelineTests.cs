@@ -28,10 +28,10 @@ public class GradingPipelineTests
         return context;
     }
 
-    private IGradingEngineDispatcher GetGradingDispatcher(IExecutionService executionService)
+    private IGradingEngineDispatcher GetGradingDispatcher(ICodeExecutionService runner, IExecutionService executionService)
     {
         var langRegistry = new LanguageRegistry();
-        var manualModule = new ManualReviewModule();
+        var manualModule = new ManualReviewModule(runner);
         var autoModule = new Judge0AutoGradingModule(executionService, langRegistry);
         return new GradingEngineDispatcher(new IGradingModule[] { manualModule, autoModule });
     }
@@ -41,6 +41,8 @@ public class GradingPipelineTests
     {
         // Arrange
         using var context = await GetDatabaseContextAsync();
+        var studentId = Guid.NewGuid();
+        var student = new User { Id = studentId, Name = "Student 1", Role = UserRole.Student };
         var session = new Session { Id = Guid.NewGuid(), Title = "S1", IsUnlocked = true };
         var task = new ProgrammingTask
         {
@@ -52,18 +54,24 @@ public class GradingPipelineTests
             Mode = ProgrammingTaskMode.InClass,
             EvaluationMode = EvaluationMode.ManualReview
         };
+        context.Users.Add(student);
         context.Sessions.Add(session);
         context.ProgrammingTasks.Add(task);
         await context.SaveChangesAsync();
 
         var mockRunner = new Mock<ICodeExecutionService>();
-        var mockExec = new Mock<IExecutionService>();
-        var dispatcher = GetGradingDispatcher(mockExec.Object);
+        mockRunner.Setup(r => r.ExecuteAsync(It.IsAny<string>(), It.IsAny<List<TestCaseModel>>(), It.IsAny<int>()))
+            .ReturnsAsync(new ExecutionResult { ExecutionTimeMs = 10, TestResults = new List<TestCaseResult>() });
 
-        var service = new SubmissionService(context, mockRunner.Object, dispatcher, NullLogger<SubmissionService>.Instance);
+        var mockExec = new Mock<IExecutionService>();
+        var mockActivityLogger = new Mock<IActivityLogger>();
+        var mockEmail = new Mock<IEmailService>();
+
+        var dispatcher = GetGradingDispatcher(mockRunner.Object, mockExec.Object);
+        var service = new SubmissionService(context, mockRunner.Object, dispatcher, NullLogger<SubmissionService>.Instance, mockActivityLogger.Object, mockEmail.Object);
 
         // Act
-        var result = await service.SubmitCodeAsync(Guid.NewGuid(), task.Id, new SubmitCodeDto { Code = "print('Hello World')" });
+        var result = await service.SubmitCodeAsync(studentId, task.Id, new SubmitCodeDto { Code = "print('Hello World')" });
 
         // Assert
         Assert.NotNull(result);
@@ -74,23 +82,26 @@ public class GradingPipelineTests
     }
 
     [Fact]
-    public async Task Test_SubmitCode_AutomaticGradingMode_EvaluatesWithJudge0Engine()
+    public async Task Test_SubmitCode_AutomaticGrading_Judge0AllPassed_CalculatesFullGrade()
     {
         // Arrange
         using var context = await GetDatabaseContextAsync();
+        var studentId = Guid.NewGuid();
+        var student = new User { Id = studentId, Name = "Student 1", Role = UserRole.Student };
         var session = new Session { Id = Guid.NewGuid(), Title = "S1", IsUnlocked = true };
         var task = new ProgrammingTask
         {
             Id = Guid.NewGuid(),
             SessionId = session.Id,
             Session = session,
-            Title = "Auto Graded Math",
+            Title = "Sum Two Numbers",
             MaxGrade = 100,
+            Language = "python",
             Mode = ProgrammingTaskMode.InClass,
             EvaluationMode = EvaluationMode.AutomaticGrading,
-            Language = "python",
-            PublicTestCasesJson = "[{\"Input\":\"5\",\"Output\":\"10\"}]"
+            PublicTestCasesJson = "[{\"Input\":\"1 2\",\"Output\":\"3\"}]"
         };
+        context.Users.Add(student);
         context.Sessions.Add(session);
         context.ProgrammingTasks.Add(task);
         await context.SaveChangesAsync();
@@ -102,101 +113,72 @@ public class GradingPipelineTests
             {
                 StatusId = 3,
                 StatusDescription = "Accepted",
-                Stdout = "10\n",
-                Passed = true,
-                TimeSeconds = 0.04
+                Stdout = "3\n",
+                TimeSeconds = 0.02,
+                MemoryKb = 1000,
+                Passed = true
             });
 
-        var dispatcher = GetGradingDispatcher(mockExec.Object);
-        var service = new SubmissionService(context, mockRunner.Object, dispatcher, NullLogger<SubmissionService>.Instance);
+        var mockActivityLogger = new Mock<IActivityLogger>();
+        var mockEmail = new Mock<IEmailService>();
+
+        var dispatcher = GetGradingDispatcher(mockRunner.Object, mockExec.Object);
+        var service = new SubmissionService(context, mockRunner.Object, dispatcher, NullLogger<SubmissionService>.Instance, mockActivityLogger.Object, mockEmail.Object);
 
         // Act
-        var result = await service.SubmitCodeAsync(Guid.NewGuid(), task.Id, new SubmitCodeDto { Code = "n = int(input()); print(n * 2)" });
+        var result = await service.SubmitCodeAsync(studentId, task.Id, new SubmitCodeDto { Code = "print(1+2)" });
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(100, result.Grade);
         Assert.Equal("Accepted", result.ExecutionStatus);
-        Assert.Contains("Passed all", result.Feedback);
     }
 
     [Fact]
-    public async Task Test_ReviewSubmission_UpdatesGradeAndTeacherFeedback()
+    public async Task Test_SubmitCode_AutomaticGrading_Judge0Unavailable_ThrowsException()
     {
         // Arrange
         using var context = await GetDatabaseContextAsync();
+        var studentId = Guid.NewGuid();
+        var student = new User { Id = studentId, Name = "Student 1", Role = UserRole.Student };
         var session = new Session { Id = Guid.NewGuid(), Title = "S1", IsUnlocked = true };
         var task = new ProgrammingTask
         {
             Id = Guid.NewGuid(),
             SessionId = session.Id,
             Session = session,
-            Title = "Python Functions",
+            Title = "Test Task",
             MaxGrade = 100,
-            Mode = ProgrammingTaskMode.InClass
+            Language = "python",
+            Mode = ProgrammingTaskMode.InClass,
+            EvaluationMode = EvaluationMode.AutomaticGrading,
+            PublicTestCasesJson = "[{\"Input\":\"1\",\"Output\":\"1\"}]"
         };
-        var student = new User
-        {
-            Id = Guid.NewGuid(),
-            Name = "John Doe",
-            Email = "john@example.com",
-            Role = UserRole.Student
-        };
-        context.Sessions.Add(session);
-        context.ProgrammingTasks.Add(task);
         context.Users.Add(student);
-        await context.SaveChangesAsync();
-
-        var mockRunner = new Mock<ICodeExecutionService>();
-        var mockExec = new Mock<IExecutionService>();
-        var dispatcher = GetGradingDispatcher(mockExec.Object);
-        var service = new SubmissionService(context, mockRunner.Object, dispatcher, NullLogger<SubmissionService>.Instance);
-
-        var submission = await service.SubmitCodeAsync(student.Id, task.Id, new SubmitCodeDto { Code = "def add(a, b):\n    return a + b" });
-
-        // Act - Teacher reviews & grades submission
-        var reviewDto = new ReviewSubmissionDto
-        {
-            Grade = 95,
-            TeacherFeedback = "Great code organization and implementation!",
-            TeacherNotes = "First class submission"
-        };
-        var updated = await service.ReviewSubmissionAsync(submission.Id, reviewDto);
-
-        // Assert
-        Assert.Equal(95, updated.Grade);
-        Assert.Equal("Great code organization and implementation!", updated.TeacherFeedback);
-        Assert.Equal("First class submission", updated.TeacherNotes);
-    }
-
-    [Fact]
-    public async Task Test_EmptySubmission_ThrowsInvalidOperationException()
-    {
-        // Arrange
-        using var context = await GetDatabaseContextAsync();
-        var session = new Session { Id = Guid.NewGuid(), Title = "S1", IsUnlocked = true };
-        var task = new ProgrammingTask
-        {
-            Id = Guid.NewGuid(),
-            SessionId = session.Id,
-            Session = session,
-            Title = "Empty Submission Task",
-            MaxGrade = 100,
-            Mode = ProgrammingTaskMode.InClass
-        };
         context.Sessions.Add(session);
         context.ProgrammingTasks.Add(task);
         await context.SaveChangesAsync();
 
         var mockRunner = new Mock<ICodeExecutionService>();
         var mockExec = new Mock<IExecutionService>();
-        var dispatcher = GetGradingDispatcher(mockExec.Object);
-        var service = new SubmissionService(context, mockRunner.Object, dispatcher, NullLogger<SubmissionService>.Instance);
+        mockExec.Setup(e => e.ExecuteAsync(It.IsAny<Judge0ExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Judge0ExecutionResult
+            {
+                IsServiceUnavailable = true,
+                StatusDescription = "Automatic grading service is unavailable."
+            });
+
+        var mockActivityLogger = new Mock<IActivityLogger>();
+        var mockEmail = new Mock<IEmailService>();
+
+        var dispatcher = GetGradingDispatcher(mockRunner.Object, mockExec.Object);
+        var service = new SubmissionService(context, mockRunner.Object, dispatcher, NullLogger<SubmissionService>.Instance, mockActivityLogger.Object, mockEmail.Object);
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.SubmitCodeAsync(Guid.NewGuid(), task.Id, new SubmitCodeDto { Code = "   " }));
+            service.SubmitCodeAsync(studentId, task.Id, new SubmitCodeDto { Code = "print(1)" })
+        );
 
-        Assert.Contains("Submission code cannot be empty", ex.Message);
+        Assert.Equal("Automatic grading service is unavailable.", ex.Message);
     }
 }

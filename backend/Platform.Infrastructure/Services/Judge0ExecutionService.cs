@@ -89,11 +89,23 @@ public class Judge0ExecutionService : IExecutionService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Judge0 execution request failed. Falling back to internal execution sandbox evaluation.");
+            _logger.LogWarning(ex, "Judge0 execution request failed due to connectivity or service error.");
+            return new Judge0ExecutionResult
+            {
+                IsServiceUnavailable = true,
+                StatusDescription = "Automatic grading service is unavailable.",
+                Stdout = string.Empty,
+                Stderr = ex.Message
+            };
         }
 
-        // Fallback Sandbox Evaluation for Offline Development / Local Testing
-        return FallbackSandboxEvaluation(request);
+        return new Judge0ExecutionResult
+        {
+            IsServiceUnavailable = true,
+            StatusDescription = "Automatic grading service is unavailable.",
+            Stdout = string.Empty,
+            Stderr = "Judge0 returned non-success HTTP status."
+        };
     }
 
     public async Task<List<Judge0ExecutionResult>> ExecuteBatchAsync(List<Judge0ExecutionRequest> requests, CancellationToken cancellationToken = default)

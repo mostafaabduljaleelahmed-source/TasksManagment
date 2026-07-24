@@ -6,9 +6,10 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import {
   ArrowLeft, Loader2, Plus, FileCode, Clock, AlertCircle,
   Award, BarChart3, Users, BookOpen, CheckCircle, AlertTriangle, FileSpreadsheet,
-  Download, Eye, Search, ChevronRight, Bell, RefreshCw, X, Trash2
+  Download, Eye, Search, ChevronRight, ChevronDown, Bell, RefreshCw, X, Trash2, Archive
 } from 'lucide-react';
 import { StudentDetailsModal } from './StudentDetailsModal';
+import { RichTextEditor } from '../components/RichTextEditor';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -25,6 +26,15 @@ interface ProgrammingTask {
   maxGrade: number;
   evaluationMode?: string;
   language?: string;
+  maxAttempts?: number;
+  status?: string;
+  grade?: number | null;
+  submittedAt?: string | null;
+  attemptsUsed?: number;
+  remainingAttempts?: number;
+  submittedCount?: number;
+  missingCount?: number;
+  pendingReviewsCount?: number;
 }
 
 interface Session {
@@ -94,8 +104,17 @@ export const CourseDetails: React.FC = () => {
   const navigate = useNavigate();
 
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [expandedSessions, setExpandedSessions] = useState<Record<string, boolean>>({});
+  const [courseInfo, setCourseInfo] = useState<{ id: string; name: string; courseCode: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const toggleSessionExpand = (sessionId: string) => {
+    setExpandedSessions((prev) => ({
+      ...prev,
+      [sessionId]: prev[sessionId] === undefined ? false : !prev[sessionId],
+    }));
+  };
 
   // Instructor Tabs
   const [activeTab, setActiveTab] = useState<'curriculum' | 'dashboard' | 'notifications' | 'export'>('curriculum');
@@ -160,12 +179,21 @@ export const CourseDetails: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/sessions/course/${courseId}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      if (!response.ok) throw new Error('Failed to load course sessions');
-      const data = await response.json();
+      const [res1, res2] = await Promise.all([
+        fetch(`${API_URL}/sessions/course/${courseId}`, { headers: { Authorization: `Bearer ${user.token}` } }),
+        fetch(`${API_URL}/courses/${courseId}`, { headers: { Authorization: `Bearer ${user.token}` } })
+      ]);
+
+      if (!res1.ok) throw new Error('Failed to load course sessions');
+      const data = await res1.json();
       setSessions(data);
+      const initialExp: Record<string, boolean> = {};
+      data.forEach((s: Session) => { initialExp[s.id] = true; });
+      setExpandedSessions(initialExp);
+      if (res2.ok) {
+        setCourseInfo(await res2.json());
+      }
+
       if (data.length > 0) {
         const maxOrder = Math.max(...data.map((s: Session) => s.order));
         setNewSessionOrder(maxOrder + 1);
@@ -305,6 +333,36 @@ export const CourseDetails: React.FC = () => {
     } catch (err: any) {
       setError(err.message);
       toast.error(err.message || 'Failed to unlock session');
+    }
+  };
+
+  const handleArchiveSession = async (sessionId: string) => {
+    if (!user) return;
+    try {
+      const res = await fetch(`${API_URL}/archive/session/${sessionId}/archive`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (!res.ok) throw new Error('Failed to archive session');
+      toast.success('Session archived.');
+      fetchSessions();
+    } catch (err: any) {
+      toast.error(err.message || 'Error archiving session');
+    }
+  };
+
+  const handleArchiveTask = async (taskId: string) => {
+    if (!user) return;
+    try {
+      const res = await fetch(`${API_URL}/archive/task/${taskId}/archive`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (!res.ok) throw new Error('Failed to archive task');
+      toast.success('Task archived.');
+      fetchSessions();
+    } catch (err: any) {
+      toast.error(err.message || 'Error archiving task');
     }
   };
 
@@ -575,7 +633,23 @@ export const CourseDetails: React.FC = () => {
           <>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
               <div>
-                <h1 className="text-3xl font-extrabold text-white tracking-tight">Programming Syllabus</h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-extrabold text-white tracking-tight">Programming Syllabus</h1>
+                  {courseInfo?.courseCode && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(courseInfo.courseCode);
+                        toast.success(`Copied group code '${courseInfo.courseCode}' to clipboard!`);
+                      }}
+                      title="Click to copy group code"
+                      className="text-xs font-mono font-bold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1 rounded-xl border border-blue-500/20 cursor-pointer transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <span>{courseInfo.courseCode}</span>
+                      <span>📋</span>
+                    </button>
+                  )}
+                </div>
                 <p className="text-zinc-400 text-sm mt-1">
                   {user?.role === 'Teacher'
                     ? 'Create programming assignments, specify public/hidden cases, and unlock milestones.'
@@ -607,99 +681,211 @@ export const CourseDetails: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-2 space-y-6">
-                  {sessions.map((session) => (
-                    <div key={session.id} className="bg-[#16161A] border border-[#24242B] rounded-xl overflow-hidden shadow-lg">
-                      <div className="bg-[#1E1E24]/50 border-b border-[#24242B] px-6 py-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs bg-violet-500/10 border border-violet-500/25 text-violet-400 font-bold uppercase tracking-wider py-1 px-2.5 rounded-full">
-                            Session {session.order}
-                          </span>
-                          <h3 className="text-lg font-bold text-white tracking-tight">{session.title}</h3>
-                        </div>
-                        {user?.role === 'Teacher' && (
-                          <div className="flex items-center gap-2">
-                            {session.isUnlocked ? (
-                              <span className="text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 py-1 px-2.5 rounded-full font-medium">Unlocked</span>
-                            ) : (
+                  {sessions.map((session) => {
+                    const isExpanded = expandedSessions[session.id] !== false;
+                    return (
+                      <div key={session.id} className="bg-[#16161A] border border-[#24242B] rounded-2xl overflow-hidden shadow-xl transition-all">
+                        {/* Session Header (Clickable Accordion) */}
+                        <div
+                          onClick={() => toggleSessionExpand(session.id)}
+                          className="bg-[#1A1A22] border-b border-[#24242B] px-6 py-4 flex items-center justify-between cursor-pointer select-none hover:bg-[#1E1E28] transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <button type="button" className="text-zinc-400 p-1 rounded-lg">
+                              {isExpanded ? (
+                                <ChevronDown className="w-5 h-5 text-blue-400" />
+                              ) : (
+                                <ChevronRight className="w-5 h-5 text-zinc-400" />
+                              )}
+                            </button>
+                            <span className="text-xs bg-violet-500/10 border border-violet-500/25 text-violet-400 font-bold uppercase tracking-wider py-1 px-2.5 rounded-full">
+                              Session {session.order}
+                            </span>
+                            <h3 className="text-lg font-bold text-white tracking-tight">{session.title}</h3>
+                            <span className="text-xs text-zinc-400 font-mono">({session.tasks.length} tasks)</span>
+                          </div>
+
+                          {user?.role === 'Teacher' && (
+                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                              {session.isUnlocked ? (
+                                <span className="text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 py-1 px-2.5 rounded-full font-medium">
+                                  Unlocked
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleUnlockSession(session.id)}
+                                  className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/25 py-1 px-2.5 rounded-full font-semibold transition-all hover:bg-amber-400/20"
+                                >
+                                  Unlock
+                                </button>
+                              )}
                               <button
-                                onClick={() => handleUnlockSession(session.id)}
-                                className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/25 py-1 px-2.5 rounded-full font-semibold transition-all hover:bg-amber-400/20"
+                                onClick={() => {
+                                  setSelectedSessionId(session.id);
+                                  setShowTaskModal(true);
+                                }}
+                                className="text-xs text-violet-400 hover:text-white flex items-center gap-1 font-semibold ml-2"
                               >
-                                Unlock
+                                <Plus className="w-3.5 h-3.5" />
+                                Add Task
                               </button>
+                              <button
+                                onClick={() => handleArchiveSession(session.id)}
+                                className="p-1 hover:bg-amber-500/20 text-zinc-500 hover:text-amber-400 rounded-lg transition-colors ml-1"
+                                title="Archive Session"
+                              >
+                                <Archive className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setSessionToDelete(session)}
+                                className="p-1 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 rounded-lg transition-colors ml-1"
+                                title="Delete Session"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Expandable Session Content */}
+                        {isExpanded && (
+                          <div className="p-6 space-y-4 bg-[#141418]">
+                            {session.tasks.length === 0 ? (
+                              <p className="text-zinc-500 text-xs italic">No programming tasks added to this session yet.</p>
+                            ) : (
+                              session.tasks.map((task) => (
+                                <div
+                                  key={task.id}
+                                  onClick={() => {
+                                    if (user?.role === 'Teacher') {
+                                      navigate(`/assignment/${task.id}/review`);
+                                    } else {
+                                      navigate(`/task/${task.id}`);
+                                    }
+                                  }}
+                                  className="bg-[#1C1C24] border border-[#2B2B36] hover:border-blue-500/50 rounded-2xl p-5 cursor-pointer transition-all hover:scale-[1.005] shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                                >
+                                  <div className="space-y-2.5 flex-1">
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                      <FileCode className="w-5 h-5 text-blue-400 shrink-0" />
+                                      <h4 className="font-extrabold text-white text-base group-hover:text-blue-300 transition-colors">
+                                        {task.title}
+                                      </h4>
+
+                                      {/* Mode Badge */}
+                                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-[#272732] border border-[#373746] text-zinc-300 rounded-md">
+                                        {task.evaluationMode === 'AutomaticGrading' ? '⚡ Auto Graded' : '📝 Manual Review'}
+                                      </span>
+
+                                      {/* Student Status Badges */}
+                                      {user?.role === 'Student' && (
+                                        task.status === 'Graded' ? (
+                                          <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold rounded-lg text-[11px] inline-flex items-center gap-1">
+                                            🟢 Graded: {task.grade ?? 0}/{task.maxGrade}
+                                          </span>
+                                        ) : task.status === 'Submitted - Pending Review' ? (
+                                          <span className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold rounded-lg text-[11px] inline-flex items-center gap-1">
+                                            🟡 Pending Review
+                                          </span>
+                                        ) : task.status === 'Late Submission' ? (
+                                          <span className="px-2.5 py-0.5 bg-orange-500/10 border border-orange-500/30 text-orange-400 font-bold rounded-lg text-[11px] inline-flex items-center gap-1">
+                                            🟠 Late Submission
+                                          </span>
+                                        ) : task.status === 'Deadline Passed' ? (
+                                          <span className="px-2.5 py-0.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 font-bold rounded-lg text-[11px] inline-flex items-center gap-1">
+                                            🔴 Deadline Passed
+                                          </span>
+                                        ) : (
+                                          <span className="px-2.5 py-0.5 bg-zinc-500/10 border border-zinc-500/30 text-zinc-400 font-medium rounded-lg text-[11px] inline-flex items-center gap-1">
+                                            ⚪ Not Submitted
+                                          </span>
+                                        )
+                                      )}
+                                    </div>
+
+                                    {/* Task Metadata & Teacher Statistics Bar */}
+                                    <div className="flex items-center gap-4 text-xs text-zinc-400 flex-wrap pt-1">
+                                      <span className="flex items-center gap-1 font-medium text-zinc-300">
+                                        <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                                        Deadline: {new Date(task.deadline).toLocaleDateString()}
+                                      </span>
+
+                                      <span className="font-semibold text-blue-400">
+                                        Max Grade: {task.maxGrade} pts
+                                      </span>
+
+                                      {/* Teacher Classroom Management Statistics */}
+                                      {user?.role === 'Teacher' && (
+                                        <>
+                                          <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold rounded-lg text-[11px]">
+                                            👥 Submitted: {task.submittedCount ?? 0}
+                                          </span>
+                                          <span className="px-2.5 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold rounded-lg text-[11px]">
+                                            🔴 Missing: {task.missingCount ?? 0}
+                                          </span>
+                                          {(task.pendingReviewsCount ?? 0) > 0 ? (
+                                            <span className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold rounded-lg text-[11px]">
+                                              🟡 Pending Reviews: {task.pendingReviewsCount}
+                                            </span>
+                                          ) : (
+                                            <span className="px-2.5 py-0.5 bg-zinc-500/10 border border-zinc-500/20 text-zinc-400 font-medium rounded-lg text-[11px]">
+                                              Pending: 0
+                                            </span>
+                                          )}
+                                        </>
+                                      )}
+
+                                      {user?.role === 'Student' && task.submittedAt && (
+                                        <span className="text-zinc-400">
+                                          Turned in: {new Date(task.submittedAt).toLocaleDateString()}
+                                        </span>
+                                      )}
+
+                                      {user?.role === 'Student' && task.remainingAttempts !== undefined && (
+                                        <span className="text-zinc-400">
+                                          {task.remainingAttempts} attempts left
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
+                                    <span className="text-xs font-bold text-blue-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                                      {user?.role === 'Teacher' ? 'Manage & Grade' : 'Open Task'} &rarr;
+                                    </span>
+                                    {user?.role === 'Teacher' && (
+                                      <>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleArchiveTask(task.id);
+                                          }}
+                                          className="p-1.5 hover:bg-amber-500/20 text-zinc-500 hover:text-amber-400 rounded-lg transition-colors"
+                                          title="Archive Task"
+                                        >
+                                          <Archive className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setTaskToDelete(task);
+                                          }}
+                                          className="p-1.5 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 rounded-lg transition-colors"
+                                          title="Delete Task"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              ))
                             )}
-                            <button
-                              onClick={() => {
-                                setSelectedSessionId(session.id);
-                                setShowTaskModal(true);
-                              }}
-                              className="text-xs text-violet-400 hover:text-white flex items-center gap-1 font-semibold ml-2"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              Add Task
-                            </button>
-                            <button
-                              onClick={() => setSessionToDelete(session)}
-                              className="p-1 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 rounded-lg transition-colors ml-1"
-                              title="Delete Session"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
                           </div>
                         )}
                       </div>
-
-                      <div className="p-6 space-y-4">
-                        {session.tasks.length === 0 ? (
-                          <p className="text-zinc-500 text-sm">No programming tasks added yet.</p>
-                        ) : (
-                          session.tasks.map((task) => (
-                            <div
-                              key={task.id}
-                              onClick={() => {
-                                if (user?.role === 'Teacher') {
-                                  setSelectedTask(task);
-                                  setTaskActiveTab('overview');
-                                } else {
-                                  navigate(`/task/${task.id}`);
-                                }
-                              }}
-                              className="flex items-center justify-between p-4 bg-[#1F1F24] border border-[#2F2F37] hover:border-violet-500/50 rounded-lg cursor-pointer transition-all hover:scale-[1.01]"
-                            >
-                              <div className="flex items-center gap-3">
-                                <FileCode className="w-5 h-5 text-violet-400" />
-                                <div>
-                                  <h4 className="font-semibold text-white text-sm">{task.title}</h4>
-                                  <div className="flex items-center gap-3 mt-1">
-                                    <span className="text-2xs text-zinc-500 flex items-center gap-1">
-                                      <Clock className="w-3 h-3" />
-                                      {new Date(task.deadline).toLocaleDateString()}
-                                    </span>
-                                    <span className="text-2xs text-violet-400 font-medium">Max Score: {task.maxGrade} pts</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {user?.role === 'Teacher' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setTaskToDelete(task);
-                                    }}
-                                    className="p-1 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 rounded-lg transition-colors"
-                                    title="Delete Task"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                )}
-                                <ChevronRight className="w-4 h-4 text-zinc-500" />
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Teacher Task Detail Panel (when a task is clicked) */}
@@ -1193,14 +1379,11 @@ export const CourseDetails: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Description</label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="Describe the python exercise requirements..."
+                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Description (Rich Text)</label>
+                <RichTextEditor
                   value={taskDesc}
-                  onChange={(e) => setTaskDesc(e.target.value)}
-                  className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  onChange={setTaskDesc}
+                  placeholder="Write detailed assignment instructions with formatting, headings, bold text, code blocks, tables, images, and links..."
                 />
               </div>
 

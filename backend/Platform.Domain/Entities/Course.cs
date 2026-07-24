@@ -11,6 +11,7 @@ public class Course
     public string CourseCode { get; set; } = string.Empty;
     public Guid TeacherId { get; set; }
     public User Teacher { get; set; } = null!;
+    public bool IsArchived { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();

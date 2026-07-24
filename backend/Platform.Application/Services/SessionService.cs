@@ -63,9 +63,25 @@ public class SessionService : ISessionService
 
         var sessions = await _context.Sessions
             .Include(s => s.Tasks)
-            .Where(s => s.CourseId == courseId)
+            .Where(s => s.CourseId == courseId && !s.IsArchived)
             .OrderBy(s => s.Order)
             .ToListAsync(cancellationToken);
+
+        var userSubmissions = await _context.Submissions
+            .Where(s => s.StudentId == userId)
+            .ToListAsync(cancellationToken);
+
+        int totalEnrolled = 0;
+        List<Submission> allTaskSubmissions = new List<Submission>();
+
+        if (isTeacher)
+        {
+            totalEnrolled = await _context.Enrollments.CountAsync(e => e.CourseId == courseId, cancellationToken);
+            var courseTaskIds = sessions.SelectMany(s => s.Tasks.Where(t => !t.IsArchived)).Select(t => t.Id).ToList();
+            allTaskSubmissions = await _context.Submissions
+                .Where(s => courseTaskIds.Contains(s.TaskId))
+                .ToListAsync(cancellationToken);
+        }
 
         var result = new List<SessionDto>();
         foreach (var s in sessions)
@@ -81,25 +97,87 @@ public class SessionService : ISessionService
 
             if (isTeacher || s.IsUnlocked)
             {
-                dto.Tasks = s.Tasks.Select(t => new ProgrammingTaskDto
+                dto.Tasks = s.Tasks.Where(t => !t.IsArchived).Select(t =>
                 {
-                    Id = t.Id,
-                    SessionId = t.SessionId,
-                    Title = t.Title,
-                    Description = t.Description,
-                    ExampleInput = t.ExampleInput,
-                    ExampleOutput = t.ExampleOutput,
-                    PublicTestCasesJson = t.PublicTestCasesJson,
-                    Deadline = t.Deadline,
-                    MaxGrade = t.MaxGrade,
-                    Mode = t.Mode.ToString(),
-                    MaxAttempts = t.MaxAttempts,
-                    RunHiddenTestCases = t.RunHiddenTestCases,
-                    Type = t.Type.ToString(),
-                    TimeLimitMs = t.TimeLimitMs,
-                    MemoryLimitMb = t.MemoryLimitMb,
-                    GradingStrategy = t.GradingStrategy.ToString(),
-                    IgnoreMultipleSpaces = t.IgnoreMultipleSpaces
+                    var taskSubs = userSubmissions.Where(sub => sub.TaskId == t.Id).ToList();
+                    var latestSub = taskSubs.OrderByDescending(sub => sub.SubmittedAt).FirstOrDefault();
+                    int attemptsCount = taskSubs.Count;
+                    int remainingAttempts = Math.Max(0, t.MaxAttempts - attemptsCount);
+
+                    string taskStatus = "Not Submitted";
+                    int? myGrade = null;
+                    DateTime? submittedAt = null;
+
+                    if (latestSub != null)
+                    {
+                        submittedAt = latestSub.SubmittedAt;
+                        bool isGraded = latestSub.Grade > 0 || !string.IsNullOrWhiteSpace(latestSub.TeacherFeedback);
+
+                        if (isGraded)
+                        {
+                            taskStatus = "Graded";
+                            myGrade = taskSubs.Max(sub => sub.Grade);
+                        }
+                        else if (latestSub.SubmittedAt > t.Deadline)
+                        {
+                            taskStatus = "Late Submission";
+                        }
+                        else
+                        {
+                            taskStatus = "Submitted - Pending Review";
+                        }
+                    }
+                    else if (DateTime.UtcNow > t.Deadline)
+                    {
+                        taskStatus = "Deadline Passed";
+                    }
+
+                    int submittedCount = 0;
+                    int missingCount = 0;
+                    int pendingReviewsCount = 0;
+
+                    if (isTeacher)
+                    {
+                        var subsForTask = allTaskSubmissions.Where(sub => sub.TaskId == t.Id).ToList();
+                        var studentSubMap = subsForTask.GroupBy(sub => sub.StudentId);
+                        submittedCount = studentSubMap.Count();
+                        missingCount = Math.Max(0, totalEnrolled - submittedCount);
+                        pendingReviewsCount = studentSubMap.Count(g =>
+                        {
+                            var latest = g.OrderByDescending(sub => sub.SubmittedAt).First();
+                            return latest.Grade == 0 && string.IsNullOrWhiteSpace(latest.TeacherFeedback);
+                        });
+                    }
+
+                    return new ProgrammingTaskDto
+                    {
+                        Id = t.Id,
+                        SessionId = t.SessionId,
+                        Title = t.Title,
+                        Description = t.Description,
+                        ExampleInput = t.ExampleInput,
+                        ExampleOutput = t.ExampleOutput,
+                        PublicTestCasesJson = t.PublicTestCasesJson,
+                        Deadline = t.Deadline,
+                        MaxGrade = t.MaxGrade,
+                        Mode = t.Mode.ToString(),
+                        MaxAttempts = t.MaxAttempts,
+                        RunHiddenTestCases = t.RunHiddenTestCases,
+                        Type = t.Type.ToString(),
+                        TimeLimitMs = t.TimeLimitMs,
+                        MemoryLimitMb = t.MemoryLimitMb,
+                        GradingStrategy = t.GradingStrategy.ToString(),
+                        IgnoreMultipleSpaces = t.IgnoreMultipleSpaces,
+                        AttachmentsJson = t.AttachmentsJson,
+                        Status = taskStatus,
+                        Grade = myGrade,
+                        SubmittedAt = submittedAt,
+                        AttemptsUsed = attemptsCount,
+                        RemainingAttempts = remainingAttempts,
+                        SubmittedCount = submittedCount,
+                        MissingCount = missingCount,
+                        PendingReviewsCount = pendingReviewsCount
+                    };
                 }).ToList();
             }
             else

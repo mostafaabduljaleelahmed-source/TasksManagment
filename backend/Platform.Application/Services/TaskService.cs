@@ -13,10 +13,14 @@ namespace Platform.Application.Services;
 public class TaskService : ITaskService
 {
     private readonly IApplicationDbContext _context;
+    private readonly IActivityLogger _logger;
+    private readonly IEmailService _emailService;
 
-    public TaskService(IApplicationDbContext context)
+    public TaskService(IApplicationDbContext context, IActivityLogger logger, IEmailService emailService)
     {
         _context = context;
+        _logger = logger;
+        _emailService = emailService;
     }
 
     public async Task<ProgrammingTaskDto> CreateTaskAsync(Guid sessionId, CreateProgrammingTaskDto dto, CancellationToken cancellationToken = default)
@@ -93,6 +97,32 @@ public class TaskService : ITaskService
 
         _context.ProgrammingTasks.Add(task);
         await _context.SaveChangesAsync(cancellationToken);
+
+        var course = await _context.Courses.FirstOrDefaultAsync(c => c.Sessions.Any(s => s.Id == sessionId), cancellationToken);
+        if (course != null)
+        {
+            await _logger.LogAsync(
+                course.TeacherId,
+                "Assignment Created",
+                $"Created assignment '{task.Title}' in session '{session.Title}'",
+                course.Id,
+                course.Name,
+                task.Id,
+                task.Title,
+                cancellationToken);
+
+            // Send New Assignment Email Notification to Enrolled Students
+            var enrolledStudents = await _context.Enrollments
+                .Include(e => e.Student)
+                .Where(e => e.CourseId == course.Id)
+                .Select(e => e.Student)
+                .ToListAsync(cancellationToken);
+
+            foreach (var student in enrolledStudents)
+            {
+                await _emailService.SendNewAssignmentNotificationAsync(student, task.Title, course.Name, task.Deadline, cancellationToken);
+            }
+        }
 
         return new ProgrammingTaskDto
         {

@@ -11,6 +11,7 @@ public class Session
     public string Title { get; set; } = string.Empty;
     public int Order { get; set; }
     public bool IsUnlocked { get; set; } = false;
+    public bool IsArchived { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<ProgrammingTask> Tasks { get; set; } = new List<ProgrammingTask>();

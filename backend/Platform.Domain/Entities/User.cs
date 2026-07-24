@@ -12,6 +12,8 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
     public UserRole Role { get; set; }
     public string? StudentId { get; set; }
+    public string? AvatarUrl { get; set; }
+    public bool EmailNotificationsEnabled { get; set; } = true;
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties

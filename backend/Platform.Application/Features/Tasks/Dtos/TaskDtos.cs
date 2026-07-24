@@ -23,6 +23,29 @@ public class ProgrammingTaskDto
     public string EvaluationMode { get; set; } = "ManualReview"; // "ManualReview" or "AutomaticGrading"
     public string Language { get; set; } = "python";
     public bool IgnoreMultipleSpaces { get; set; } = true;
+    public string AttachmentsJson { get; set; } = "[]";
+
+    // Student submission metadata
+    public string Status { get; set; } = "Not Submitted";
+    public int? Grade { get; set; }
+    public DateTime? SubmittedAt { get; set; }
+    public int AttemptsUsed { get; set; }
+    public int RemainingAttempts { get; set; }
+
+    // Teacher assignment metrics
+    public int SubmittedCount { get; set; }
+    public int MissingCount { get; set; }
+    public int PendingReviewsCount { get; set; }
+}
+
+public class TaskAttachmentDto
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string FileName { get; set; } = string.Empty;
+    public string FileUrl { get; set; } = string.Empty;
+    public long FileSize { get; set; }
+    public string ContentType { get; set; } = string.Empty;
+    public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 }
 
 public class CreateProgrammingTaskDto

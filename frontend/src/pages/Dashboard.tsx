@@ -1,84 +1,156 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
-import { Navbar } from '../components/Navbar';
 import { MetricsSkeleton } from '../components/SkeletonLoaders';
-import { StudentDetailsModal } from './StudentDetailsModal';
 import {
-  BookOpen, Clock, Award, CheckCircle2, AlertCircle,
-  FileCode, ArrowRight, MessageSquare, Plus, Trophy, BarChart3, TrendingUp
+  FileCode, Users, School, CheckCircle2, Award, MessageSquare, Clock, Bell, ChevronRight, Activity, Calendar, CheckSquare
 } from 'lucide-react';
-import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid
-} from 'recharts';
+
+interface TeacherSummary {
+  pendingReviewsCount: number;
+  missingSubmissionsCount: number;
+  submittedTodayCount: number;
+  totalGroupsCount: number;
+  totalStudentsCount: number;
+  overdueAssignmentsCount: number;
+}
+
+interface TeacherGroupItem {
+  groupId: string;
+  groupName: string;
+  groupCode: string;
+  studentsCount: number;
+  assignmentsCount: number;
+  pendingReviewsCount: number;
+  missingSubmissionsCount: number;
+}
+
+interface PendingReviewItem {
+  submissionId: string;
+  studentId: string;
+  studentName: string;
+  studentRegisterId: string;
+  studentAvatarUrl?: string | null;
+  taskId: string;
+  taskTitle: string;
+  groupName: string;
+  submittedAt: string;
+}
+
+interface TodayActivityItem {
+  submissionId: string;
+  studentId: string;
+  studentName: string;
+  studentRegisterId: string;
+  studentAvatarUrl?: string | null;
+  taskId: string;
+  taskTitle: string;
+  groupName: string;
+  submittedAt: string;
+  grade: number;
+  status: string;
+}
+
+interface NotificationItem {
+  id: string;
+  message: string;
+  isRead: boolean;
+  taskId?: string | null;
+  studentId?: string | null;
+  submissionId?: string | null;
+  createdAt: string;
+}
+
+interface PendingAssignmentItem {
+  taskId: string;
+  title: string;
+  courseName: string;
+  sessionName: string;
+  deadline: string;
+  remainingAttempts: number;
+  status: string;
+}
+
+interface CompletedAssignmentItem {
+  taskId: string;
+  taskTitle: string;
+  courseName: string;
+  sessionName: string;
+  grade: number;
+  maxGrade: number;
+  teacherFeedback: string;
+  submittedAt: string;
+}
 
 interface StudentDashboardData {
   coursesCount: number;
   completedTasks: number;
   pendingTasks: number;
   lateTasks: number;
-  bestGrades: Array<{ taskTitle: string; bestGrade: number; maxGrade: number }>;
-  recentFeedback: Array<{ taskTitle: string; feedback: string; grade: number; feedbackDate: string }>;
-  history: Array<{ submissionId: string; taskTitle: string; grade: number; submittedAt: string; attemptNumber: number }>;
-}
-
-interface TeacherDashboardTelemetry {
-  totalCourses: number;
-  totalStudents: number;
-  totalTasks: number;
-  totalSubmissions: number;
-  overallAverageGrade: number;
-  submissionTrends: Array<{ date: string; submissions: number }>;
-  pendingReviews: Array<{
-    submissionId: string;
-    studentId: string;
-    studentName: string;
-    studentRegisterId: string;
-    taskId: string;
-    taskTitle: string;
-    maxGrade: number;
-    submittedAt: string;
-    attemptNumber: number;
-  }>;
+  pendingAssignments?: PendingAssignmentItem[];
+  completedAssignments?: CompletedAssignmentItem[];
+  bestGrades: { taskTitle: string; bestGrade: number; maxGrade: number }[];
+  recentFeedback: { taskTitle: string; feedback: string; grade: number; feedbackDate: string }[];
+  history: { submissionId: string; taskTitle: string; grade: number; submittedAt: string; attemptNumber: number }[];
 }
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
+  // Teacher State
+  const [summary, setSummary] = useState<TeacherSummary | null>(null);
+  const [groups, setGroups] = useState<TeacherGroupItem[]>([]);
+  const [recentPending, setRecentPending] = useState<PendingReviewItem[]>([]);
+  const [todayActivity, setTodayActivity] = useState<TodayActivityItem[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  // Student State
   const [studentData, setStudentData] = useState<StudentDashboardData | null>(null);
-  const [teacherTelemetry, setTeacherTelemetry] = useState<TeacherDashboardTelemetry | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Review modal state for teacher
-  const [selectedReview, setSelectedReview] = useState<{
-    studentId: string;
-    studentName: string;
-    studentRegisterId: string;
-    taskId: string;
-    taskTitle: string;
-    maxGrade: number;
-  } | null>(null);
-
   const fetchDashboardData = async () => {
     if (!user) return;
+
+    // Reset previous states
+    setSummary(null);
+    setGroups([]);
+    setRecentPending([]);
+    setTodayActivity([]);
+    setNotifications([]);
+    setStudentData(null);
+
     setLoading(true);
     setError(null);
+
     try {
       if (user.role === 'Teacher') {
-        const res = await fetch(`${API_URL}/dashboard/teacher/analytics`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-        if (!res.ok) throw new Error('Failed to load teacher dashboard telemetry');
-        const data = await res.json();
-        setTeacherTelemetry(data);
-      } else {
-        const res = await fetch(`${API_URL}/dashboard/student`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-        if (!res.ok) throw new Error('Failed to load student dashboard telemetry');
-        const data = await res.json();
-        setStudentData(data);
+        const [sumRes, grpRes, revRes, actRes, notifRes] = await Promise.all([
+          fetch(`${API_URL}/dashboard/teacher/summary`, { headers: { Authorization: `Bearer ${user.token}` } }),
+          fetch(`${API_URL}/dashboard/teacher/groups`, { headers: { Authorization: `Bearer ${user.token}` } }),
+          fetch(`${API_URL}/dashboard/teacher/pending-reviews?sortBy=newest`, { headers: { Authorization: `Bearer ${user.token}` } }),
+          fetch(`${API_URL}/dashboard/teacher/today-activity`, { headers: { Authorization: `Bearer ${user.token}` } }),
+          fetch(`${API_URL}/dashboard/notifications`, { headers: { Authorization: `Bearer ${user.token}` } }),
+        ]);
+
+        if (!sumRes.ok || !grpRes.ok) throw new Error('Failed to load teacher workspace');
+
+        setSummary(await sumRes.json());
+        setGroups(await grpRes.json());
+
+        if (revRes.ok) setRecentPending(await revRes.json());
+        if (actRes.ok) setTodayActivity(await actRes.json());
+        if (notifRes.ok) setNotifications(await notifRes.json());
+      } else if (user.role === 'Student') {
+        const [res, notifRes] = await Promise.all([
+          fetch(`${API_URL}/dashboard/student`, { headers: { Authorization: `Bearer ${user.token}` } }),
+          fetch(`${API_URL}/dashboard/notifications`, { headers: { Authorization: `Bearer ${user.token}` } }),
+        ]);
+        if (!res.ok) throw new Error('Failed to load student dashboard');
+        setStudentData(await res.json());
+        if (notifRes.ok) setNotifications(await notifRes.json());
       }
     } catch (err: any) {
       setError(err.message || 'Error loading dashboard');
@@ -89,336 +161,532 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [user]);
+  }, [user?.id, user?.role, user?.token]);
+
+  const handleNotificationClick = (n: NotificationItem) => {
+    if (n.taskId) {
+      if (user?.role === 'Teacher') {
+        navigate(`/assignment/${n.taskId}/review`);
+      } else {
+        navigate(`/task/${n.taskId}`);
+      }
+    } else if (n.submissionId) {
+      navigate('/teacher/pending-reviews');
+    } else {
+      navigate('/');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-zinc-100 pb-16 relative overflow-hidden">
-      <Navbar />
+    <div className="p-8 max-w-7xl mx-auto space-y-10">
+      {/* Top Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F2937] pb-6">
+        <div>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">
+            {user?.role === 'Teacher' ? 'Daily Teaching Workspace' : 'Student Dashboard'}
+          </h1>
+          <p className="text-xs text-zinc-400 mt-1">
+            {user?.role === 'Teacher'
+              ? 'Focus on your daily teaching workflow: pending reviews, student activity, and course management.'
+              : 'Overview of your pending assignments, completed work, teacher feedback, and recent grades.'}
+          </p>
+        </div>
 
-      {/* Ambient background glows */}
-      <div className="absolute top-20 right-0 w-96 h-96 bg-violet-600/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-600/5 rounded-full blur-3xl pointer-events-none" />
+        {user?.role === 'Teacher' && (
+          <div className="flex items-center gap-3">
+            <Link
+              to="/teacher/pending-reviews"
+              className="px-4 py-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 font-bold rounded-xl text-xs transition-all flex items-center gap-2"
+            >
+              <FileCode className="w-4 h-4" />
+              Pending Reviews ({summary?.pendingReviewsCount ?? 0})
+            </Link>
+            <Link
+              to="/teacher/students"
+              className="px-4 py-2.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-zinc-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-2"
+            >
+              <Users className="w-4 h-4 text-blue-400" />
+              Students Roster
+            </Link>
+          </div>
+        )}
+      </div>
 
-      <main className="max-w-7xl mx-auto px-6 mt-8 relative z-10 space-y-8">
-        {/* Welcome Header & Quick Actions */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#16161A] border border-[#24242B] p-6 rounded-2xl shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-violet-600/10 to-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
-          <div>
-            <span className="text-xs text-violet-400 font-extrabold uppercase tracking-wider bg-violet-500/10 border border-violet-500/20 px-3 py-1 rounded-full">
-              SaaS Classroom Hub
-            </span>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mt-2">
-              Welcome back, {user?.name}! 👋
-            </h1>
-            <p className="text-zinc-400 text-xs md:text-sm mt-1">
-              {user?.role === 'Teacher'
-                ? 'Overview of your active teaching groups, pending reviews, and class performance analytics.'
-                : 'Track your current programming tasks, submission history, grades, and teacher feedback.'}
-            </p>
+      {loading ? (
+        <MetricsSkeleton />
+      ) : error ? (
+        <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-center text-sm">
+          {error}
+        </div>
+      ) : user?.role === 'Teacher' ? (
+        /* TEACHER DASHBOARD VIEW */
+        <div className="space-y-10">
+
+          {/* Section 1: Pending Reviews */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block animate-pulse" />
+                  1. Pending Reviews ({recentPending.length})
+                </h2>
+                <p className="text-xs text-zinc-400">Student submissions waiting for your grading.</p>
+              </div>
+
+              <Link
+                to="/teacher/pending-reviews"
+                className="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1"
+              >
+                View All Pending &rarr;
+              </Link>
+            </div>
+
+            {recentPending.length === 0 ? (
+              <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-8 text-center text-zinc-500 text-xs">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2 opacity-80" />
+                All student submissions are graded! No pending reviews.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {recentPending.map((item) => (
+                  <div
+                    key={item.submissionId}
+                    onClick={() => navigate(`/assignment/${item.taskId}/review`)}
+                    className="bg-[#111827] border border-[#1F2937] hover:border-amber-500/50 rounded-2xl p-5 shadow-lg transition-all flex flex-col justify-between space-y-4 group cursor-pointer"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-lg">
+                          {item.groupName}
+                        </span>
+                        <span className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-[11px] font-bold">
+                          🟡 Pending
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <div className="w-7 h-7 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0">
+                          {item.studentAvatarUrl ? (
+                            <img src={item.studentAvatarUrl} alt={item.studentName} className="w-full h-full object-cover" />
+                          ) : (
+                            item.studentName.substring(0, 2).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
+                            {item.studentName}
+                          </p>
+                          <p className="text-[10px] text-zinc-500 font-mono">{item.studentRegisterId}</p>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-zinc-300 font-semibold pt-1">{item.taskTitle}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-[#1F2937] text-xs">
+                      <span className="text-[11px] text-zinc-500 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                        {new Date(item.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold rounded-xl text-xs transition-colors inline-flex items-center gap-1"
+                      >
+                        Grade &rarr;
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            {user?.role === 'Teacher' ? (
-              <>
-                <Link
-                  to="/"
-                  className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                  Manage Groups
-                </Link>
-                <Link
-                  to="/analytics"
-                  className="flex items-center gap-2 bg-[#1F1F24] hover:bg-[#2F2F37] border border-[#2F2F37] text-zinc-300 hover:text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition-all"
-                >
-                  <BarChart3 className="w-4 h-4 text-emerald-400" />
-                  Analytics
-                </Link>
-              </>
+          {/* Section 2: Today's Activity */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Activity className="w-5 h-5 text-emerald-400" />
+                2. Today's Activity ({todayActivity.length})
+              </h2>
+              <p className="text-xs text-zinc-400">Students who submitted an assignment today.</p>
+            </div>
+
+            {todayActivity.length === 0 ? (
+              <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-8 text-center text-zinc-500 text-xs">
+                <Calendar className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
+                No student submissions recorded today yet.
+              </div>
             ) : (
-              <>
-                <Link
-                  to="/"
-                  className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  My Groups
-                </Link>
-                <Link
-                  to="/leaderboard"
-                  className="flex items-center gap-2 bg-[#1F1F24] hover:bg-[#2F2F37] border border-[#2F2F37] text-zinc-300 hover:text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition-all"
-                >
-                  <Trophy className="w-4 h-4 text-amber-400" />
-                  Leaderboard
-                </Link>
-              </>
+              <div className="bg-[#111827] border border-[#1F2937] rounded-2xl overflow-hidden shadow-xl">
+                <table className="w-full text-xs text-left text-zinc-300">
+                  <thead className="bg-[#1F2937]/50 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-[#1F2937]">
+                    <tr>
+                      <th className="px-5 py-3.5 font-bold">Student</th>
+                      <th className="px-5 py-3.5 font-bold">Assignment</th>
+                      <th className="px-4 py-3.5 font-bold">Course / Group</th>
+                      <th className="px-4 py-3.5 font-bold">Submission Time</th>
+                      <th className="px-4 py-3.5 font-bold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1F2937]/50">
+                    {todayActivity.map((act) => (
+                      <tr
+                        key={act.submissionId}
+                        onClick={() => navigate(`/assignment/${act.taskId}/review`)}
+                        className="hover:bg-[#1A2234] transition-colors cursor-pointer"
+                      >
+                        <td className="px-5 py-3.5 flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0">
+                            {act.studentAvatarUrl ? (
+                              <img src={act.studentAvatarUrl} alt={act.studentName} className="w-full h-full object-cover" />
+                            ) : (
+                              act.studentName.substring(0, 2).toUpperCase()
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-bold text-white">{act.studentName}</div>
+                            <div className="text-[10px] text-zinc-500 font-mono">{act.studentRegisterId}</div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5 font-bold text-white">{act.taskTitle}</td>
+                        <td className="px-4 py-3.5 font-medium text-blue-400">{act.groupName}</td>
+                        <td className="px-4 py-3.5 text-zinc-400">{new Date(act.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                        <td className="px-4 py-3.5">
+                          {act.status === 'Graded' ? (
+                            <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold rounded-lg text-[11px]">
+                              🟢 Graded ({act.grade} pts)
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold rounded-lg text-[11px]">
+                              🟡 Pending Review
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Section 3: My Courses */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <School className="w-5 h-5 text-blue-400" />
+                  3. My Courses ({groups.length})
+                </h2>
+                <p className="text-xs text-zinc-400">Overview of your active teaching groups.</p>
+              </div>
+
+              <Link to="/" className="text-xs text-blue-400 hover:text-blue-300 font-semibold">
+                Manage Courses &rarr;
+              </Link>
+            </div>
+
+            {groups.length === 0 ? (
+              <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-8 text-center text-zinc-500 text-xs">
+                No teaching groups created yet.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {groups.map((g) => (
+                  <div
+                    key={g.groupId}
+                    className="bg-[#111827] border border-[#1F2937] hover:border-blue-500/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between space-y-5 group"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
+                          {g.groupCode}
+                        </span>
+                        <span className="text-[11px] text-zinc-500 font-medium">Group</span>
+                      </div>
+                      <h3 className="text-lg font-extrabold text-white group-hover:text-blue-300 transition-colors">
+                        {g.groupName}
+                      </h3>
+                    </div>
+
+                    {/* Course Metrics */}
+                    <div className="grid grid-cols-3 gap-2 py-3 border-y border-[#1F2937] text-center">
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-zinc-500 uppercase font-bold">Students</span>
+                        <p className="text-base font-extrabold text-white">{g.studentsCount}</p>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-zinc-500 uppercase font-bold">Tasks</span>
+                        <p className="text-base font-extrabold text-blue-400">{g.assignmentsCount}</p>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-zinc-500 uppercase font-bold">Pending</span>
+                        <p className={`text-base font-extrabold ${g.pendingReviewsCount > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                          {g.pendingReviewsCount}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons: Open Course & View Students */}
+                    <div className="flex items-center gap-3 pt-1">
+                      <Link
+                        to={`/course/${g.groupId}`}
+                        className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs transition-colors text-center"
+                      >
+                        Open Course
+                      </Link>
+                      <Link
+                        to="/teacher/students"
+                        className="px-3 py-2 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-zinc-300 font-semibold rounded-xl text-xs transition-colors text-center"
+                      >
+                        View Students
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Section 4: Notifications */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Bell className="w-5 h-5 text-purple-400" />
+                4. Notifications ({notifications.filter(n => !n.isRead).length} unread)
+              </h2>
+              <p className="text-xs text-zinc-400">Click any notification to navigate directly to the related assignment or submission.</p>
+            </div>
+
+            {notifications.length === 0 ? (
+              <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-8 text-center text-zinc-500 text-xs">
+                No notifications recorded.
+              </div>
+            ) : (
+              <div className="bg-[#111827] border border-[#1F2937] rounded-2xl divide-y divide-[#1F2937] overflow-hidden shadow-xl">
+                {notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    onClick={() => handleNotificationClick(n)}
+                    className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${
+                      n.isRead ? 'bg-[#111827] hover:bg-[#1A2234]' : 'bg-purple-500/5 hover:bg-purple-500/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`w-2 h-2 rounded-full ${n.isRead ? 'bg-zinc-600' : 'bg-purple-400 animate-pulse'}`} />
+                      <div>
+                        <p className={`text-xs ${n.isRead ? 'text-zinc-300 font-medium' : 'text-white font-bold'}`}>
+                          {n.message}
+                        </p>
+                        <span className="text-[10px] text-zinc-500">
+                          {new Date(n.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs font-semibold text-blue-400">
+                      <span>Navigate</span>
+                      <ChevronRight className="w-4 h-4 text-zinc-500" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
+      ) : (
+        /* MINIMAL STUDENT DASHBOARD VIEW */
+        <div className="space-y-10">
+
+          {/* Section 1: Pending Assignments */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-400" />
+                1. Pending Assignments ({studentData?.pendingAssignments?.length ?? 0})
+              </h2>
+              <p className="text-xs text-zinc-400">Assignments waiting to be submitted.</p>
+            </div>
+
+            {!studentData?.pendingAssignments || studentData.pendingAssignments.length === 0 ? (
+              <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-8 text-center text-zinc-400 text-sm">
+                🎉 You have no pending assignments.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {studentData.pendingAssignments.map((item) => (
+                  <div
+                    key={item.taskId}
+                    className="bg-[#111827] border border-[#1F2937] hover:border-blue-500/40 rounded-2xl p-5 shadow-lg transition-all flex flex-col justify-between space-y-4 group"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-lg">
+                          {item.courseName}
+                        </span>
+                        {item.status === 'Late' ? (
+                          <span className="px-2.5 py-0.5 bg-orange-500/10 border border-orange-500/30 text-orange-400 font-bold rounded-lg text-[11px]">
+                            🟠 Late
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold rounded-lg text-[11px]">
+                            🟡 Pending
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="text-base font-extrabold text-white group-hover:text-blue-300 transition-colors">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-zinc-400 font-medium">Session: {item.sessionName}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-[#1F2937] text-xs text-zinc-400">
+                      <div className="space-y-0.5">
+                        <p className="text-zinc-400 flex items-center gap-1 text-[11px]">
+                          <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                          Due: {new Date(item.deadline).toLocaleDateString()}
+                        </p>
+                        <p className="text-[11px] text-zinc-500">{item.remainingAttempts} attempts left</p>
+                      </div>
+
+                      <Link
+                        to={`/task/${item.taskId}`}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs transition-all inline-flex items-center gap-1.5 shadow-lg hover:shadow-blue-600/20"
+                      >
+                        Open Assignment &rarr;
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Section 2: Completed Assignments */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <CheckSquare className="w-5 h-5 text-emerald-400" />
+                2. Completed Assignments ({studentData?.completedAssignments?.length ?? 0})
+              </h2>
+              <p className="text-xs text-zinc-400">Your submitted programming tasks, scores, and teacher comments.</p>
+            </div>
+
+            {!studentData?.completedAssignments || studentData.completedAssignments.length === 0 ? (
+              <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-8 text-center text-zinc-500 text-xs">
+                No completed assignments recorded yet.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {studentData.completedAssignments.map((comp) => (
+                  <div key={comp.taskId} className="bg-[#111827] border border-[#1F2937] rounded-2xl p-5 space-y-3 shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-lg border border-blue-500/20">
+                        {comp.courseName}
+                      </span>
+                      <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-lg">
+                        Grade: {comp.grade} / {comp.maxGrade} pts
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-extrabold text-white">{comp.taskTitle}</h3>
+
+                    <div className="bg-[#0B0F19] p-3 rounded-xl border border-[#1F2937] text-xs space-y-1">
+                      <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Teacher Feedback:</span>
+                      <p className="text-zinc-300 leading-relaxed italic">"{comp.teacherFeedback}"</p>
+                    </div>
+
+                    <div className="text-[11px] text-zinc-500 text-right">
+                      Submitted: {new Date(comp.submittedAt).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Section 3: Latest Feedback */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-sky-400" />
+                3. Latest Feedback ({studentData?.recentFeedback?.length ?? 0})
+              </h2>
+              <p className="text-xs text-zinc-400">Direct feedback received from your teachers.</p>
+            </div>
+
+            {!studentData?.recentFeedback || studentData.recentFeedback.length === 0 ? (
+              <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-8 text-center text-zinc-500 text-xs">
+                No teacher feedback received yet. Submit your assignments to receive feedback and grades!
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {studentData.recentFeedback.map((fb, idx) => (
+                  <div key={idx} className="bg-[#111827] border border-[#1F2937] rounded-2xl p-5 space-y-2 shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white">{fb.taskTitle}</span>
+                      <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-lg">
+                        Score: {fb.grade} pts
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-300 leading-relaxed bg-[#0B0F19] p-3 rounded-xl border border-[#1F2937]">
+                      "{fb.feedback}"
+                    </p>
+                    <p className="text-[10px] text-zinc-500 text-right">
+                      {new Date(fb.feedbackDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Section 4: Recent Grades */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Award className="w-5 h-5 text-purple-400" />
+                4. Recent Grades ({studentData?.history?.length ?? 0})
+              </h2>
+              <p className="text-xs text-zinc-400">Recent assignment scores and submission attempt history.</p>
+            </div>
+
+            {!studentData?.history || studentData.history.length === 0 ? (
+              <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-8 text-center text-zinc-500 text-xs">
+                No past grades recorded yet. Open your course syllabus to solve assignments.
+              </div>
+            ) : (
+              <div className="bg-[#111827] border border-[#1F2937] rounded-2xl overflow-hidden shadow-xl">
+                <table className="w-full text-left text-xs text-zinc-300">
+                  <thead className="bg-[#1F2937]/50 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-[#1F2937]">
+                    <tr>
+                      <th className="px-5 py-3.5 font-bold">Assignment</th>
+                      <th className="px-4 py-3.5 font-bold">Attempt #</th>
+                      <th className="px-4 py-3.5 font-bold">Date Turned In</th>
+                      <th className="px-4 py-3.5 font-bold">Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1F2937]/50">
+                    {studentData.history.map((item) => (
+                      <tr key={item.submissionId} className="hover:bg-[#1A2234] transition-colors">
+                        <td className="px-5 py-3.5 font-bold text-white">{item.taskTitle}</td>
+                        <td className="px-4 py-3.5 font-mono text-zinc-400">#{item.attemptNumber}</td>
+                        <td className="px-4 py-3.5 text-zinc-400">{new Date(item.submittedAt).toLocaleString()}</td>
+                        <td className="px-4 py-3.5">
+                          <span className="font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                            {item.grade} pts
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
-
-        {error && (
-          <div className="p-4 bg-red-950/40 border border-red-800/50 text-red-300 rounded-xl text-sm">
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <MetricsSkeleton />
-            <MetricsSkeleton />
-            <MetricsSkeleton />
-            <MetricsSkeleton />
-          </div>
-        ) : user?.role === 'Teacher' && teacherTelemetry ? (
-          /* ================= TEACHER DASHBOARD VIEW ================= */
-          <div className="space-y-8">
-            {/* Top Telemetry Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-                <div className="p-2.5 bg-violet-500/10 border border-violet-500/20 rounded-xl text-violet-400 w-fit mb-3">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-3xs text-zinc-400 uppercase tracking-wider block font-semibold">Active Groups</span>
-                  <span className="text-2xl font-black text-white mt-1 block">{teacherTelemetry.totalCourses}</span>
-                </div>
-              </div>
-
-              <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-                <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400 w-fit mb-3">
-                  <Award className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-3xs text-zinc-400 uppercase tracking-wider block font-semibold">Class Avg Grade</span>
-                  <span className="text-2xl font-black text-indigo-400 mt-1 block">{teacherTelemetry.overallAverageGrade}%</span>
-                </div>
-              </div>
-
-              <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-                <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 w-fit mb-3">
-                  <Clock className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-3xs text-zinc-400 uppercase tracking-wider block font-semibold">Pending Reviews</span>
-                  <span className="text-2xl font-black text-amber-400 mt-1 block">{teacherTelemetry.pendingReviews.length}</span>
-                </div>
-              </div>
-
-              <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-                <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 w-fit mb-3">
-                  <FileCode className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-3xs text-zinc-400 uppercase tracking-wider block font-semibold">Total Submissions</span>
-                  <span className="text-2xl font-black text-emerald-400 mt-1 block">{teacherTelemetry.totalSubmissions}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Middle Row: Submission Velocity Chart & Pending Reviews Panel */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Submission Trend Graph */}
-              <div className="lg:col-span-2 bg-[#16161A] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-violet-400" />
-                    <h3 className="text-lg font-bold text-white">Classroom Submission Activity</h3>
-                  </div>
-                  <Link to="/analytics" className="text-xs text-violet-400 hover:text-violet-300 font-semibold flex items-center gap-1">
-                    Full Analytics <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={teacherTelemetry.submissionTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="dashGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.4} />
-                          <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#24242B" />
-                      <XAxis dataKey="date" stroke="#71717A" tick={{ fontSize: 11 }} />
-                      <YAxis stroke="#71717A" tick={{ fontSize: 11 }} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#1A1A22', borderColor: '#2F2F37', borderRadius: '12px', color: '#FFF' }}
-                        formatter={(val: any) => [`${val} submissions`, 'Volume']}
-                      />
-                      <Area type="monotone" dataKey="submissions" stroke="#8B5CF6" strokeWidth={3} fillOpacity={1} fill="url(#dashGradient)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Pending Reviews Box */}
-              <div className="bg-[#16161A] border border-[#24242B] rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4">
-                <div className="flex items-center justify-between border-b border-[#24242B] pb-3">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-amber-400" />
-                    <h3 className="text-base font-bold text-white">Pending Reviews</h3>
-                  </div>
-                  <span className="text-3xs font-bold bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">
-                    {teacherTelemetry.pendingReviews.length} Tasks
-                  </span>
-                </div>
-
-                {teacherTelemetry.pendingReviews.length === 0 ? (
-                  <div className="text-center py-8">
-                    <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-                    <p className="text-xs text-zinc-400">All student submissions graded!</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3 overflow-y-auto max-h-64 pr-1">
-                    {teacherTelemetry.pendingReviews.slice(0, 5).map((rev) => (
-                      <div key={rev.submissionId} className="bg-[#1F1F24] border border-[#2F2F37] p-3 rounded-xl flex items-center justify-between text-xs">
-                        <div>
-                          <span className="font-bold text-white block">{rev.studentName}</span>
-                          <span className="text-2xs text-violet-400">{rev.taskTitle}</span>
-                        </div>
-                        <button
-                          onClick={() => setSelectedReview({
-                            studentId: rev.studentId,
-                            studentName: rev.studentName,
-                            studentRegisterId: rev.studentRegisterId,
-                            taskId: rev.taskId,
-                            taskTitle: rev.taskTitle,
-                            maxGrade: rev.maxGrade
-                          })}
-                          className="px-2.5 py-1 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-semibold shadow text-3xs transition-all"
-                        >
-                          Grade
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : studentData ? (
-          /* ================= STUDENT DASHBOARD VIEW ================= */
-          <div className="space-y-8">
-            {/* Student Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-              <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-                <div className="p-2.5 bg-violet-500/10 border border-violet-500/20 rounded-xl text-violet-400 w-fit mb-3">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-3xs text-zinc-400 uppercase tracking-wider block font-semibold">Enrolled Groups</span>
-                  <span className="text-2xl font-black text-white mt-1 block">{studentData.coursesCount}</span>
-                </div>
-              </div>
-
-              <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-                <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 w-fit mb-3">
-                  <CheckCircle2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-3xs text-zinc-400 uppercase tracking-wider block font-semibold">Completed Tasks</span>
-                  <span className="text-2xl font-black text-emerald-400 mt-1 block">{studentData.completedTasks}</span>
-                </div>
-              </div>
-
-              <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-                <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 w-fit mb-3">
-                  <Clock className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-3xs text-zinc-400 uppercase tracking-wider block font-semibold">Pending Tasks</span>
-                  <span className="text-2xl font-black text-amber-400 mt-1 block">{studentData.pendingTasks}</span>
-                </div>
-              </div>
-
-              <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-                <div className="p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 w-fit mb-3">
-                  <AlertCircle className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-3xs text-zinc-400 uppercase tracking-wider block font-semibold">Late Submissions</span>
-                  <span className="text-2xl font-black text-red-400 mt-1 block">{studentData.lateTasks}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Grades Breakdown & Teacher Feedback */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Recent Teacher Feedback */}
-              <div className="bg-[#16161A] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-[#24242B] pb-3">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-violet-400" />
-                    <h3 className="text-lg font-bold text-white">Teacher Evaluations & Feedback</h3>
-                  </div>
-                </div>
-
-                {studentData.recentFeedback.length === 0 ? (
-                  <p className="text-xs text-zinc-500 py-6 text-center">No teacher feedback received yet.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {studentData.recentFeedback.map((fb, idx) => (
-                      <div key={idx} className="bg-[#1F1F24] border border-[#2F2F37] p-4 rounded-xl space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-bold text-white">{fb.taskTitle}</span>
-                          <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded-md">
-                            Score: {fb.grade} pts
-                          </span>
-                        </div>
-                        <p className="text-xs text-violet-300 italic font-medium leading-relaxed">
-                          "{fb.feedback}"
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Grades Summary */}
-              <div className="bg-[#16161A] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-[#24242B] pb-3">
-                  <div className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-amber-400" />
-                    <h3 className="text-lg font-bold text-white">Highest Task Grades</h3>
-                  </div>
-                  <Link to="/profile" className="text-xs text-violet-400 font-semibold flex items-center gap-1">
-                    Profile <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                {studentData.bestGrades.length === 0 ? (
-                  <p className="text-xs text-zinc-500 py-6 text-center">No grades assigned yet.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {studentData.bestGrades.map((bg, idx) => (
-                      <div key={idx} className="bg-[#1F1F24] border border-[#2F2F37] p-3 rounded-xl flex items-center justify-between text-xs">
-                        <span className="font-bold text-white">{bg.taskTitle}</span>
-                        <span className="font-black text-amber-400 text-sm">{bg.bestGrade} / {bg.maxGrade} pts</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </main>
-
-      {/* Review Modal for Teacher */}
-      {selectedReview && (
-        <StudentDetailsModal
-          studentId={selectedReview.studentId}
-          studentName={selectedReview.studentName}
-          studentRegisterId={selectedReview.studentRegisterId}
-          taskId={selectedReview.taskId}
-          taskTitle={selectedReview.taskTitle}
-          maxGrade={selectedReview.maxGrade}
-          onClose={() => setSelectedReview(null)}
-          onGraded={() => {
-            fetchDashboardData();
-            setSelectedReview(null);
-          }}
-        />
       )}
     </div>
   );

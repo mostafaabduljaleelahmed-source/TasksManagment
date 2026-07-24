@@ -22,14 +22,55 @@ public static class DatabaseMigrationHelper
                     connection.Open();
                 }
 
+                // Sync Users table columns
+                EnsureColumnExists(connection, "Users", "AvatarUrl", "TEXT NULL", logger);
+                EnsureColumnExists(connection, "Users", "StudentId", "TEXT NULL", logger);
+                EnsureColumnExists(connection, "Users", "EmailNotificationsEnabled", "INTEGER NOT NULL DEFAULT 1", logger);
+
+                // Sync Courses table columns
+                EnsureColumnExists(connection, "Courses", "IsArchived", "INTEGER NOT NULL DEFAULT 0", logger);
+
+                // Sync Sessions table columns
+                EnsureColumnExists(connection, "Sessions", "IsArchived", "INTEGER NOT NULL DEFAULT 0", logger);
+
                 // Sync ProgrammingTasks table columns
                 EnsureColumnExists(connection, "ProgrammingTasks", "EvaluationMode", "INTEGER NOT NULL DEFAULT 0", logger);
                 EnsureColumnExists(connection, "ProgrammingTasks", "Language", "TEXT NOT NULL DEFAULT 'python'", logger);
+                EnsureColumnExists(connection, "ProgrammingTasks", "AttachmentsJson", "TEXT NOT NULL DEFAULT '[]'", logger);
+                EnsureColumnExists(connection, "ProgrammingTasks", "IsArchived", "INTEGER NOT NULL DEFAULT 0", logger);
 
                 // Sync Submissions table columns
                 EnsureColumnExists(connection, "Submissions", "ExecutionStatus", "TEXT NOT NULL DEFAULT 'PendingEvaluation'", logger);
                 EnsureColumnExists(connection, "Submissions", "TestCaseResultsJson", "TEXT NOT NULL DEFAULT '[]'", logger);
                 EnsureColumnExists(connection, "Submissions", "TeacherNotes", "TEXT NOT NULL DEFAULT ''", logger);
+                EnsureColumnExists(connection, "Submissions", "TeacherFeedback", "TEXT NOT NULL DEFAULT ''", logger);
+                EnsureColumnExists(connection, "Submissions", "ConsoleOutput", "TEXT NULL", logger);
+                EnsureColumnExists(connection, "Submissions", "ExpectedOutput", "TEXT NULL", logger);
+                EnsureColumnExists(connection, "Submissions", "SimilarityScore", "REAL NULL", logger);
+                EnsureColumnExists(connection, "Submissions", "ComparisonReport", "TEXT NULL", logger);
+
+                // Create ActivityLogs table if not exists
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS ActivityLogs (
+                            Id TEXT PRIMARY KEY,
+                            UserId TEXT NOT NULL,
+                            Action TEXT NOT NULL,
+                            Details TEXT NOT NULL,
+                            CourseId TEXT NULL,
+                            CourseName TEXT NULL,
+                            TaskId TEXT NULL,
+                            TaskTitle TEXT NULL,
+                            Timestamp TEXT NOT NULL
+                        );";
+                    cmd.ExecuteNonQuery();
+                }
+
+                // Sync Notifications table columns
+                EnsureColumnExists(connection, "Notifications", "TaskId", "TEXT NULL", logger);
+                EnsureColumnExists(connection, "Notifications", "StudentId", "TEXT NULL", logger);
+                EnsureColumnExists(connection, "Notifications", "SubmissionId", "TEXT NULL", logger);
             }
         }
         catch (Exception ex)

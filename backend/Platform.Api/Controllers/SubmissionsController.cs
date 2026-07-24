@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Platform.Application.Common.Interfaces;
 using Platform.Application.Features.Submissions.Dtos;
 
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
 namespace Platform.Api.Controllers;
 
 [Authorize]
@@ -15,10 +18,12 @@ namespace Platform.Api.Controllers;
 public class SubmissionsController : ControllerBase
 {
     private readonly ISubmissionService _submissionService;
+    private readonly ILogger<SubmissionsController> _logger;
 
-    public SubmissionsController(ISubmissionService submissionService)
+    public SubmissionsController(ISubmissionService submissionService, ILogger<SubmissionsController> logger)
     {
         _submissionService = submissionService;
+        _logger = logger;
     }
 
     [HttpPost("task/{taskId}/run")]
@@ -33,6 +38,11 @@ public class SubmissionsController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RunCode failed for Task ID: {TaskId}", taskId);
+            return StatusCode(500, new { message = $"Run execution error: {ex.Message}" });
+        }
     }
 
     [HttpPost("task/{taskId}/submit")]
@@ -41,7 +51,7 @@ public class SubmissionsController : ControllerBase
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
         {
-            return Unauthorized(new { message = "User not found." });
+            return Unauthorized(new { message = "Invalid User ID." });
         }
 
         try
@@ -49,9 +59,27 @@ public class SubmissionsController : ControllerBase
             var result = await _submissionService.SubmitCodeAsync(userId, taskId, dto, cancellationToken);
             return Ok(result);
         }
-        catch (Exception ex) when (ex is InvalidOperationException || ex is ArgumentException)
+        catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            var innerMessage = ex.InnerException?.Message ?? ex.Message;
+            _logger.LogError(ex, "DbUpdateException on SubmitCode for Task {TaskId}, User {UserId}: {InnerMessage}", taskId, userId, innerMessage);
+            return BadRequest(new { 
+                message = "Database schema mismatch or constraint failure.", 
+                details = innerMessage 
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error on SubmitCode for Task {TaskId}, User {UserId}: {Message}", taskId, userId, ex.Message);
+            return StatusCode(500, new { message = $"Submission error: {ex.Message}" });
         }
     }
 

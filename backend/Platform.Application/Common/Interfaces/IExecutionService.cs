@@ -24,6 +24,7 @@ public class Judge0ExecutionResult
     public double TimeSeconds { get; set; }
     public int MemoryKb { get; set; }
     public bool Passed { get; set; }
+    public bool IsServiceUnavailable { get; set; }
 }
 
 public interface IExecutionService

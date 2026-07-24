@@ -20,17 +20,23 @@ public class SubmissionService : ISubmissionService
     private readonly ICodeExecutionService _executionService;
     private readonly IGradingEngineDispatcher _gradingEngineDispatcher;
     private readonly ILogger<SubmissionService> _logger;
+    private readonly IActivityLogger _activityLogger;
+    private readonly IEmailService _emailService;
 
     public SubmissionService(
         IApplicationDbContext context,
         ICodeExecutionService executionService,
         IGradingEngineDispatcher gradingEngineDispatcher,
-        ILogger<SubmissionService> logger)
+        ILogger<SubmissionService> logger,
+        IActivityLogger activityLogger,
+        IEmailService emailService)
     {
         _context = context;
         _executionService = executionService;
         _gradingEngineDispatcher = gradingEngineDispatcher;
         _logger = logger;
+        _activityLogger = activityLogger;
+        _emailService = emailService;
     }
 
     public async Task<RunResultDto> RunCodeAsync(Guid taskId, RunCodeDto dto, CancellationToken cancellationToken = default)
@@ -75,7 +81,13 @@ public class SubmissionService : ISubmissionService
 
         if (task == null)
         {
-            throw new InvalidOperationException("Programming task not found.");
+            throw new InvalidOperationException("Invalid Task ID.");
+        }
+
+        var studentExists = await _context.Users.AnyAsync(u => u.Id == studentId, cancellationToken);
+        if (!studentExists)
+        {
+            throw new InvalidOperationException("Invalid User ID.");
         }
 
         _logger.LogInformation("SubmitCodeAsync called for Student: {StudentId}, Task ID: {TaskId}.", studentId, task.Id);
@@ -115,6 +127,11 @@ public class SubmissionService : ISubmissionService
         };
 
         var gradingResult = await _gradingEngineDispatcher.DispatchAsync(gradingContext, cancellationToken);
+
+        if (gradingResult.IsServiceUnavailable)
+        {
+            throw new InvalidOperationException("Automatic grading service is unavailable.");
+        }
 
         var submission = new Submission
         {
@@ -169,6 +186,9 @@ public class SubmissionService : ISubmissionService
                     Id = Guid.NewGuid(),
                     UserId = teacherId,
                     Message = msg,
+                    TaskId = task.Id,
+                    StudentId = student.Id,
+                    SubmissionId = submission.Id,
                     CreatedAt = DateTime.UtcNow,
                     IsRead = false
                 });
@@ -180,6 +200,9 @@ public class SubmissionService : ISubmissionService
                         Id = Guid.NewGuid(),
                         UserId = teacherId,
                         Message = $"{student.Name} reached maximum attempts ({task.MaxAttempts}) for task '{task.Title}'.",
+                        TaskId = task.Id,
+                        StudentId = student.Id,
+                        SubmissionId = submission.Id,
                         CreatedAt = DateTime.UtcNow,
                         IsRead = false
                     });
@@ -188,6 +211,16 @@ public class SubmissionService : ISubmissionService
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _activityLogger.LogAsync(
+            studentId,
+            "Assignment Submission",
+            $"Submitted attempt #{submission.AttemptNumber} for assignment '{task.Title}'",
+            course?.Id,
+            course?.Name,
+            task.Id,
+            task.Title,
+            cancellationToken);
 
         return new SubmissionDto
         {
@@ -378,6 +411,49 @@ public class SubmissionService : ISubmissionService
         });
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Fetch task session course
+        var course = await _context.Courses
+            .Include(c => c.Sessions)
+            .FirstOrDefaultAsync(c => c.Sessions.Any(sess => sess.Id == submission.Task.SessionId), cancellationToken);
+
+        await _activityLogger.LogAsync(
+            course?.TeacherId ?? Guid.Empty,
+            "Grade Updated",
+            $"Grade updated to {submission.Grade}/{submission.Task.MaxGrade} for student {submission.Student.Name}",
+            course?.Id,
+            course?.Name,
+            submission.TaskId,
+            submission.Task.Title,
+            cancellationToken);
+
+        // Send Grade Released Email Notification
+        await _emailService.SendGradeReleasedNotificationAsync(
+            submission.Student,
+            submission.Task.Title,
+            submission.Grade,
+            submission.Task.MaxGrade,
+            cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(dto.TeacherFeedback))
+        {
+            await _activityLogger.LogAsync(
+                course?.TeacherId ?? Guid.Empty,
+                "Teacher Feedback",
+                $"Teacher feedback provided for {submission.Student.Name}: \"{dto.TeacherFeedback}\"",
+                course?.Id,
+                course?.Name,
+                submission.TaskId,
+                submission.Task.Title,
+                cancellationToken);
+
+            // Send Teacher Feedback Email Notification
+            await _emailService.SendTeacherFeedbackNotificationAsync(
+                submission.Student,
+                submission.Task.Title,
+                dto.TeacherFeedback,
+                cancellationToken);
+        }
 
         return new SubmissionDto
         {

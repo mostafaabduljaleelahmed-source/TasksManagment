@@ -2,9 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-main: #0B0F19;
+  --bg-card: #111827;
+  --bg-secondary: #1F2937;
+  --primary: #3B82F6;
+  --primary-hover: #2563EB;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --text-main: #F9FAFB;
+  --text-muted: #9CA3AF;
+}
+
 @layer base {
   body {
-    @apply bg-[#0F0F11] text-[#E4E4E7] antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    @apply bg-[#0B0F19] text-[#F9FAFB] antialiased selection:bg-blue-500/30 selection:text-blue-200;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0B0F19;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1F2937;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+}
+
+/* Linear Glassmorphism & Soft Glows */
+.saas-card {
+  @apply bg-[#111827] border border-[#1F2937] rounded-2xl shadow-xl transition-all duration-200;
+}
+
+.saas-card:hover {
+  @apply border-[#374151] shadow-2xl;
+}
+
+.saas-button-primary {
+  @apply bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-xs py-2.5 px-4 shadow-lg shadow-blue-950/40 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.saas-button-secondary {
+  @apply bg-[#1F2937] hover:bg-[#374151] text-zinc-200 font-semibold rounded-xl text-xs py-2.5 px-4 border border-[#374151] transition-all duration-200 flex items-center justify-center gap-2;
+}
+
+.saas-input {
+  @apply bg-[#111827] border border-[#1F2937] text-white rounded-xl text-xs py-2.5 px-3.5 focus:outline-none focus:border-blue-500 transition-colors w-full placeholder:text-zinc-500;
+}
+
+/* Force Monaco Editor containers and internal canvas/lines to strictly render in LTR mode */
+.monaco-editor,
+.monaco-editor *,
+.monaco-editor-background,
+.overflow-guard,
+.margin,
+.monaco-scrollable-element,
+.view-lines,
+.view-line {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: isolate !important;
 }

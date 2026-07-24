@@ -13,10 +13,12 @@ namespace Platform.Application.Services;
 public class CourseService : ICourseService
 {
     private readonly IApplicationDbContext _context;
+    private readonly IActivityLogger _logger;
 
-    public CourseService(IApplicationDbContext context)
+    public CourseService(IApplicationDbContext context, IActivityLogger logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<CourseDto> CreateCourseAsync(Guid teacherId, CreateCourseDto dto, CancellationToken cancellationToken = default)
@@ -59,6 +61,14 @@ public class CourseService : ICourseService
 
         await _context.SaveChangesAsync(cancellationToken);
 
+        await _logger.LogAsync(
+            teacherId,
+            "Course Creation",
+            $"Created new course group '{course.Name}' (Code: {course.CourseCode})",
+            course.Id,
+            course.Name,
+            cancellationToken: cancellationToken);
+
         var teacher = await _context.Users.FindAsync(new object[] { teacherId }, cancellationToken);
 
         return new CourseDto
@@ -83,7 +93,7 @@ public class CourseService : ICourseService
 
         return await _context.Courses
             .Include(c => c.Teacher)
-            .Where(c => c.TeacherId == teacherId || courseIds.Contains(c.Id))
+            .Where(c => !c.IsArchived && (c.TeacherId == teacherId || courseIds.Contains(c.Id)))
             .Select(c => new CourseDto
             {
                 Id = c.Id,
@@ -102,7 +112,7 @@ public class CourseService : ICourseService
         return await _context.Enrollments
             .Include(e => e.Course)
             .ThenInclude(c => c.Teacher)
-            .Where(e => e.StudentId == studentId)
+            .Where(e => e.StudentId == studentId && !e.Course.IsArchived)
             .Select(e => new CourseDto
             {
                 Id = e.Course.Id,
@@ -150,6 +160,14 @@ public class CourseService : ICourseService
 
         _context.Enrollments.Add(enrollment);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _logger.LogAsync(
+            studentId,
+            "Student Joined",
+            $"Joined course '{course.Name}' using code '{course.CourseCode}'",
+            course.Id,
+            course.Name,
+            cancellationToken: cancellationToken);
 
         return new CourseDto
         {
@@ -205,7 +223,17 @@ public class CourseService : ICourseService
             throw new InvalidOperationException("Student enrollment not found in this course.");
         }
 
+        var student = await _context.Users.FindAsync(new object[] { studentId }, cancellationToken);
+
         _context.Enrollments.Remove(enrollment);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _logger.LogAsync(
+            teacherId,
+            "Student Removal",
+            $"Removed student '{student?.Name ?? "Student"}' from course '{course.Name}'",
+            course.Id,
+            course.Name,
+            cancellationToken: cancellationToken);
     }
 }
