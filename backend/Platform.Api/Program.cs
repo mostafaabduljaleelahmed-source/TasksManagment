@@ -81,6 +81,7 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors("AllowAll");
+app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 
@@ -88,5 +89,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 app.Run();

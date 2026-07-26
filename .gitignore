@@ -22,3 +22,7 @@ temp_runs/
 # Environment & Logs
 *.env
 *.log
+
+# Generated Frontend Build Output
+backend/Platform.Api/wwwroot/
+
