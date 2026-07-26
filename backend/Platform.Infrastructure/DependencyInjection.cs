@@ -14,19 +14,13 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection") 
-            ?? "Data Source=gradingplatform.db";
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-        services.AddDbContextPool<ApplicationDbContext>(options =>
+        services.AddDbContext<ApplicationDbContext>(options =>
         {
-            var dbProvider = configuration["DatabaseProvider"];
-            if (string.Equals(dbProvider, "Sqlite", StringComparison.OrdinalIgnoreCase) || connectionString.Contains(".db") || connectionString.Contains(".sqlite"))
+            if (!string.IsNullOrWhiteSpace(connectionString))
             {
-                options.UseSqlite(connectionString, b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
-            }
-            else
-            {
-                options.UseSqlServer(connectionString, b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+                options.UseNpgsql(connectionString, b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
             }
         });
 
