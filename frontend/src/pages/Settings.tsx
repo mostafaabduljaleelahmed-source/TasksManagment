@@ -253,14 +253,14 @@ export const Settings: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-xs font-bold text-zinc-300 mb-1.5">{t('fullName')}</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="saas-input"
                   required
                 />
               </div>
@@ -271,7 +271,7 @@ export const Settings: React.FC = () => {
                   type="email"
                   value={user?.email || ''}
                   disabled
-                  className="w-full bg-[#141418] border border-[#22222B] rounded-xl px-4 py-2.5 text-xs text-zinc-500 cursor-not-allowed"
+                  className="saas-input text-zinc-500 cursor-not-allowed opacity-75"
                 />
               </div>
 
@@ -283,7 +283,7 @@ export const Settings: React.FC = () => {
                     value={studentId}
                     onChange={(e) => setStudentId(e.target.value)}
                     placeholder="e.g. 202410928"
-                    className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500 font-mono"
+                    className="saas-input font-mono"
                   />
                 </div>
               )}
@@ -293,7 +293,7 @@ export const Settings: React.FC = () => {
               <button
                 type="submit"
                 disabled={savingProfile}
-                className="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-violet-950/40 transition-all disabled:opacity-50"
+                className="saas-button-primary min-h-[48px] w-full sm:w-auto"
               >
                 {savingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {t('saveChanges')}
@@ -310,14 +310,14 @@ export const Settings: React.FC = () => {
           </div>
 
           <form onSubmit={handleChangePassword} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-xs font-bold text-zinc-300 mb-1.5">{t('currentPassword')}</label>
                 <input
                   type="password"
                   value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="saas-input"
                   required
                 />
               </div>
@@ -328,7 +328,7 @@ export const Settings: React.FC = () => {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="saas-input"
                   required
                 />
               </div>
@@ -339,11 +339,12 @@ export const Settings: React.FC = () => {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="saas-input"
                   required
                 />
               </div>
             </div>
+
 
             <div className="flex justify-end pt-2">
               <button

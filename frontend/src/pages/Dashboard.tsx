@@ -217,29 +217,30 @@ export const Dashboard: React.FC = () => {
         <div className="space-y-10">
           {/* Workload Overview Cards */}
           {summary && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-[#121215] border border-[#24242B] p-4 rounded-2xl space-y-1">
-                <span className="text-[11px] font-bold text-zinc-400 uppercase">Pending Reviews</span>
-                <p className="text-2xl font-black text-amber-400">{summary.pendingReviewsCount}</p>
-                <span className="text-[10px] text-zinc-500">Submissions waiting</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-[#121215] border border-[#24242B] p-4 sm:p-5 rounded-2xl space-y-1 shadow-xl">
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Pending Reviews</span>
+                <p className="text-3xl font-black text-amber-400">{summary.pendingReviewsCount}</p>
+                <span className="text-xs text-zinc-500">Submissions waiting</span>
               </div>
-              <div className="bg-[#121215] border border-[#24242B] p-4 rounded-2xl space-y-1">
-                <span className="text-[11px] font-bold text-zinc-400 uppercase">Submitted Today</span>
-                <p className="text-2xl font-black text-emerald-400">{summary.submittedTodayCount}</p>
-                <span className="text-[10px] text-zinc-500">Student submissions</span>
+              <div className="bg-[#121215] border border-[#24242B] p-4 sm:p-5 rounded-2xl space-y-1 shadow-xl">
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Submitted Today</span>
+                <p className="text-3xl font-black text-emerald-400">{summary.submittedTodayCount}</p>
+                <span className="text-xs text-zinc-500">Student submissions</span>
               </div>
-              <div className="bg-[#121215] border border-[#24242B] p-4 rounded-2xl space-y-1">
-                <span className="text-[11px] font-bold text-zinc-400 uppercase">Teaching Groups</span>
-                <p className="text-2xl font-black text-blue-400">{summary.totalGroupsCount}</p>
-                <span className="text-[10px] text-zinc-500">Active courses</span>
+              <div className="bg-[#121215] border border-[#24242B] p-4 sm:p-5 rounded-2xl space-y-1 shadow-xl">
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Teaching Groups</span>
+                <p className="text-3xl font-black text-blue-400">{summary.totalGroupsCount}</p>
+                <span className="text-xs text-zinc-500">Active courses</span>
               </div>
-              <div className="bg-[#121215] border border-[#24242B] p-4 rounded-2xl space-y-1">
-                <span className="text-[11px] font-bold text-zinc-400 uppercase">Enrolled Students</span>
-                <p className="text-2xl font-black text-violet-400">{summary.totalStudentsCount}</p>
-                <span className="text-[10px] text-zinc-500">Total roster</span>
+              <div className="bg-[#121215] border border-[#24242B] p-4 sm:p-5 rounded-2xl space-y-1 shadow-xl">
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Enrolled Students</span>
+                <p className="text-3xl font-black text-violet-400">{summary.totalStudentsCount}</p>
+                <span className="text-xs text-zinc-500">Total roster</span>
               </div>
             </div>
           )}
+
 
           {/* Section 1: Pending Reviews */}
           <div className="space-y-4">

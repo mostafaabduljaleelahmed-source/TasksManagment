@@ -334,8 +334,8 @@ export const CoursesList: React.FC = () => {
 
       {/* Create Course Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#111827] border border-[#1F2937] rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#111827] border-t sm:border border-[#1F2937] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
             <div>
               <h3 className="text-lg font-bold text-white">Create Teaching Group</h3>
               <p className="text-xs text-zinc-400 mt-1">Set up a new programming class for your students.</p>
@@ -365,7 +365,7 @@ export const CoursesList: React.FC = () => {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
@@ -388,8 +388,8 @@ export const CoursesList: React.FC = () => {
 
       {/* Join Course Modal */}
       {showJoinModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#111827] border border-[#1F2937] rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#111827] border-t sm:border border-[#1F2937] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
             <div>
               <h3 className="text-lg font-bold text-white">Join Group</h3>
               <p className="text-xs text-zinc-400 mt-1">Enter the group code provided by your instructor.</p>
@@ -408,7 +408,7 @@ export const CoursesList: React.FC = () => {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowJoinModal(false)}
@@ -428,6 +428,7 @@ export const CoursesList: React.FC = () => {
           </div>
         </div>
       )}
+
 
       {/* Delete Confirmation Modal */}
       {courseToDelete && (

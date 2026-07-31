@@ -43,19 +43,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
   const isTeacherOrAdmin = user.role === 'Teacher' || user.role === 'Admin';
 
   const sidebarContent = (
-    <aside className="w-64 bg-[#111827] border-r border-[#1F2937] flex flex-col justify-between h-full select-none">
-      <div className="flex flex-col gap-6 p-4 overflow-y-auto">
-        {/* Brand / Logo */}
-        <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 px-2 pt-2 group" onClick={onClose}>
-            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-950/50 group-hover:scale-105 transition-transform">
+    <aside className="w-full sm:w-64 bg-[#111827] border-r border-[#1F2937] flex flex-col justify-between h-full select-none">
+      <div className="flex flex-col gap-5 p-4 overflow-y-auto">
+        {/* Brand / Logo & Mobile Close Header */}
+        <div className="flex items-center justify-between border-b border-[#1F2937] pb-3">
+          <Link to="/" className="flex items-center gap-3 group" onClick={onClose}>
+            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-base shadow-lg shadow-blue-950/50">
               ⚡
             </div>
             <div>
-              <span className="text-sm font-extrabold text-white tracking-tight block leading-none">
+              <span className="text-base font-extrabold text-white tracking-tight block leading-none">
                 Classroom SaaS
               </span>
-              <span className="text-[10px] text-blue-400 font-bold tracking-wider uppercase mt-0.5 block">
+              <span className="text-[10px] text-blue-400 font-bold tracking-wider uppercase mt-1 block">
                 {user.role === 'Teacher' ? 'Instructor Edition' : user.role === 'Admin' ? 'Executive Admin' : 'Student Portal'}
               </span>
             </div>
@@ -63,8 +63,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
 
           {/* Close button for mobile drawer */}
           {onClose && (
-            <button onClick={onClose} className="md:hidden p-2 text-zinc-400 hover:text-white rounded-lg">
-              <X className="w-5 h-5" />
+            <button
+              onClick={onClose}
+              className="md:hidden p-2 text-zinc-400 hover:text-white rounded-xl bg-[#1F2937]/80 border border-[#374151]/50 min-h-[44px] min-w-[44px] flex items-center justify-center active:scale-95 transition-transform"
+              aria-label="Close Navigation Drawer"
+            >
+              <X className="w-5 h-5 text-zinc-300" />
             </button>
           )}
         </div>
@@ -80,7 +84,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
               <LayoutDashboard className="w-4 h-4 text-blue-400" />
               <span>{t('dashboard')}</span>
             </span>
-            {isActive('/dashboard') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
+            {isActive('/dashboard') && <span className="w-2 h-2 rounded-full bg-blue-400" />}
           </Link>
 
           <Link to="/" className={navLinkClass('/')} onClick={onClose}>
@@ -88,7 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
               <BookOpen className="w-4 h-4 text-indigo-400" />
               <span>{t('courses')}</span>
             </span>
-            {isActive('/') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
+            {isActive('/') && <span className="w-2 h-2 rounded-full bg-blue-400" />}
           </Link>
 
           <Link to="/leaderboard" className={navLinkClass('/leaderboard')} onClick={onClose}>
@@ -96,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
               <Trophy className="w-4 h-4 text-amber-400" />
               <span>{t('leaderboard')}</span>
             </span>
-            {isActive('/leaderboard') && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+            {isActive('/leaderboard') && <span className="w-2 h-2 rounded-full bg-amber-400" />}
           </Link>
 
           <Link to="/calendar" className={navLinkClass('/calendar')} onClick={onClose}>
@@ -104,7 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
               <Calendar className="w-4 h-4 text-sky-400" />
               <span>Calendar</span>
             </span>
-            {isActive('/calendar') && <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />}
+            {isActive('/calendar') && <span className="w-2 h-2 rounded-full bg-sky-400" />}
           </Link>
 
           {isTeacherOrAdmin && (
@@ -118,7 +122,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
                   <FileCode className="w-4 h-4 text-amber-400" />
                   <span>{t('pendingReviews')}</span>
                 </span>
-                {isActive('/teacher/pending-reviews') && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                {isActive('/teacher/pending-reviews') && <span className="w-2 h-2 rounded-full bg-amber-400" />}
               </Link>
 
               <Link to="/teacher/students" className={navLinkClass('/teacher/students')} onClick={onClose}>
@@ -126,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
                   <Users className="w-4 h-4 text-sky-400" />
                   <span>{t('students')}</span>
                 </span>
-                {isActive('/teacher/students') && <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />}
+                {isActive('/teacher/students') && <span className="w-2 h-2 rounded-full bg-sky-400" />}
               </Link>
 
               <Link to="/archive" className={navLinkClass('/archive')} onClick={onClose}>
@@ -134,16 +138,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
                   <Archive className="w-4 h-4 text-amber-400" />
                   <span>Archive</span>
                 </span>
-                {isActive('/archive') && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                {isActive('/archive') && <span className="w-2 h-2 rounded-full bg-amber-400" />}
               </Link>
 
-              {/* Activity Log - Strictly hidden from Students */}
               <Link to="/activity-log" className={navLinkClass('/activity-log')} onClick={onClose}>
                 <span className="flex items-center gap-3">
                   <Activity className="w-4 h-4 text-indigo-400" />
                   <span>Activity Audit Log</span>
                 </span>
-                {isActive('/activity-log') && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />}
+                {isActive('/activity-log') && <span className="w-2 h-2 rounded-full bg-indigo-400" />}
               </Link>
             </>
           )}
@@ -158,21 +161,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
                   <ShieldCheck className="w-4 h-4 text-violet-400" />
                   <span>Admin Dashboard</span>
                 </span>
-                {isActive('/admin/dashboard') && <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />}
+                {isActive('/admin/dashboard') && <span className="w-2 h-2 rounded-full bg-violet-400" />}
               </Link>
               <Link to="/admin/users" className={navLinkClass('/admin/users')} onClick={onClose}>
                 <span className="flex items-center gap-3">
                   <Users className="w-4 h-4 text-violet-400" />
                   <span>User Management</span>
                 </span>
-                {isActive('/admin/users') && <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />}
+                {isActive('/admin/users') && <span className="w-2 h-2 rounded-full bg-violet-400" />}
               </Link>
               <Link to="/admin/settings" className={navLinkClass('/admin/settings')} onClick={onClose}>
                 <span className="flex items-center gap-3">
                   <Settings className="w-4 h-4 text-violet-400" />
                   <span>System Settings</span>
                 </span>
-                {isActive('/admin/settings') && <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />}
+                {isActive('/admin/settings') && <span className="w-2 h-2 rounded-full bg-violet-400" />}
               </Link>
             </>
           )}
@@ -186,7 +189,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
               <Settings className="w-4 h-4 text-zinc-400" />
               <span>{t('settings')}</span>
             </span>
-            {isActive('/settings') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
+            {isActive('/settings') && <span className="w-2 h-2 rounded-full bg-blue-400" />}
           </Link>
 
           <Link to="/profile" className={navLinkClass('/profile')} onClick={onClose}>
@@ -194,31 +197,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
               <User className="w-4 h-4 text-zinc-400" />
               <span>{t('profile')}</span>
             </span>
-            {isActive('/profile') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
+            {isActive('/profile') && <span className="w-2 h-2 rounded-full bg-blue-400" />}
           </Link>
         </nav>
       </div>
 
       {/* Footer / User Profile & Controls */}
-      <div className="p-4 border-t border-[#1F2937] space-y-3 bg-[#0B0F19]/50">
+      <div className="p-4 border-t border-[#1F2937] space-y-3 bg-[#0B0F19]/80">
         {/* Language Switcher */}
         <button
           onClick={toggleLanguage}
-          className="w-full flex items-center justify-between px-3 py-2 bg-[#1F2937]/60 hover:bg-[#1F2937] border border-[#374151]/50 text-zinc-300 rounded-xl text-xs font-semibold transition-colors"
+          className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[#1F2937]/70 hover:bg-[#1F2937] border border-[#374151]/50 text-zinc-200 rounded-xl text-xs font-bold transition-colors min-h-[44px]"
         >
           <span className="flex items-center gap-2">
-            <Globe className="w-3.5 h-3.5 text-blue-400" />
+            <Globe className="w-4 h-4 text-blue-400" />
             <span>Language</span>
           </span>
-          <span className="text-[10px] font-bold uppercase bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30">
+          <span className="text-[10px] font-extrabold uppercase bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30">
             {lang === 'ar' ? 'عربي' : 'English'}
           </span>
         </button>
 
         {/* User Card & Logout */}
-        <div className="flex items-center justify-between p-2 bg-[#1F2937]/40 rounded-xl border border-[#374151]/30">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0 border border-blue-400/30">
+        <div className="flex items-center justify-between p-2.5 bg-[#1F2937]/50 rounded-xl border border-[#374151]/40">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0 border border-blue-400/30">
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
               ) : (
@@ -233,7 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
 
           <button
             onClick={logout}
-            className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0"
+            className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
             title={t('logout')}
           >
             <LogOut className="w-4 h-4" />
@@ -250,14 +253,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
         {sidebarContent}
       </div>
 
-      {/* Mobile Off-Canvas Drawer */}
+      {/* Mobile Off-Canvas Drawer with 80-85% viewport width and full dark backdrop overlay */}
       {isOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
+          {/* Dimmed Background Overlay */}
           <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/85 backdrop-blur-md transition-opacity animate-in fade-in"
             onClick={onClose}
           />
-          <div className="relative z-10 h-full animate-fade-in">
+          {/* Drawer Container (Width 82% max 320px) */}
+          <div className="relative z-10 h-full w-[82vw] max-w-[320px] shadow-2xl animate-in slide-in-from-left duration-200">
             {sidebarContent}
           </div>
         </div>
@@ -265,3 +270,4 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
     </>
   );
 };
+
