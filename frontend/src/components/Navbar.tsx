@@ -3,21 +3,22 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { GlobalSearchModal } from './GlobalSearchModal';
-import { Sidebar } from './Sidebar';
 import {
   Menu, Bell, Globe
 } from 'lucide-react';
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  onOpenMobileDrawer?: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
   const { user } = useAuth();
   const { t, lang, setLanguage } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   if (!user) return null;
-
 
   const toggleLanguage = () => {
     setLanguage(lang === 'ar' ? 'en' : 'ar');
@@ -52,7 +53,7 @@ export const Navbar: React.FC = () => {
         {/* Left Side: Off-canvas Hamburger & Page Title */}
         <div className="flex items-center gap-2.5 shrink-0 min-w-0">
           <button
-            onClick={() => setIsMobileDrawerOpen(true)}
+            onClick={onOpenMobileDrawer}
             className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center text-zinc-300 hover:text-white bg-[#1F2937]/70 border border-[#374151]/50 rounded-xl active:scale-95 transition-transform"
             aria-label="Open Navigation Drawer"
           >
@@ -106,11 +107,9 @@ export const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile Off-Canvas Drawer */}
-      <Sidebar isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} />
-
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 };
+
 

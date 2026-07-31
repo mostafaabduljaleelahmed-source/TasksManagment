@@ -41,7 +41,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
       />
 
       <div className="flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-250 ease-in-out">
-        <Navbar />
+        <Navbar onOpenMobileDrawer={() => setIsMobileOpen(true)} />
 
         <main className="flex-1 overflow-y-auto w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
           {children}
