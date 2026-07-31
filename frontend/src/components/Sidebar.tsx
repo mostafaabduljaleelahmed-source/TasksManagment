@@ -1,21 +1,43 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import {
   LayoutDashboard, BookOpen, FileCode, Users, Settings, User, LogOut,
-  Globe, ShieldCheck, X, Trophy, Archive, Activity, Calendar
+  Globe, ShieldCheck, X, Trophy, Archive, Activity, Calendar,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  isOpen = false,
+  onClose,
+  isCollapsed = false,
+  onToggleCollapse
+}) => {
   const { user, logout } = useAuth();
   const { t, lang, setLanguage } = useTranslation();
   const location = useLocation();
+
+  // Keyboard shortcut Ctrl+B / Cmd+B to toggle sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        if (onToggleCollapse) {
+          onToggleCollapse();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onToggleCollapse]);
 
   if (!user) return null;
 
@@ -24,13 +46,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
     if (path !== '/' && location.pathname.startsWith(path)) return true;
     return false;
   };
-
-  const navLinkClass = (path: string) =>
-    `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-      isActive(path)
-        ? 'bg-blue-600/15 text-blue-400 border border-blue-500/20 font-bold shadow-sm'
-        : 'text-zinc-400 hover:text-white hover:bg-[#1F2937]/50'
-    }`;
 
   const userInitials = user.name
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().substring(0, 2)
@@ -42,26 +57,82 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
 
   const isTeacherOrAdmin = user.role === 'Teacher' || user.role === 'Admin';
 
-  const sidebarContent = (
-    <aside className="w-full sm:w-64 bg-[#111827] border-r border-[#1F2937] flex flex-col justify-between h-full select-none">
-      <div className="flex flex-col gap-5 p-4 overflow-y-auto">
-        {/* Brand / Logo & Mobile Close Header */}
-        <div className="flex items-center justify-between border-b border-[#1F2937] pb-3">
-          <Link to="/" className="flex items-center gap-3 group" onClick={onClose}>
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-base shadow-lg shadow-blue-950/50">
+  const renderNavLink = (path: string, label: string, icon: React.ReactNode, activeBgColor: string = 'bg-blue-400') => {
+    const active = isActive(path);
+    return (
+      <div className="relative group/item" key={path}>
+        <Link
+          to={path}
+          onClick={onClose}
+          aria-label={label}
+          className={`flex items-center gap-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-250 ${
+            isCollapsed ? 'justify-center px-0' : 'justify-between px-3.5'
+          } ${
+            active
+              ? 'bg-blue-600/15 text-blue-400 border border-blue-500/20 font-bold shadow-sm'
+              : 'text-zinc-400 hover:text-white hover:bg-[#1F2937]/50 border border-transparent'
+          }`}
+        >
+          <span className="flex items-center gap-3 shrink-0">
+            {icon}
+            {!isCollapsed && <span className="truncate">{label}</span>}
+          </span>
+          {!isCollapsed && active && <span className={`w-2 h-2 rounded-full ${activeBgColor} shrink-0`} />}
+        </Link>
+
+        {/* Hover Tooltip in Collapsed Mode */}
+        {isCollapsed && (
+          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 px-2.5 py-1.5 bg-[#1F2937] text-white text-xs font-semibold rounded-lg shadow-xl border border-[#374151] whitespace-nowrap opacity-0 pointer-events-none group-hover/item:opacity-100 transition-opacity duration-150">
+            {label}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const sidebarContent = (collapsed: boolean) => (
+    <aside
+      className={`w-full bg-[#111827] border-r border-[#1F2937] flex flex-col justify-between h-full select-none transition-all duration-250 ${
+        collapsed ? 'items-center px-2 py-4' : 'p-4'
+      }`}
+    >
+      <div className="flex flex-col gap-4 overflow-y-auto w-full">
+        {/* Header with Brand Logo, Collapse Toggle, and Mobile Close */}
+        <div className="flex items-center justify-between border-b border-[#1F2937] pb-3 min-h-[48px]">
+          <Link
+            to="/"
+            className={`flex items-center gap-3 group shrink-0 ${collapsed ? 'justify-center w-full' : ''}`}
+            onClick={onClose}
+            aria-label="Home"
+          >
+            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-base shadow-lg shadow-blue-950/50 shrink-0">
               ⚡
             </div>
-            <div>
-              <span className="text-base font-extrabold text-white tracking-tight block leading-none">
-                Classroom SaaS
-              </span>
-              <span className="text-[10px] text-blue-400 font-bold tracking-wider uppercase mt-1 block">
-                {user.role === 'Teacher' ? 'Instructor Edition' : user.role === 'Admin' ? 'Executive Admin' : 'Student Portal'}
-              </span>
-            </div>
+            {!collapsed && (
+              <div className="overflow-hidden">
+                <span className="text-base font-extrabold text-white tracking-tight block leading-none truncate">
+                  Classroom SaaS
+                </span>
+                <span className="text-[10px] text-blue-400 font-bold tracking-wider uppercase mt-1 block truncate">
+                  {user.role === 'Teacher' ? 'Instructor' : user.role === 'Admin' ? 'Executive Admin' : 'Student Portal'}
+                </span>
+              </div>
+            )}
           </Link>
 
-          {/* Close button for mobile drawer */}
+          {/* Desktop Collapse Toggle Button */}
+          {onToggleCollapse && !onClose && (
+            <button
+              onClick={onToggleCollapse}
+              aria-label={collapsed ? 'Expand Sidebar (Ctrl+B)' : 'Collapse Sidebar (Ctrl+B)'}
+              title={collapsed ? 'Expand Sidebar (Ctrl+B)' : 'Collapse Sidebar (Ctrl+B)'}
+              className="hidden md:flex items-center justify-center p-1.5 text-zinc-400 hover:text-white rounded-lg bg-[#1F2937]/80 hover:bg-[#1F2937] border border-[#374151]/50 transition-colors shrink-0"
+            >
+              {collapsed ? <ChevronRight className="w-4 h-4 text-blue-400" /> : <ChevronLeft className="w-4 h-4 text-blue-400" />}
+            </button>
+          )}
+
+          {/* Mobile Drawer Close Button */}
           {onClose && (
             <button
               onClick={onClose}
@@ -73,153 +144,103 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
           )}
         </div>
 
+        {/* Desktop Collapse Button Banner when Collapsed */}
+        {onToggleCollapse && !onClose && collapsed && (
+          <button
+            onClick={onToggleCollapse}
+            aria-label="Expand Sidebar"
+            title="Expand Sidebar (Ctrl+B)"
+            className="hidden md:flex items-center justify-center w-full py-1.5 text-xs text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-xl transition-colors font-bold"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
+
         {/* Navigation Sections */}
-        <nav className="space-y-1">
-          <div className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 px-3.5 mb-2">
-            Academic Hub
-          </div>
+        <nav className="space-y-1 w-full">
+          {!collapsed && (
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 px-3.5 mb-2 truncate">
+              Academic Hub
+            </div>
+          )}
 
-          <Link to="/dashboard" className={navLinkClass('/dashboard')} onClick={onClose}>
-            <span className="flex items-center gap-3">
-              <LayoutDashboard className="w-4 h-4 text-blue-400" />
-              <span>{t('dashboard')}</span>
-            </span>
-            {isActive('/dashboard') && <span className="w-2 h-2 rounded-full bg-blue-400" />}
-          </Link>
-
-          <Link to="/" className={navLinkClass('/')} onClick={onClose}>
-            <span className="flex items-center gap-3">
-              <BookOpen className="w-4 h-4 text-indigo-400" />
-              <span>{t('courses')}</span>
-            </span>
-            {isActive('/') && <span className="w-2 h-2 rounded-full bg-blue-400" />}
-          </Link>
-
-          <Link to="/leaderboard" className={navLinkClass('/leaderboard')} onClick={onClose}>
-            <span className="flex items-center gap-3">
-              <Trophy className="w-4 h-4 text-amber-400" />
-              <span>{t('leaderboard')}</span>
-            </span>
-            {isActive('/leaderboard') && <span className="w-2 h-2 rounded-full bg-amber-400" />}
-          </Link>
-
-          <Link to="/calendar" className={navLinkClass('/calendar')} onClick={onClose}>
-            <span className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 text-sky-400" />
-              <span>Calendar</span>
-            </span>
-            {isActive('/calendar') && <span className="w-2 h-2 rounded-full bg-sky-400" />}
-          </Link>
+          {renderNavLink('/dashboard', t('dashboard'), <LayoutDashboard className="w-4 h-4 text-blue-400" />)}
+          {renderNavLink('/', t('courses'), <BookOpen className="w-4 h-4 text-indigo-400" />)}
+          {renderNavLink('/leaderboard', t('leaderboard'), <Trophy className="w-4 h-4 text-amber-400" />, 'bg-amber-400')}
+          {renderNavLink('/calendar', 'Calendar', <Calendar className="w-4 h-4 text-sky-400" />, 'bg-sky-400')}
 
           {isTeacherOrAdmin && (
             <>
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 px-3.5 pt-4 mb-2">
-                Teacher Tools
-              </div>
-
-              <Link to="/teacher/pending-reviews" className={navLinkClass('/teacher/pending-reviews')} onClick={onClose}>
-                <span className="flex items-center gap-3">
-                  <FileCode className="w-4 h-4 text-amber-400" />
-                  <span>{t('pendingReviews')}</span>
-                </span>
-                {isActive('/teacher/pending-reviews') && <span className="w-2 h-2 rounded-full bg-amber-400" />}
-              </Link>
-
-              <Link to="/teacher/students" className={navLinkClass('/teacher/students')} onClick={onClose}>
-                <span className="flex items-center gap-3">
-                  <Users className="w-4 h-4 text-sky-400" />
-                  <span>{t('students')}</span>
-                </span>
-                {isActive('/teacher/students') && <span className="w-2 h-2 rounded-full bg-sky-400" />}
-              </Link>
-
-              <Link to="/archive" className={navLinkClass('/archive')} onClick={onClose}>
-                <span className="flex items-center gap-3">
-                  <Archive className="w-4 h-4 text-amber-400" />
-                  <span>Archive</span>
-                </span>
-                {isActive('/archive') && <span className="w-2 h-2 rounded-full bg-amber-400" />}
-              </Link>
-
-              <Link to="/activity-log" className={navLinkClass('/activity-log')} onClick={onClose}>
-                <span className="flex items-center gap-3">
-                  <Activity className="w-4 h-4 text-indigo-400" />
-                  <span>Activity Audit Log</span>
-                </span>
-                {isActive('/activity-log') && <span className="w-2 h-2 rounded-full bg-indigo-400" />}
-              </Link>
+              {!collapsed && (
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 px-3.5 pt-4 mb-2 truncate">
+                  Teacher Tools
+                </div>
+              )}
+              {renderNavLink('/teacher/pending-reviews', t('pendingReviews'), <FileCode className="w-4 h-4 text-amber-400" />, 'bg-amber-400')}
+              {renderNavLink('/teacher/students', t('students'), <Users className="w-4 h-4 text-sky-400" />, 'bg-sky-400')}
+              {renderNavLink('/archive', 'Archive', <Archive className="w-4 h-4 text-amber-400" />, 'bg-amber-400')}
+              {renderNavLink('/activity-log', 'Activity Audit Log', <Activity className="w-4 h-4 text-indigo-400" />, 'bg-indigo-400')}
             </>
           )}
 
           {user.role === 'Admin' && (
             <>
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-violet-400 px-3.5 pt-4 mb-2">
-                Academy Admin
-              </div>
-              <Link to="/admin/dashboard" className={navLinkClass('/admin/dashboard')} onClick={onClose}>
-                <span className="flex items-center gap-3">
-                  <ShieldCheck className="w-4 h-4 text-violet-400" />
-                  <span>Admin Dashboard</span>
-                </span>
-                {isActive('/admin/dashboard') && <span className="w-2 h-2 rounded-full bg-violet-400" />}
-              </Link>
-              <Link to="/admin/users" className={navLinkClass('/admin/users')} onClick={onClose}>
-                <span className="flex items-center gap-3">
-                  <Users className="w-4 h-4 text-violet-400" />
-                  <span>User Management</span>
-                </span>
-                {isActive('/admin/users') && <span className="w-2 h-2 rounded-full bg-violet-400" />}
-              </Link>
-              <Link to="/admin/settings" className={navLinkClass('/admin/settings')} onClick={onClose}>
-                <span className="flex items-center gap-3">
-                  <Settings className="w-4 h-4 text-violet-400" />
-                  <span>System Settings</span>
-                </span>
-                {isActive('/admin/settings') && <span className="w-2 h-2 rounded-full bg-violet-400" />}
-              </Link>
+              {!collapsed && (
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-violet-400 px-3.5 pt-4 mb-2 truncate">
+                  Academy Admin
+                </div>
+              )}
+              {renderNavLink('/admin/dashboard', 'Admin Dashboard', <ShieldCheck className="w-4 h-4 text-violet-400" />, 'bg-violet-400')}
+              {renderNavLink('/admin/users', 'User Management', <Users className="w-4 h-4 text-violet-400" />, 'bg-violet-400')}
+              {renderNavLink('/admin/settings', 'System Settings', <Settings className="w-4 h-4 text-violet-400" />, 'bg-violet-400')}
             </>
           )}
 
-          <div className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 px-3.5 pt-4 mb-2">
-            Preferences
-          </div>
+          {!collapsed && (
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 px-3.5 pt-4 mb-2 truncate">
+              Preferences
+            </div>
+          )}
 
-          <Link to="/settings" className={navLinkClass('/settings')} onClick={onClose}>
-            <span className="flex items-center gap-3">
-              <Settings className="w-4 h-4 text-zinc-400" />
-              <span>{t('settings')}</span>
-            </span>
-            {isActive('/settings') && <span className="w-2 h-2 rounded-full bg-blue-400" />}
-          </Link>
-
-          <Link to="/profile" className={navLinkClass('/profile')} onClick={onClose}>
-            <span className="flex items-center gap-3">
-              <User className="w-4 h-4 text-zinc-400" />
-              <span>{t('profile')}</span>
-            </span>
-            {isActive('/profile') && <span className="w-2 h-2 rounded-full bg-blue-400" />}
-          </Link>
+          {renderNavLink('/settings', t('settings'), <Settings className="w-4 h-4 text-zinc-400" />)}
+          {renderNavLink('/profile', t('profile'), <User className="w-4 h-4 text-zinc-400" />)}
         </nav>
       </div>
 
       {/* Footer / User Profile & Controls */}
-      <div className="p-4 border-t border-[#1F2937] space-y-3 bg-[#0B0F19]/80">
+      <div className={`border-t border-[#1F2937] space-y-3 bg-[#0B0F19]/80 w-full ${collapsed ? 'p-2' : 'p-4'}`}>
         {/* Language Switcher */}
-        <button
-          onClick={toggleLanguage}
-          className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[#1F2937]/70 hover:bg-[#1F2937] border border-[#374151]/50 text-zinc-200 rounded-xl text-xs font-bold transition-colors min-h-[44px]"
-        >
-          <span className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-blue-400" />
-            <span>Language</span>
-          </span>
-          <span className="text-[10px] font-extrabold uppercase bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30">
-            {lang === 'ar' ? 'عربي' : 'English'}
-          </span>
-        </button>
+        <div className="relative group/lang">
+          <button
+            onClick={toggleLanguage}
+            aria-label="Toggle Language"
+            className={`w-full flex items-center bg-[#1F2937]/70 hover:bg-[#1F2937] border border-[#374151]/50 text-zinc-200 rounded-xl text-xs font-bold transition-colors min-h-[44px] ${
+              collapsed ? 'justify-center px-0' : 'justify-between px-3.5'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-blue-400 shrink-0" />
+              {!collapsed && <span>Language</span>}
+            </span>
+            {!collapsed && (
+              <span className="text-[10px] font-extrabold uppercase bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30">
+                {lang === 'ar' ? 'عربي' : 'English'}
+              </span>
+            )}
+          </button>
+          {collapsed && (
+            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 px-2.5 py-1.5 bg-[#1F2937] text-white text-xs font-semibold rounded-lg shadow-xl border border-[#374151] whitespace-nowrap opacity-0 pointer-events-none group-hover/lang:opacity-100 transition-opacity duration-150">
+              Language ({lang === 'ar' ? 'English' : 'عربي'})
+            </div>
+          )}
+        </div>
 
         {/* User Card & Logout */}
-        <div className="flex items-center justify-between p-2.5 bg-[#1F2937]/50 rounded-xl border border-[#374151]/40">
+        <div
+          className={`flex items-center bg-[#1F2937]/50 rounded-xl border border-[#374151]/40 ${
+            collapsed ? 'justify-center p-2' : 'justify-between p-2.5'
+          }`}
+        >
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-9 h-9 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0 border border-blue-400/30">
               {user.avatarUrl ? (
@@ -228,19 +249,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
                 userInitials
               )}
             </div>
-            <div className="truncate">
-              <p className="text-xs font-bold text-white truncate">{user.name}</p>
-              <p className="text-[10px] text-zinc-400 capitalize truncate">{user.role}</p>
-            </div>
+            {!collapsed && (
+              <div className="truncate">
+                <p className="text-xs font-bold text-white truncate">{user.name}</p>
+                <p className="text-[10px] text-zinc-400 capitalize truncate">{user.role}</p>
+              </div>
+            )}
           </div>
 
-          <button
-            onClick={logout}
-            className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
-            title={t('logout')}
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          {!collapsed && (
+            <button
+              onClick={logout}
+              className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              aria-label={t('logout')}
+              title={t('logout')}
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </aside>
@@ -249,11 +275,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
   return (
     <>
       {/* Desktop Sticky Sidebar */}
-      <div className="hidden md:flex h-screen sticky top-0 shrink-0 z-30">
-        {sidebarContent}
+      <div
+        className={`hidden md:flex h-screen sticky top-0 shrink-0 z-30 transition-all duration-250 ease-in-out ${
+          isCollapsed ? 'w-[72px]' : 'w-[280px]'
+        }`}
+      >
+        {sidebarContent(isCollapsed)}
       </div>
 
-      {/* Mobile Off-Canvas Drawer with 80-85% viewport width and full dark backdrop overlay */}
+      {/* Mobile Off-Canvas Drawer (Always Expanded) */}
       {isOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
           {/* Dimmed Background Overlay */}
@@ -261,13 +291,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
             className="fixed inset-0 bg-black/85 backdrop-blur-md transition-opacity animate-in fade-in"
             onClick={onClose}
           />
-          {/* Drawer Container (Width 82% max 320px) */}
+          {/* Drawer Container */}
           <div className="relative z-10 h-full w-[82vw] max-w-[320px] shadow-2xl animate-in slide-in-from-left duration-200">
-            {sidebarContent}
+            {sidebarContent(false)}
           </div>
         </div>
       )}
     </>
   );
 };
+
 
