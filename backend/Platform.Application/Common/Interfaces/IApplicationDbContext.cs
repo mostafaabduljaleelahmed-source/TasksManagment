@@ -17,5 +17,6 @@ public interface IApplicationDbContext
     DbSet<Notification> Notifications { get; }
     DbSet<UserTaskView> UserTaskViews { get; }
     DbSet<ActivityLog> ActivityLogs { get; }
+    DbSet<SystemSetting> SystemSettings { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -4,6 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Platform.Application.Common.Interfaces;
 using Platform.Application.Features.Tasks.Dtos;
 
@@ -15,19 +17,21 @@ namespace Platform.Api.Controllers;
 public class TasksController : ControllerBase
 {
     private readonly ITaskService _taskService;
+    private readonly ILogger<TasksController> _logger;
 
-    public TasksController(ITaskService taskService)
+    public TasksController(ITaskService taskService, ILogger<TasksController> logger)
     {
         _taskService = taskService;
+        _logger = logger;
     }
 
     [HttpPost("session/{sessionId}")]
     public async Task<IActionResult> CreateTask(Guid sessionId, [FromBody] CreateProgrammingTaskDto dto, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
-            return Forbid("Only teachers can create tasks.");
+            return Forbid("Only teachers and admins can create tasks.");
         }
 
         try
@@ -78,9 +82,9 @@ public class TasksController : ControllerBase
             return Unauthorized(new { message = "User not found." });
         }
 
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
-            return Forbid("Only teachers can delete tasks.");
+            return Forbid("Only teachers and admins can delete tasks.");
         }
 
         try
@@ -90,7 +94,28 @@ public class TasksController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
+            _logger.LogWarning(ex, "InvalidOperationException deleting task {TaskId}: {Message}", taskId, ex.Message);
             return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "UnauthorizedAccessException deleting task {TaskId}: {Message}", taskId, ex.Message);
+            return StatusCode(403, new { message = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            var innerMsg = ex.InnerException?.Message ?? ex.Message;
+            _logger.LogError(ex, "DbUpdateException deleting task {TaskId}. InnerException: {InnerMessage}", taskId, innerMsg);
+            return BadRequest(new { 
+                message = "Cannot delete task due to linked database records.", 
+                error = ex.Message,
+                innerException = innerMsg 
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unhandled exception deleting task {TaskId}: {Message}", taskId, ex.Message);
+            return StatusCode(500, new { message = $"Error deleting task: {ex.Message}", innerException = ex.InnerException?.Message });
         }
     }
 
@@ -103,9 +128,9 @@ public class TasksController : ControllerBase
         CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
-            return Forbid("Only teachers can upload attachments.");
+            return Forbid("Only teachers and admins can upload attachments.");
         }
 
         if (file == null || file.Length == 0)
@@ -180,9 +205,9 @@ public class TasksController : ControllerBase
         CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
-            return Forbid("Only teachers can delete attachments.");
+            return Forbid("Only teachers and admins can delete attachments.");
         }
 
         var task = await dbContext.ProgrammingTasks.FindAsync(new object[] { taskId }, cancellationToken);

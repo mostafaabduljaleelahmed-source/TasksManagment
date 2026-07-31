@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<UserTaskView> UserTaskViews => Set<UserTaskView>();
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -99,6 +100,18 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             .HasForeignKey(n => n.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<Notification>()
+            .HasOne<ProgrammingTask>()
+            .WithMany()
+            .HasForeignKey(n => n.TaskId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ActivityLog>()
+            .HasOne(a => a.Task)
+            .WithMany()
+            .HasForeignKey(a => a.TaskId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         modelBuilder.Entity<UserTaskView>()
             .HasOne(v => v.Student)
             .WithMany()
@@ -115,6 +128,18 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
             .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.GoogleId);
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.EmailVerificationToken);
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.PasswordResetToken);
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.RefreshToken);
 
         modelBuilder.Entity<Course>()
             .HasIndex(c => c.CourseCode)

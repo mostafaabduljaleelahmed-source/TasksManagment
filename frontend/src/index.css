@@ -13,12 +13,32 @@
   --danger: #EF4444;
   --text-main: #F9FAFB;
   --text-muted: #9CA3AF;
+
+  /* Safe Area Insets */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+
+  /* Touch Target Minimum Standard */
+  --min-touch-target: 48px;
 }
 
 @layer base {
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
   body {
     @apply bg-[#0B0F19] text-[#F9FAFB] antialiased selection:bg-blue-500/30 selection:text-blue-200;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding-top: var(--sat);
+    padding-bottom: var(--sab);
+    padding-left: var(--sal);
+    padding-right: var(--sar);
   }
 }
 
@@ -41,9 +61,37 @@
   background: #374151;
 }
 
-/* Linear Glassmorphism & Soft Glows */
+/* Glassmorphism & Modern UI Enhancements */
+.glass-panel {
+  background: rgba(18, 18, 23, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(23, 23, 30, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+}
+
+.glow-violet {
+  box-shadow: 0 0 30px -5px rgba(124, 58, 237, 0.3);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 30px -5px rgba(16, 185, 129, 0.3);
+}
+
+.glow-sky {
+  box-shadow: 0 0 30px -5px rgba(14, 165, 233, 0.3);
+}
+
+/* Linear Glassmorphism & Mobile Touch Rules */
 .saas-card {
-  @apply bg-[#111827] border border-[#1F2937] rounded-2xl shadow-xl transition-all duration-200;
+  @apply bg-[#111827] border border-[#1F2937] rounded-2xl shadow-xl transition-all duration-200 p-4 sm:p-6;
 }
 
 .saas-card:hover {
@@ -51,15 +99,31 @@
 }
 
 .saas-button-primary {
-  @apply bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-xs py-2.5 px-4 shadow-lg shadow-blue-950/40 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm min-h-[48px] px-4 shadow-lg shadow-blue-950/40 transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto;
 }
 
 .saas-button-secondary {
-  @apply bg-[#1F2937] hover:bg-[#374151] text-zinc-200 font-semibold rounded-xl text-xs py-2.5 px-4 border border-[#374151] transition-all duration-200 flex items-center justify-center gap-2;
+  @apply bg-[#1F2937] hover:bg-[#374151] text-zinc-200 font-semibold rounded-xl text-sm min-h-[48px] px-4 border border-[#374151] transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98] w-full sm:w-auto;
 }
 
 .saas-input {
-  @apply bg-[#111827] border border-[#1F2937] text-white rounded-xl text-xs py-2.5 px-3.5 focus:outline-none focus:border-blue-500 transition-colors w-full placeholder:text-zinc-500;
+  @apply bg-[#111827] border border-[#1F2937] text-white rounded-xl text-sm min-h-[48px] px-4 focus:outline-none focus:border-blue-500 transition-colors w-full placeholder:text-zinc-500;
+}
+
+/* Mobile Responsive Typography Utilities */
+.text-mobile-h1 {
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  line-height: 1.2;
+}
+
+.text-mobile-h2 {
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+  line-height: 1.3;
+}
+
+.text-mobile-h3 {
+  font-size: clamp(1.1rem, 3.5vw, 1.35rem);
+  line-height: 1.4;
 }
 
 /* Force Monaco Editor containers and internal canvas/lines to strictly render in LTR mode */
@@ -75,3 +139,59 @@
   text-align: left !important;
   unicode-bidi: isolate !important;
 }
+
+/* Micro-animations and active press states */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* Accessible focus ring utilities */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+}
+
+/* Button active feedback */
+button:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+
+/* Bottom Sheet Drawer for Mobile */
+.mobile-bottom-sheet {
+  @apply fixed inset-x-0 bottom-0 z-50 bg-[#111827] border-t border-[#1F2937] rounded-t-3xl p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto animate-fade-in;
+}
+
+/* Print Certificate Media Rules */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-certificate, #printable-certificate * {
+    visibility: visible;
+  }
+  #printable-certificate {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
+

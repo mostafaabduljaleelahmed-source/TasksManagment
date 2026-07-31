@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import {
-  Archive as ArchiveIcon, RotateCcw, BookOpen, FolderGit2, FileCode, Loader2, CheckCircle2
+  Archive as ArchiveIcon, RotateCcw, BookOpen, FolderGit2, FileCode, Loader2, CheckCircle2, ArrowLeft, ChevronRight, Home
 } from 'lucide-react';
 
 interface ArchivedCourse {
@@ -42,6 +43,7 @@ interface ArchiveData {
 export const Archive: React.FC = () => {
   const { user } = useAuth();
   const toast = useToast();
+  const navigate = useNavigate();
 
   const [data, setData] = useState<ArchiveData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -90,7 +92,31 @@ export const Archive: React.FC = () => {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Navigation Breadcrumb & Back Button */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-zinc-400">
+          <Link to="/dashboard" className="hover:text-white flex items-center gap-1 transition-colors">
+            <Home className="w-3.5 h-3.5" />
+            Dashboard
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5 text-zinc-600" />
+          <Link to="/" className="hover:text-white transition-colors">
+            Courses
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5 text-zinc-600" />
+          <span className="text-amber-400 font-semibold">Archive</span>
+        </nav>
+
+        <button
+          onClick={() => navigate(-1)}
+          className="px-3.5 py-1.5 bg-[#1F2937] hover:bg-[#374151] text-zinc-200 font-semibold text-xs rounded-xl border border-[#374151] transition-all flex items-center gap-2 shadow-sm active:scale-95"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 text-zinc-400" />
+          Back
+        </button>
+      </div>
+
       {/* Header */}
       <div className="border-b border-[#1F2937] pb-6 flex items-center justify-between">
         <div>
@@ -166,7 +192,7 @@ export const Archive: React.FC = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {data.courses.map((course) => (
+                  {data.courses.map((course: ArchivedCourse) => (
                     <div
                       key={course.id}
                       className="bg-[#111827] border border-[#1F2937] rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4"
@@ -217,7 +243,7 @@ export const Archive: React.FC = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {data.sessions.map((session) => (
+                  {data.sessions.map((session: ArchivedSession) => (
                     <div
                       key={session.id}
                       className="bg-[#111827] border border-[#1F2937] rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4"
@@ -267,7 +293,7 @@ export const Archive: React.FC = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {data.assignments.map((task) => (
+                  {data.assignments.map((task: ArchivedAssignment) => (
                     <div
                       key={task.id}
                       className="bg-[#111827] border border-[#1F2937] rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4"

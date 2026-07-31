@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CardSkeleton } from '../components/SkeletonLoaders';
 import { EmptyState } from '../components/EmptyState';
-import { Plus, Key, Clock, Trash2, BookOpen, Loader2, Archive } from 'lucide-react';
+import { Plus, Key, Clock, Trash2, BookOpen, Loader2, Archive, Users, Settings } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -44,7 +44,7 @@ export const CoursesList: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const endpoint = user.role === 'Teacher' ? 'teacher' : 'student';
+      const endpoint = (user.role === 'Teacher' || user.role === 'Admin') ? 'teacher' : 'student';
       const response = await fetch(`${API_URL}/courses/${endpoint}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
@@ -161,9 +161,9 @@ export const CoursesList: React.FC = () => {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${user?.token}` },
       });
+      const data = await response.json().catch(() => null);
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to delete course');
+        throw new Error(data?.message || data?.details || 'Failed to delete course');
       }
 
       setCourses((prev) => prev.filter((c) => c.id !== courseToDelete.id));
@@ -188,7 +188,31 @@ export const CoursesList: React.FC = () => {
         </div>
 
         <div>
-          {user?.role === 'Teacher' ? (
+          {user?.role === 'Admin' ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="saas-button-primary"
+              >
+                <Plus className="w-4 h-4" />
+                Create Course
+              </button>
+              <Link
+                to="/admin/users"
+                className="px-4 py-2.5 bg-[#1F2937] hover:bg-[#374151] text-zinc-200 border border-[#374151] rounded-xl text-xs font-semibold flex items-center gap-2 transition-all"
+              >
+                <Users className="w-4 h-4 text-violet-400" />
+                User Management
+              </Link>
+              <Link
+                to="/admin/settings"
+                className="px-4 py-2.5 bg-[#1F2937] hover:bg-[#374151] text-zinc-200 border border-[#374151] rounded-xl text-xs font-semibold flex items-center gap-2 transition-all"
+              >
+                <Settings className="w-4 h-4 text-violet-400" />
+                System Settings
+              </Link>
+            </div>
+          ) : user?.role === 'Teacher' ? (
             <button
               onClick={() => setShowCreateModal(true)}
               className="saas-button-primary"

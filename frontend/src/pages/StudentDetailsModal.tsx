@@ -3,7 +3,9 @@ import Editor from '@monaco-editor/react';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from '../utils/i18n';
-import { X, Calendar, Code, Award, MessageSquare, Save, Loader2, Download, Clock } from 'lucide-react';
+import { X, Code, Award, Save, Loader2, Download, MessageSquare } from 'lucide-react';
+
+
 
 interface StudentDetailsModalProps {
   studentId: string;
@@ -186,13 +188,13 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
     : 'ST';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="w-full max-w-6xl h-[90vh] bg-[#16161A] border border-[#24242B] rounded-2xl flex flex-col shadow-2xl overflow-hidden relative">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4">
+      <div className="w-full sm:max-w-6xl h-[94vh] sm:h-[90vh] bg-[#16161A] border-t sm:border border-[#24242B] rounded-t-3xl sm:rounded-2xl flex flex-col shadow-2xl overflow-hidden relative">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#24242B] bg-[#1E1E24]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#24242B] bg-[#1E1E24] shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold text-sm flex items-center justify-center border border-violet-400/30 overflow-hidden shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center border border-violet-400/30 overflow-hidden shrink-0">
               {studentAvatarUrl ? (
                 <img src={studentAvatarUrl} alt={studentName} className="w-full h-full object-cover" />
               ) : (
@@ -200,18 +202,18 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
               )}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Award className="w-5 h-5 text-violet-400" />
-                {t('manualReviewTitle')}: <span className="text-violet-300">{studentName}</span>
+              <h2 className="text-sm sm:text-lg font-bold text-white flex items-center gap-2">
+                <Award className="w-4 h-4 sm:w-5 sm:h-5 text-violet-400" />
+                <span>{studentName}</span>
               </h2>
-              <p className="text-xs text-zinc-400">
-                {t('studentId')}: {studentRegisterId} | {t('taskTitle')}: {taskTitle}
+              <p className="text-[11px] sm:text-xs text-zinc-400">
+                {studentRegisterId} | {taskTitle}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-[#2F2F37] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-2 hover:bg-[#2F2F37] text-zinc-400 hover:text-white rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -227,89 +229,45 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
             <p>{error}</p>
           </div>
         ) : (
-          <div className="flex-1 flex overflow-hidden">
-            {/* Sidebar: Attempt History */}
-            <div className="w-64 border-r border-[#24242B] bg-[#121215] flex flex-col overflow-y-auto p-4 space-y-3">
-              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">{t('submissionHistory')}</h3>
-              {submissions.length === 0 ? (
-                <div className="text-zinc-500 text-sm py-4">{t('notSubmitted')}</div>
-              ) : (
-                submissions.map((sub) => (
-                  <button
-                    key={sub.id}
-                    onClick={() => handleSelectSubmission(sub)}
-                    className={`w-full text-right p-3 rounded-xl border text-xs transition-all flex flex-col gap-1 ${
-                      selectedSub?.id === sub.id
-                        ? 'bg-violet-600/15 border-violet-500/50 text-white font-semibold shadow-sm'
-                        : 'bg-[#1A1A20] border-[#292933] text-zinc-400 hover:bg-[#22222A]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-violet-400">{t('attemptNumber')} #{sub.attemptNumber}</span>
-                      <span className="bg-violet-500/20 text-violet-300 px-1.5 py-0.5 rounded text-[10px] font-bold">
-                        {sub.grade}/{maxGrade}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-zinc-500 flex items-center gap-1 mt-1">
-                      <Calendar className="w-3 h-3 text-zinc-500" />
-                      {new Date(sub.submittedAt).toLocaleString()}
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
-
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
             {/* Main Content Pane */}
             {selectedSub ? (
-              <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-[#16161A]">
+              <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden bg-[#16161A]">
                 {/* Submitted Code & Execution Console Pane */}
-                <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-[#1F2937] overflow-hidden">
-                  <div className="px-5 py-2.5 border-b border-[#1F2937] bg-[#111827] flex items-center justify-between">
+                <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-[#1F2937] min-h-[300px] lg:min-h-0">
+                  <div className="px-4 py-2 border-b border-[#1F2937] bg-[#111827] flex items-center justify-between">
                     <span className="text-xs font-bold text-zinc-300 flex items-center gap-2">
                       <Code className="w-4 h-4 text-blue-400" />
                       {t('submittedCode')}
                     </span>
-                    <div className="flex items-center gap-3">
-                      {selectedSub.executionTimeMs !== null && selectedSub.executionTimeMs !== undefined && (
-                        <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-amber-400" />
-                          {selectedSub.executionTimeMs} ms
-                        </span>
-                      )}
-                      <span className="text-[11px] text-zinc-400 font-mono">
-                        {new Date(selectedSub.submittedAt).toLocaleString()}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const blob = new Blob([selectedSub.code], { type: 'text/plain;charset=utf-8' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `${selectedSub.studentName.replace(/\s+/g, '_')}_Attempt_${selectedSub.attemptNumber}.py`;
-                          document.body.appendChild(a);
-                          a.click();
-                          document.body.removeChild(a);
-                          URL.revokeObjectURL(url);
-                        }}
-                        className="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/40 text-blue-300 text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1"
-                        title="Download Submitted File"
-                      >
-                        <Download className="w-3 h-3" />
-                        Download File
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const blob = new Blob([selectedSub.code], { type: 'text/plain;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${selectedSub.studentName.replace(/\s+/g, '_')}_Attempt_${selectedSub.attemptNumber}.py`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/40 text-blue-300 text-xs font-bold rounded-xl transition-colors flex items-center gap-1 min-h-[38px]"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download
+                    </button>
                   </div>
-                  
-                  {/* Monaco Editor Container */}
-                  <div className="h-3/5 min-h-[240px] relative overflow-hidden bg-[#0B0F19]" dir="ltr" style={{ direction: 'ltr' }}>
+
+                  <div className="flex-1 min-h-[250px] relative" dir="ltr" style={{ direction: 'ltr' }}>
                     <Editor
                       height="100%"
                       width="100%"
                       defaultLanguage="python"
                       language="python"
                       theme="vs-dark"
-                      value={selectedSub.code || ''}
+                      value={selectedSub.code}
                       options={{
                         readOnly: true,
                         minimap: { enabled: false },
@@ -317,13 +275,10 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                         lineNumbers: 'on',
                         fontFamily: 'Consolas, monospace',
                         automaticLayout: true,
-                        scrollBeyondLastLine: false,
-                        padding: { top: 8, bottom: 8 }
+                        wordWrap: 'on'
                       }}
                     />
                   </div>
-
-                  {/* Console Output & Runtime Errors Pane */}
                   <div className="h-2/5 border-t border-[#1F2937] bg-[#0D1117] p-4 overflow-y-auto flex flex-col space-y-3 font-mono text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
@@ -374,8 +329,32 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Manual Grading Form */}
+                  {/* Right Side: Grading Controls Form (Sticky Footer on mobile) */}
                   <form onSubmit={handleSaveReview} className="space-y-4">
+                    {submissions.length > 1 && (
+                      <div>
+                        <label className="block text-xs font-extrabold uppercase tracking-wider text-zinc-400 mb-2">
+                          Select Attempt
+                        </label>
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {submissions.map((sub) => (
+                            <button
+                              key={sub.id}
+                              type="button"
+                              onClick={() => handleSelectSubmission(sub)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 border transition-all ${
+                                selectedSub?.id === sub.id
+                                  ? 'bg-blue-600 text-white border-blue-400'
+                                  : 'bg-[#1A1A20] text-zinc-400 border-[#292933]'
+                              }`}
+                            >
+                              Attempt #{sub.attemptNumber} ({sub.grade ?? 0}/{maxGrade})
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <label className="block text-xs font-bold text-zinc-300 mb-1.5 flex items-center gap-1.5">
                         <Award className="w-4 h-4 text-amber-400" />

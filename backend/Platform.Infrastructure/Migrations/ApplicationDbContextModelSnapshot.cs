@@ -168,6 +168,8 @@ namespace Platform.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TaskId");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
@@ -373,6 +375,47 @@ namespace Platform.Infrastructure.Migrations
                     b.ToTable("Submissions");
                 });
 
+            modelBuilder.Entity("Platform.Domain.Entities.SystemSetting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AcademyLogo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AcademyName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContactEmail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FooterText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PrimaryColor")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SecondaryColor")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SupportEmail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemSettings");
+                });
+
             modelBuilder.Entity("Platform.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -389,7 +432,28 @@ namespace Platform.Infrastructure.Migrations
                     b.Property<bool>("EmailNotificationsEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("EmailVerificationToken")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("EmailVerificationTokenExpires")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("GoogleId")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDisabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
@@ -399,6 +463,18 @@ namespace Platform.Infrastructure.Migrations
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("PasswordResetToken")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("PasswordResetTokenExpires")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("RefreshTokenExpires")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Role")
                         .HasColumnType("integer");
@@ -410,6 +486,14 @@ namespace Platform.Infrastructure.Migrations
 
                     b.HasIndex("Email")
                         .IsUnique();
+
+                    b.HasIndex("EmailVerificationToken");
+
+                    b.HasIndex("GoogleId");
+
+                    b.HasIndex("PasswordResetToken");
+
+                    b.HasIndex("RefreshToken");
 
                     b.ToTable("Users");
                 });
@@ -446,7 +530,8 @@ namespace Platform.Infrastructure.Migrations
 
                     b.HasOne("Platform.Domain.Entities.ProgrammingTask", "Task")
                         .WithMany()
-                        .HasForeignKey("TaskId");
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Platform.Domain.Entities.User", "User")
                         .WithMany()
@@ -512,6 +597,11 @@ namespace Platform.Infrastructure.Migrations
 
             modelBuilder.Entity("Platform.Domain.Entities.Notification", b =>
                 {
+                    b.HasOne("Platform.Domain.Entities.ProgrammingTask", null)
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("Platform.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")

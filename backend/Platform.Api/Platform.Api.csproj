@@ -24,8 +24,16 @@
     <ProjectReference Include="..\Platform.Application\Platform.Application.csproj" />
   </ItemGroup>
 
-  <Target Name="BuildFrontend" BeforeTargets="Build;Publish">
+  <Target Name="BuildFrontend" BeforeTargets="Build">
     <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)\..\..\frontend" />
+  </Target>
+
+  <Target Name="FlattenWwwrootForPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <_WwwrootFiles Include="$(PublishDir)wwwroot\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_WwwrootFiles)" DestinationFolder="$(PublishDir)%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <RemoveDir Directories="$(PublishDir)wwwroot" />
   </Target>
 
 </Project>

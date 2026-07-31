@@ -27,8 +27,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
-      <div className="w-full max-w-md bg-[#16161A] border border-[#24242B] rounded-2xl p-6 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in">
+      <div className="w-full sm:max-w-md bg-[#16161A] border-t sm:border border-[#24242B] rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl relative">
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-3">
             <div className={`p-2.5 rounded-xl border ${
@@ -41,7 +41,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             onClick={onClose}
             disabled={loading}
-            className="p-1 hover:bg-[#24242B] rounded-lg text-zinc-400 hover:text-white transition-colors"
+            className="p-2 hover:bg-[#24242B] rounded-xl text-zinc-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -51,12 +51,12 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           {message}
         </p>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 bg-[#1F1F24] hover:bg-[#2F2F37] border border-[#2F2F37] text-zinc-300 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+            className="saas-button-secondary min-h-[48px]"
           >
             {cancelText}
           </button>
@@ -64,10 +64,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className={`flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg text-sm transition-all shadow-lg disabled:opacity-50 ${
+            className={`saas-button-primary min-h-[48px] ${
               danger
                 ? 'bg-red-600 hover:bg-red-500 shadow-red-950/40'
-                : 'bg-violet-600 hover:bg-violet-500 shadow-violet-950/40'
+                : 'bg-blue-600 hover:bg-blue-500 shadow-blue-950/40'
             }`}
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -78,3 +78,4 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     </div>
   );
 };
+

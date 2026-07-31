@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { StudentDetailsModal } from './StudentDetailsModal';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 import {
-  Code, ArrowLeft, ArrowRight, Search, FileCode, Loader2, Users, CheckCircle2, XCircle, Clock, Award
+  Code, Search, FileCode, Loader2, Users, CheckCircle2, XCircle, Clock, Award
 } from 'lucide-react';
 
 interface AssignmentStudentItem {
@@ -34,7 +35,7 @@ interface AssignmentOverviewData {
 export const AssignmentReview: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
   const { user } = useAuth();
-  const { t, isRtl } = useTranslation();
+  const { t } = useTranslation();
 
   const [data, setData] = useState<AssignmentOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,17 +131,18 @@ export const AssignmentReview: React.FC = () => {
   const activeSub = reviewIndex !== null && searchFilteredSubmitted[reviewIndex] ? searchFilteredSubmitted[reviewIndex] : null;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
-      {/* Header Breadcrumb & Actions */}
+    <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: 'Courses', href: '/' },
+          { label: data?.groupName || 'Course', href: data?.courseId ? `/course/${data.courseId}` : '/' },
+          { label: data?.taskTitle ? `Review: ${data.taskTitle}` : 'Assignment Review' },
+        ]}
+      />
+
+      {/* Header & Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F2937] pb-6">
         <div>
-          <Link
-            to={data?.courseId ? `/course/${data.courseId}` : '/'}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-blue-400 hover:text-blue-300 mb-2 transition-colors"
-          >
-            {isRtl ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
-            {t('courses')} / {data?.groupName}
-          </Link>
           <h1 className="text-2xl font-extrabold text-white flex items-center gap-3 tracking-tight">
             <Code className="w-6 h-6 text-blue-400" />
             {data?.taskTitle}
@@ -229,7 +231,53 @@ export const AssignmentReview: React.FC = () => {
               <p className="text-xs text-zinc-400">Students who submitted their assignment. Click Review to inspect code and grade.</p>
             </div>
 
-            <div className="bg-[#111827] border border-[#1F2937] rounded-2xl overflow-hidden shadow-xl">
+            {/* Mobile Cards Layout (sm:hidden) */}
+            <div className="sm:hidden space-y-3">
+              {searchFilteredSubmitted.length === 0 ? (
+                <div className="p-6 bg-[#111827] border border-[#1F2937] rounded-2xl text-center text-zinc-500 text-xs">
+                  No submitted students found.
+                </div>
+              ) : (
+                searchFilteredSubmitted.map((s, idx) => (
+                  <div key={s.studentId} className="bg-[#111827] border border-[#1F2937] rounded-2xl p-4 space-y-3 shadow-xl">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0">
+                          {s.studentAvatarUrl ? (
+                            <img src={s.studentAvatarUrl} alt={s.studentName} className="w-full h-full object-cover" />
+                          ) : (
+                            s.studentName.substring(0, 2).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-white text-sm">{s.studentName}</h3>
+                          <span className="text-xs text-zinc-400 font-mono">{s.studentRegisterId}</span>
+                        </div>
+                      </div>
+                      <span className="font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl text-xs">
+                        {s.grade} / {data?.maxGrade} pts
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-2 border-t border-[#1F2937]/60 text-zinc-400">
+                      <span>Submitted: {s.submissionTime ? new Date(s.submissionTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</span>
+                      <span className="font-mono">Attempt #{s.attemptNumber}</span>
+                    </div>
+
+                    <button
+                      onClick={() => setReviewIndex(idx)}
+                      className="saas-button-primary min-h-[48px] w-full mt-2"
+                    >
+                      <FileCode className="w-4 h-4" />
+                      Review & Grade Code
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop Table (hidden on mobile) */}
+            <div className="hidden sm:block bg-[#111827] border border-[#1F2937] rounded-2xl overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left text-zinc-300">
                   <thead className="bg-[#1F2937]/50 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-[#1F2937]">
@@ -322,7 +370,48 @@ export const AssignmentReview: React.FC = () => {
               <p className="text-xs text-zinc-400">Enrolled students who have not turned in a submission yet.</p>
             </div>
 
-            <div className="bg-[#111827] border border-[#1F2937] rounded-2xl overflow-hidden shadow-xl">
+            {/* Mobile Cards for Missing Students */}
+            <div className="sm:hidden space-y-3">
+              {searchFilteredMissing.length === 0 ? (
+                <div className="p-6 bg-[#111827] border border-[#1F2937] rounded-2xl text-center text-zinc-500 text-xs">
+                  All enrolled students have submitted! No missing students.
+                </div>
+              ) : (
+                searchFilteredMissing.map((s) => {
+                  const isOverdue = data?.deadline ? new Date() > new Date(data.deadline) : false;
+                  return (
+                    <div key={s.studentId} className="bg-[#111827] border border-[#1F2937] rounded-2xl p-4 flex items-center justify-between gap-3 shadow-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-400 font-bold text-xs flex items-center justify-center border border-zinc-700/40 overflow-hidden shrink-0">
+                          {s.studentAvatarUrl ? (
+                            <img src={s.studentAvatarUrl} alt={s.studentName} className="w-full h-full object-cover" />
+                          ) : (
+                            s.studentName.substring(0, 2).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-white text-sm">{s.studentName}</h3>
+                          <span className="text-xs text-zinc-400 font-mono">{s.studentRegisterId}</span>
+                        </div>
+                      </div>
+
+                      {isOverdue ? (
+                        <span className="px-2.5 py-1 rounded-xl font-bold text-[10px] bg-rose-500/15 border border-rose-500/30 text-rose-400 shrink-0">
+                          🔴 Overdue
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-xl font-medium text-[10px] bg-zinc-500/15 border border-zinc-500/30 text-zinc-400 shrink-0">
+                          ⚪ Pending
+                        </span>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Desktop Table for Missing Students */}
+            <div className="hidden sm:block bg-[#111827] border border-[#1F2937] rounded-2xl overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left text-zinc-300">
                   <thead className="bg-[#1F2937]/50 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-[#1F2937]">
@@ -403,3 +492,4 @@ export const AssignmentReview: React.FC = () => {
     </div>
   );
 };
+

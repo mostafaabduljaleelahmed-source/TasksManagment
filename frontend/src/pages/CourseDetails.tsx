@@ -6,9 +6,11 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import {
   ArrowLeft, Loader2, Plus, FileCode, Clock, AlertCircle,
   Award, BarChart3, Users, BookOpen, CheckCircle, AlertTriangle, FileSpreadsheet,
-  Download, Eye, Search, ChevronRight, ChevronDown, Bell, RefreshCw, X, Trash2, Archive
+  Download, Eye, Search, ChevronRight, ChevronDown, Bell, RefreshCw, X, Trash2, Archive,
+  Lock, Unlock
 } from 'lucide-react';
 import { StudentDetailsModal } from './StudentDetailsModal';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 import { RichTextEditor } from '../components/RichTextEditor';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -108,6 +110,7 @@ export const CourseDetails: React.FC = () => {
   const [courseInfo, setCourseInfo] = useState<{ id: string; name: string; courseCode: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [processingSessionId, setProcessingSessionId] = useState<string | null>(null);
 
   const toggleSessionExpand = (sessionId: string) => {
     setExpandedSessions((prev) => ({
@@ -272,9 +275,11 @@ export const CourseDetails: React.FC = () => {
     }
   };
 
+  const isTeacherOrAdmin = user?.role === 'Teacher' || user?.role === 'Admin';
+
   useEffect(() => {
     fetchSessions();
-    if (user?.role === 'Teacher') {
+    if (isTeacherOrAdmin) {
       fetchDashboardMetrics();
       fetchNotifications();
     }
@@ -318,21 +323,26 @@ export const CourseDetails: React.FC = () => {
     }
   };
 
-  const handleUnlockSession = async (sessionId: string) => {
+  const handleToggleSessionLock = async (sessionId: string, currentUnlocked: boolean) => {
+    setProcessingSessionId(sessionId);
     try {
-      const response = await fetch(`${API_URL}/sessions/${sessionId}/unlock`, {
+      const endpoint = currentUnlocked ? 'lock' : 'unlock';
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/${endpoint}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${user?.token}` },
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Failed to unlock session');
+      if (!response.ok) throw new Error(data.message || `Failed to ${endpoint} session`);
+
       setSessions((prev) =>
-        prev.map((s) => (s.id === sessionId ? { ...s, isUnlocked: true } : s))
+        prev.map((s) => (s.id === sessionId ? { ...s, isUnlocked: !currentUnlocked } : s))
       );
-      toast.success('Session unlocked for students.');
+      toast.success(currentUnlocked ? 'Session locked.' : 'Session unlocked for students.');
     } catch (err: any) {
       setError(err.message);
-      toast.error(err.message || 'Failed to unlock session');
+      toast.error(err.message || 'Failed to toggle session lock');
+    } finally {
+      setProcessingSessionId(null);
     }
   };
 
@@ -434,7 +444,10 @@ export const CourseDetails: React.FC = () => {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${user?.token}` },
       });
-      if (!response.ok) throw new Error('Failed to delete session');
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(data?.message || data?.details || 'Failed to delete session');
+      }
       setSessions((prev) => prev.filter((s) => s.id !== sessionToDelete.id));
       toast.success(`Session '${sessionToDelete.title}' deleted.`);
       setSessionToDelete(null);
@@ -453,7 +466,10 @@ export const CourseDetails: React.FC = () => {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${user?.token}` },
       });
-      if (!response.ok) throw new Error('Failed to delete task');
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(data?.message || data?.details || 'Failed to delete task');
+      }
       toast.success(`Task '${taskToDelete.title}' deleted.`);
       if (selectedTask?.id === taskToDelete.id) {
         setSelectedTask(null);
@@ -475,7 +491,10 @@ export const CourseDetails: React.FC = () => {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${user?.token}` },
       });
-      if (!response.ok) throw new Error('Failed to remove student');
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(data?.message || data?.details || 'Failed to remove student');
+      }
       toast.success(`Student '${studentToRemove.name}' removed from course.`);
       setStudentToRemove(null);
       if (selectedTask) {
@@ -578,7 +597,7 @@ export const CourseDetails: React.FC = () => {
           <span className="text-xl font-bold tracking-tight text-white">Course Syllabus</span>
         </div>
 
-        {user?.role === 'Teacher' && (
+        {isTeacherOrAdmin && (
           <div className="flex items-center bg-[#16161A] border border-[#24242B] rounded-lg p-1">
             <button
               onClick={() => setActiveTab('curriculum')}
@@ -620,7 +639,13 @@ export const CourseDetails: React.FC = () => {
       </nav>
 
       {/* Main Container */}
-      <div className="max-w-6xl mx-auto px-6 mt-8 relative z-10">
+      <div className="max-w-6xl mx-auto px-6 mt-6 relative z-10 space-y-6">
+        <Breadcrumbs
+          items={[
+            { label: 'Courses', href: '/' },
+            { label: courseInfo ? `${courseInfo.name} (${courseInfo.courseCode})` : 'Course Details' },
+          ]}
+        />
         {error && (
           <div className="mb-6 p-4 bg-red-950/40 border border-red-800/50 text-red-200 rounded-lg text-sm flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-red-400" />
@@ -651,12 +676,12 @@ export const CourseDetails: React.FC = () => {
                   )}
                 </div>
                 <p className="text-zinc-400 text-sm mt-1">
-                  {user?.role === 'Teacher'
+                  {isTeacherOrAdmin
                     ? 'Create programming assignments, specify public/hidden cases, and unlock milestones.'
                     : 'Solve python programming tasks and view automatic execution grading.'}
                 </p>
               </div>
-              {user?.role === 'Teacher' && (
+              {isTeacherOrAdmin && (
                 <button
                   onClick={() => setShowSessionModal(true)}
                   className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-5 rounded-lg shadow-lg hover:shadow-violet-900/20 transition-all text-sm shrink-0"
@@ -705,20 +730,35 @@ export const CourseDetails: React.FC = () => {
                             <span className="text-xs text-zinc-400 font-mono">({session.tasks.length} tasks)</span>
                           </div>
 
-                          {user?.role === 'Teacher' && (
+                          {isTeacherOrAdmin && (
                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                              {session.isUnlocked ? (
-                                <span className="text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 py-1 px-2.5 rounded-full font-medium">
-                                  Unlocked
-                                </span>
-                              ) : (
-                                <button
-                                  onClick={() => handleUnlockSession(session.id)}
-                                  className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/25 py-1 px-2.5 rounded-full font-semibold transition-all hover:bg-amber-400/20"
-                                >
-                                  Unlock
-                                </button>
-                              )}
+                              <button
+                                disabled={processingSessionId === session.id}
+                                onClick={() => handleToggleSessionLock(session.id, session.isUnlocked)}
+                                className={`text-xs flex items-center gap-1.5 py-1 px-3 rounded-full font-semibold transition-all shadow-sm active:scale-95 disabled:opacity-50 ${
+                                  session.isUnlocked
+                                    ? 'text-emerald-400 bg-emerald-400/10 border border-emerald-400/25 hover:bg-emerald-400/20'
+                                    : 'text-amber-400 bg-amber-400/10 border border-amber-400/25 hover:bg-amber-400/20'
+                                }`}
+                                title={session.isUnlocked ? "Click to lock session" : "Click to unlock session"}
+                              >
+                                {processingSessionId === session.id ? (
+                                  <>
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    <span>Processing...</span>
+                                  </>
+                                ) : session.isUnlocked ? (
+                                  <>
+                                    <Unlock className="w-3.5 h-3.5" />
+                                    <span>Unlocked</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Lock className="w-3.5 h-3.5" />
+                                    <span>Lock Session</span>
+                                  </>
+                                )}
+                              </button>
                               <button
                                 onClick={() => {
                                   setSelectedSessionId(session.id);
@@ -757,7 +797,7 @@ export const CourseDetails: React.FC = () => {
                                 <div
                                   key={task.id}
                                   onClick={() => {
-                                    if (user?.role === 'Teacher') {
+                                    if (isTeacherOrAdmin) {
                                       navigate(`/assignment/${task.id}/review`);
                                     } else {
                                       navigate(`/task/${task.id}`);
@@ -815,7 +855,7 @@ export const CourseDetails: React.FC = () => {
                                       </span>
 
                                       {/* Teacher Classroom Management Statistics */}
-                                      {user?.role === 'Teacher' && (
+                                      {isTeacherOrAdmin && (
                                         <>
                                           <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold rounded-lg text-[11px]">
                                             👥 Submitted: {task.submittedCount ?? 0}
@@ -851,9 +891,9 @@ export const CourseDetails: React.FC = () => {
 
                                   <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
                                     <span className="text-xs font-bold text-blue-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
-                                      {user?.role === 'Teacher' ? 'Manage & Grade' : 'Open Task'} &rarr;
+                                      {isTeacherOrAdmin ? 'Manage & Grade' : 'Open Task'} &rarr;
                                     </span>
-                                    {user?.role === 'Teacher' && (
+                                    {isTeacherOrAdmin && (
                                       <>
                                         <button
                                           onClick={(e) => {
@@ -889,7 +929,7 @@ export const CourseDetails: React.FC = () => {
                 </div>
 
                 {/* Teacher Task Detail Panel (when a task is clicked) */}
-                {user?.role === 'Teacher' && (
+                {isTeacherOrAdmin && (
                   <div className="md:col-span-1">
                     {selectedTask ? (
                       <div className="bg-[#16161A] border border-[#24242B] rounded-xl p-6 sticky top-24 space-y-6 shadow-xl">

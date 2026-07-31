@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { StudentDetailsModal } from './StudentDetailsModal';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 import {
-  Clock, CheckCircle2, FileCode, Search, SortAsc, Loader2, ArrowLeft
+  Clock, CheckCircle2, FileCode, Search, SortAsc, Loader2
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 interface PendingSubmission {
   submissionId: string;
@@ -71,17 +71,11 @@ export const TeacherPendingReviews: React.FC = () => {
   const activeSub = reviewIndex !== null && filteredSubmissions[reviewIndex] ? filteredSubmissions[reviewIndex] : null;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
-      {/* Header Title & Controls */}
+    <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-6">
+      <Breadcrumbs items={[{ label: 'Pending Reviews' }]} />
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F2937] pb-6">
         <div>
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-400 hover:text-blue-300 mb-2 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Dashboard
-          </Link>
           <h1 className="text-2xl font-extrabold text-white flex items-center gap-3">
             <span className="p-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl">
               🟡

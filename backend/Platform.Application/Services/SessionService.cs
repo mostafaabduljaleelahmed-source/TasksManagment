@@ -235,15 +235,92 @@ public class SessionService : ISessionService
         };
     }
 
-    public async Task DeleteSessionAsync(Guid sessionId, Guid teacherId, CancellationToken cancellationToken = default)
+    public async Task<SessionDto> LockSessionAsync(Guid sessionId, CancellationToken cancellationToken = default)
     {
         var session = await _context.Sessions
+            .Include(s => s.Tasks)
             .FirstOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
 
         if (session == null)
         {
             throw new InvalidOperationException("Session not found.");
         }
+
+        session.IsUnlocked = false;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new SessionDto
+        {
+            Id = session.Id,
+            CourseId = session.CourseId,
+            Title = session.Title,
+            Order = session.Order,
+            IsUnlocked = session.IsUnlocked,
+            Tasks = session.Tasks.Select(t => new ProgrammingTaskDto
+            {
+                Id = t.Id,
+                SessionId = t.SessionId,
+                Title = t.Title,
+                Description = t.Description,
+                ExampleInput = t.ExampleInput,
+                ExampleOutput = t.ExampleOutput,
+                PublicTestCasesJson = t.PublicTestCasesJson,
+                Deadline = t.Deadline,
+                MaxGrade = t.MaxGrade,
+                Mode = t.Mode.ToString(),
+                MaxAttempts = t.MaxAttempts,
+                RunHiddenTestCases = t.RunHiddenTestCases,
+                Type = t.Type.ToString(),
+                TimeLimitMs = t.TimeLimitMs,
+                MemoryLimitMb = t.MemoryLimitMb,
+                GradingStrategy = t.GradingStrategy.ToString(),
+                IgnoreMultipleSpaces = t.IgnoreMultipleSpaces
+            }).ToList()
+        };
+    }
+
+    public async Task DeleteSessionAsync(Guid sessionId, Guid teacherId, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == teacherId, cancellationToken);
+        var session = await _context.Sessions
+            .Include(s => s.Course)
+            .FirstOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
+
+        if (session == null)
+        {
+            throw new InvalidOperationException("Session not found.");
+        }
+
+        if (user == null || (user.Role != Domain.Enums.UserRole.Admin && user.Role != Domain.Enums.UserRole.Teacher))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to delete sessions.");
+        }
+
+        // 1. Get all task IDs for this session
+        var tasks = await _context.ProgrammingTasks.Where(t => t.SessionId == sessionId).ToListAsync(cancellationToken);
+        var taskIds = tasks.Select(t => t.Id).ToList();
+
+        // 2. Purge Submissions
+        var submissions = await _context.Submissions.Where(s => taskIds.Contains(s.TaskId)).ToListAsync(cancellationToken);
+        if (submissions.Any()) _context.Submissions.RemoveRange(submissions);
+
+        // 3. Purge UserTaskViews
+        var taskViews = await _context.UserTaskViews.Where(v => taskIds.Contains(v.TaskId)).ToListAsync(cancellationToken);
+        if (taskViews.Any()) _context.UserTaskViews.RemoveRange(taskViews);
+
+        // 4. Purge Task Notifications
+        var notifications = await _context.Notifications.Where(n => n.TaskId.HasValue && taskIds.Contains(n.TaskId.Value)).ToListAsync(cancellationToken);
+        if (notifications.Any()) _context.Notifications.RemoveRange(notifications);
+
+        // 5. Nullify ActivityLogs
+        var activityLogs = await _context.ActivityLogs.Where(a => a.TaskId.HasValue && taskIds.Contains(a.TaskId.Value)).ToListAsync(cancellationToken);
+        foreach (var log in activityLogs)
+        {
+            log.TaskId = null;
+        }
+
+        // 6. Purge Tasks & Session
+        if (tasks.Any()) _context.ProgrammingTasks.RemoveRange(tasks);
 
         _context.Sessions.Remove(session);
         await _context.SaveChangesAsync(cancellationToken);

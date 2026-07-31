@@ -4,6 +4,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
+import { VerifyEmail } from './pages/VerifyEmail';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
 import { CoursesList } from './pages/CoursesList';
 import { CourseDetails } from './pages/CourseDetails';
 import { CourseMembers } from './pages/CourseMembers';
@@ -20,6 +23,11 @@ import { AssignmentReview } from './pages/AssignmentReview';
 import { AssignmentsList } from './pages/AssignmentsList';
 import { Archive } from './pages/Archive';
 import { ActivityLogPage } from './pages/ActivityLog';
+import { AdminTeachers } from './pages/AdminTeachers';
+import { AdminDashboard } from './pages/AdminDashboard';
+import { UserManagement } from './pages/UserManagement';
+import { SystemSettings } from './pages/SystemSettings';
+import { CalendarPage } from './pages/CalendarPage';
 import { AppLayout } from './components/AppLayout';
 import { Loader2 } from 'lucide-react';
 
@@ -53,7 +61,25 @@ const TeacherRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     );
   }
 
-  if (!user || user.role !== 'Teacher') {
+  if (!user || (user.role !== 'Teacher' && user.role !== 'Admin')) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center text-zinc-500">
+        <Loader2 className="w-8 h-8 animate-spin text-violet-500 mb-2" />
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'Admin') {
     return <Navigate to="/" replace />;
   }
 
@@ -76,6 +102,9 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/"
               element={
@@ -191,9 +220,57 @@ function App() {
             <Route
               path="/activity-log"
               element={
-                <ProtectedRoute>
+                <TeacherRoute>
                   <ActivityLogPage />
+                </TeacherRoute>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute>
+                  <CalendarPage />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/teachers"
+              element={
+                <AdminRoute>
+                  <ProtectedRoute>
+                    <AdminTeachers />
+                  </ProtectedRoute>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <AdminRoute>
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <AdminRoute>
+                  <ProtectedRoute>
+                    <UserManagement />
+                  </ProtectedRoute>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <AdminRoute>
+                  <ProtectedRoute>
+                    <SystemSettings />
+                  </ProtectedRoute>
+                </AdminRoute>
               }
             />
             <Route path="*" element={<Navigate to="/" replace />} />

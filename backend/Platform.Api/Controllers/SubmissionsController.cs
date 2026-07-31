@@ -100,9 +100,9 @@ public class SubmissionsController : ControllerBase
     public async Task<IActionResult> GetTeacherSubmissions(Guid taskId, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
-            return Forbid("Only teachers can access all submissions.");
+            return Forbid("Only teachers and admins can access all submissions.");
         }
 
         var result = await _submissionService.GetTaskSubmissionsAsync(taskId, cancellationToken);
@@ -113,9 +113,9 @@ public class SubmissionsController : ControllerBase
     public async Task<IActionResult> GetTaskStats(Guid taskId, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
-            return Forbid("Only teachers can access task submission statistics.");
+            return Forbid("Only teachers and admins can access task submission statistics.");
         }
 
         try
@@ -153,9 +153,9 @@ public class SubmissionsController : ControllerBase
     public async Task<IActionResult> ReviewSubmission(Guid submissionId, [FromBody] ReviewSubmissionDto dto, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
-            return Forbid("Only teachers can review and grade submissions.");
+            return Forbid("Only teachers and admins can review and grade submissions.");
         }
 
         try

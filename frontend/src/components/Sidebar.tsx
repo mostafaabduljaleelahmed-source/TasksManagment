@@ -4,10 +4,15 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import {
   LayoutDashboard, BookOpen, FileCode, Users, Settings, User, LogOut,
-  Globe
+  Globe, ShieldCheck, X, Trophy, Archive, Activity, Calendar
 } from 'lucide-react';
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
   const { user, logout } = useAuth();
   const { t, lang, setLanguage } = useTranslation();
   const location = useLocation();
@@ -35,31 +40,42 @@ export const Sidebar: React.FC = () => {
     setLanguage(lang === 'ar' ? 'en' : 'ar');
   };
 
-  return (
-    <aside className="w-64 bg-[#111827] border-r border-[#1F2937] flex flex-col justify-between h-screen sticky top-0 shrink-0 select-none z-30">
+  const isTeacherOrAdmin = user.role === 'Teacher' || user.role === 'Admin';
+
+  const sidebarContent = (
+    <aside className="w-64 bg-[#111827] border-r border-[#1F2937] flex flex-col justify-between h-full select-none">
       <div className="flex flex-col gap-6 p-4 overflow-y-auto">
         {/* Brand / Logo */}
-        <Link to="/" className="flex items-center gap-3 px-2 pt-2 group">
-          <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-950/50 group-hover:scale-105 transition-transform">
-            ⚡
-          </div>
-          <div>
-            <span className="text-sm font-extrabold text-white tracking-tight block leading-none">
-              Classroom SaaS
-            </span>
-            <span className="text-[10px] text-blue-400 font-bold tracking-wider uppercase mt-0.5 block">
-              {user.role === 'Teacher' ? 'Instructor Edition' : 'Student Portal'}
-            </span>
-          </div>
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-3 px-2 pt-2 group" onClick={onClose}>
+            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-950/50 group-hover:scale-105 transition-transform">
+              ⚡
+            </div>
+            <div>
+              <span className="text-sm font-extrabold text-white tracking-tight block leading-none">
+                Classroom SaaS
+              </span>
+              <span className="text-[10px] text-blue-400 font-bold tracking-wider uppercase mt-0.5 block">
+                {user.role === 'Teacher' ? 'Instructor Edition' : user.role === 'Admin' ? 'Executive Admin' : 'Student Portal'}
+              </span>
+            </div>
+          </Link>
+
+          {/* Close button for mobile drawer */}
+          {onClose && (
+            <button onClick={onClose} className="md:hidden p-2 text-zinc-400 hover:text-white rounded-lg">
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
 
         {/* Navigation Sections */}
         <nav className="space-y-1">
           <div className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 px-3.5 mb-2">
-            Main Navigation
+            Academic Hub
           </div>
 
-          <Link to="/dashboard" className={navLinkClass('/dashboard')}>
+          <Link to="/dashboard" className={navLinkClass('/dashboard')} onClick={onClose}>
             <span className="flex items-center gap-3">
               <LayoutDashboard className="w-4 h-4 text-blue-400" />
               <span>{t('dashboard')}</span>
@@ -67,7 +83,7 @@ export const Sidebar: React.FC = () => {
             {isActive('/dashboard') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
           </Link>
 
-          <Link to="/" className={navLinkClass('/')}>
+          <Link to="/" className={navLinkClass('/')} onClick={onClose}>
             <span className="flex items-center gap-3">
               <BookOpen className="w-4 h-4 text-indigo-400" />
               <span>{t('courses')}</span>
@@ -75,9 +91,29 @@ export const Sidebar: React.FC = () => {
             {isActive('/') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
           </Link>
 
-          {user.role === 'Teacher' && (
+          <Link to="/leaderboard" className={navLinkClass('/leaderboard')} onClick={onClose}>
+            <span className="flex items-center gap-3">
+              <Trophy className="w-4 h-4 text-amber-400" />
+              <span>{t('leaderboard')}</span>
+            </span>
+            {isActive('/leaderboard') && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+          </Link>
+
+          <Link to="/calendar" className={navLinkClass('/calendar')} onClick={onClose}>
+            <span className="flex items-center gap-3">
+              <Calendar className="w-4 h-4 text-sky-400" />
+              <span>Calendar</span>
+            </span>
+            {isActive('/calendar') && <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />}
+          </Link>
+
+          {isTeacherOrAdmin && (
             <>
-              <Link to="/teacher/pending-reviews" className={navLinkClass('/teacher/pending-reviews')}>
+              <div className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 px-3.5 pt-4 mb-2">
+                Teacher Tools
+              </div>
+
+              <Link to="/teacher/pending-reviews" className={navLinkClass('/teacher/pending-reviews')} onClick={onClose}>
                 <span className="flex items-center gap-3">
                   <FileCode className="w-4 h-4 text-amber-400" />
                   <span>{t('pendingReviews')}</span>
@@ -85,12 +121,58 @@ export const Sidebar: React.FC = () => {
                 {isActive('/teacher/pending-reviews') && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
               </Link>
 
-              <Link to="/teacher/students" className={navLinkClass('/teacher/students')}>
+              <Link to="/teacher/students" className={navLinkClass('/teacher/students')} onClick={onClose}>
                 <span className="flex items-center gap-3">
                   <Users className="w-4 h-4 text-sky-400" />
                   <span>{t('students')}</span>
                 </span>
                 {isActive('/teacher/students') && <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />}
+              </Link>
+
+              <Link to="/archive" className={navLinkClass('/archive')} onClick={onClose}>
+                <span className="flex items-center gap-3">
+                  <Archive className="w-4 h-4 text-amber-400" />
+                  <span>Archive</span>
+                </span>
+                {isActive('/archive') && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+              </Link>
+
+              {/* Activity Log - Strictly hidden from Students */}
+              <Link to="/activity-log" className={navLinkClass('/activity-log')} onClick={onClose}>
+                <span className="flex items-center gap-3">
+                  <Activity className="w-4 h-4 text-indigo-400" />
+                  <span>Activity Audit Log</span>
+                </span>
+                {isActive('/activity-log') && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />}
+              </Link>
+            </>
+          )}
+
+          {user.role === 'Admin' && (
+            <>
+              <div className="text-[10px] font-extrabold uppercase tracking-wider text-violet-400 px-3.5 pt-4 mb-2">
+                Academy Admin
+              </div>
+              <Link to="/admin/dashboard" className={navLinkClass('/admin/dashboard')} onClick={onClose}>
+                <span className="flex items-center gap-3">
+                  <ShieldCheck className="w-4 h-4 text-violet-400" />
+                  <span>Admin Dashboard</span>
+                </span>
+                {isActive('/admin/dashboard') && <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />}
+              </Link>
+              <Link to="/admin/users" className={navLinkClass('/admin/users')} onClick={onClose}>
+                <span className="flex items-center gap-3">
+                  <Users className="w-4 h-4 text-violet-400" />
+                  <span>User Management</span>
+                </span>
+                {isActive('/admin/users') && <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />}
+              </Link>
+              <Link to="/admin/settings" className={navLinkClass('/admin/settings')} onClick={onClose}>
+                <span className="flex items-center gap-3">
+                  <Settings className="w-4 h-4 text-violet-400" />
+                  <span>System Settings</span>
+                </span>
+                {isActive('/admin/settings') && <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />}
               </Link>
             </>
           )}
@@ -99,7 +181,7 @@ export const Sidebar: React.FC = () => {
             Preferences
           </div>
 
-          <Link to="/settings" className={navLinkClass('/settings')}>
+          <Link to="/settings" className={navLinkClass('/settings')} onClick={onClose}>
             <span className="flex items-center gap-3">
               <Settings className="w-4 h-4 text-zinc-400" />
               <span>{t('settings')}</span>
@@ -107,7 +189,7 @@ export const Sidebar: React.FC = () => {
             {isActive('/settings') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
           </Link>
 
-          <Link to="/profile" className={navLinkClass('/profile')}>
+          <Link to="/profile" className={navLinkClass('/profile')} onClick={onClose}>
             <span className="flex items-center gap-3">
               <User className="w-4 h-4 text-zinc-400" />
               <span>{t('profile')}</span>
@@ -159,5 +241,27 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop Sticky Sidebar */}
+      <div className="hidden md:flex h-screen sticky top-0 shrink-0 z-30">
+        {sidebarContent}
+      </div>
+
+      {/* Mobile Off-Canvas Drawer */}
+      {isOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+            onClick={onClose}
+          />
+          <div className="relative z-10 h-full animate-fade-in">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 };

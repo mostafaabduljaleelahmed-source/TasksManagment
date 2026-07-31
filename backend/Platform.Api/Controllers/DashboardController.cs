@@ -30,7 +30,7 @@ public class DashboardController : ControllerBase
     public async Task<IActionResult> GetTeacherCourseOverview(Guid courseId, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
             return Forbid("Only teachers can access course dashboard.");
         }
@@ -118,7 +118,7 @@ public class DashboardController : ControllerBase
     public async Task<IActionResult> GetTeacherSessionOverview(Guid courseId, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
             return Forbid("Only teachers can access course session overview.");
         }
@@ -205,7 +205,7 @@ public class DashboardController : ControllerBase
     public async Task<IActionResult> GetTeacherTaskOverview(Guid taskId, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
             return Forbid("Only teachers can access task overview.");
         }
@@ -279,7 +279,7 @@ public class DashboardController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
             return Forbid("Only teachers can access task submissions.");
         }
@@ -580,7 +580,7 @@ public class DashboardController : ControllerBase
     public async Task<IActionResult> ExportCourseGradesCsv(Guid courseId, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
             return Forbid("Only teachers can export course grades.");
         }
@@ -636,14 +636,14 @@ public class DashboardController : ControllerBase
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (role != "Teacher" || string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId))
+        if ((role != "Teacher" && role != "Admin") || string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId))
         {
             return Forbid("Only teachers can access analytics.");
         }
 
-        var teacherCourses = await _context.Courses
-            .Where(c => c.TeacherId == teacherId)
-            .ToListAsync(cancellationToken);
+        var teacherCourses = role == "Admin"
+            ? await _context.Courses.ToListAsync(cancellationToken)
+            : await _context.Courses.Where(c => c.TeacherId == teacherId).ToListAsync(cancellationToken);
 
         var targetCourseIds = courseId.HasValue
             ? new List<Guid> { courseId.Value }
@@ -898,14 +898,14 @@ public class DashboardController : ControllerBase
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || role != "Teacher")
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || (role != "Teacher" && role != "Admin"))
         {
             return Forbid("Only teachers can access summary.");
         }
 
-        var courses = await _context.Courses
-            .Where(c => c.TeacherId == teacherId)
-            .ToListAsync(cancellationToken);
+        var courses = role == "Admin"
+            ? await _context.Courses.ToListAsync(cancellationToken)
+            : await _context.Courses.Where(c => c.TeacherId == teacherId).ToListAsync(cancellationToken);
 
         var courseIds = courses.Select(c => c.Id).ToList();
 
@@ -983,14 +983,14 @@ public class DashboardController : ControllerBase
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || role != "Teacher")
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || (role != "Teacher" && role != "Admin"))
         {
             return Forbid("Only teachers can access groups.");
         }
 
-        var courses = await _context.Courses
-            .Where(c => c.TeacherId == teacherId)
-            .ToListAsync(cancellationToken);
+        var courses = role == "Admin"
+            ? await _context.Courses.ToListAsync(cancellationToken)
+            : await _context.Courses.Where(c => c.TeacherId == teacherId).ToListAsync(cancellationToken);
 
         var courseIds = courses.Select(c => c.Id).ToList();
 
@@ -1060,14 +1060,14 @@ public class DashboardController : ControllerBase
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || role != "Teacher")
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || (role != "Teacher" && role != "Admin"))
         {
             return Forbid("Only teachers can access students roster.");
         }
 
-        var courses = await _context.Courses
-            .Where(c => c.TeacherId == teacherId)
-            .ToListAsync(cancellationToken);
+        var courses = role == "Admin"
+            ? await _context.Courses.ToListAsync(cancellationToken)
+            : await _context.Courses.Where(c => c.TeacherId == teacherId).ToListAsync(cancellationToken);
 
         var courseIds = courses.Select(c => c.Id).ToList();
 
@@ -1148,7 +1148,7 @@ public class DashboardController : ControllerBase
         CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
             return Forbid("Only teachers can reset student passwords.");
         }
@@ -1181,14 +1181,14 @@ public class DashboardController : ControllerBase
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || role != "Teacher")
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || (role != "Teacher" && role != "Admin"))
         {
             return Forbid("Only teachers can access pending reviews.");
         }
 
-        var courses = await _context.Courses
-            .Where(c => c.TeacherId == teacherId)
-            .ToListAsync(cancellationToken);
+        var courses = role == "Admin"
+            ? await _context.Courses.ToListAsync(cancellationToken)
+            : await _context.Courses.Where(c => c.TeacherId == teacherId).ToListAsync(cancellationToken);
 
         var courseIds = courses.Select(c => c.Id).ToList();
 
@@ -1254,12 +1254,14 @@ public class DashboardController : ControllerBase
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || role != "Teacher")
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || (role != "Teacher" && role != "Admin"))
         {
             return Forbid("Only teachers can access today's activity.");
         }
 
-        var courses = await _context.Courses.Where(c => c.TeacherId == teacherId).ToListAsync(cancellationToken);
+        var courses = role == "Admin"
+            ? await _context.Courses.ToListAsync(cancellationToken)
+            : await _context.Courses.Where(c => c.TeacherId == teacherId).ToListAsync(cancellationToken);
         var courseIds = courses.Select(c => c.Id).ToList();
         var sessions = await _context.Sessions.Where(s => courseIds.Contains(s.CourseId)).ToListAsync(cancellationToken);
         var tasks = await _context.ProgrammingTasks.Where(t => sessions.Select(s => s.Id).Contains(t.SessionId)).ToListAsync(cancellationToken);
@@ -1382,14 +1384,14 @@ public class DashboardController : ControllerBase
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (role != "Teacher" || string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId))
+        if ((role != "Teacher" && role != "Admin") || string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId))
         {
             return Forbid("Only teachers can access assignments list.");
         }
 
-        var teacherCourses = await _context.Courses
-            .Where(c => c.TeacherId == teacherId)
-            .ToListAsync(cancellationToken);
+        var teacherCourses = role == "Admin"
+            ? await _context.Courses.ToListAsync(cancellationToken)
+            : await _context.Courses.Where(c => c.TeacherId == teacherId).ToListAsync(cancellationToken);
 
         var courseIds = teacherCourses.Select(c => c.Id).ToList();
 

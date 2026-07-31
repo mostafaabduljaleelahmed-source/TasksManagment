@@ -6,7 +6,7 @@ import { Navbar } from '../components/Navbar';
 import { User, Lock, Camera, Trash2, Globe, Palette, Save, Loader2, CheckCircle2, Mail, Bell, BellOff } from 'lucide-react';
 
 export const Settings: React.FC = () => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const { t, lang, setLanguage } = useTranslation();
   const toast = useToast();
 
@@ -133,8 +133,8 @@ export const Settings: React.FC = () => {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!oldPassword || !newPassword) {
-      toast.error('Please fill in both current and new passwords.');
+    if (!newPassword) {
+      toast.error('Please enter your new password.');
       return;
     }
 
@@ -150,16 +150,18 @@ export const Settings: React.FC = () => {
 
     setSavingPassword(true);
     try {
-      const res = await fetch(`${API_URL}/profile/change-password`, {
+      const endpoint = user?.role === 'Admin' ? `${API_URL}/admin/reset-admin-password` : `${API_URL}/profile/change-password`;
+      const payload = user?.role === 'Admin' 
+        ? { currentPassword: oldPassword, newPassword }
+        : { oldPassword, newPassword };
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${user?.token}`,
         },
-        body: JSON.stringify({
-          oldPassword,
-          newPassword,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -167,7 +169,7 @@ export const Settings: React.FC = () => {
         throw new Error(data.message || 'Failed to change password');
       }
 
-      toast.success(t('passwordChangedSuccess'));
+      toast.success(data.message || t('passwordChangedSuccess'));
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -189,7 +191,7 @@ export const Settings: React.FC = () => {
       <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-10 space-y-10">
         <div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">{t('settings')}</h1>
-          <p className="text-sm text-zinc-400 mt-1">Manage your profile details, security preferences, language, and theme.</p>
+          <p className="text-sm text-zinc-400 mt-1">{t('settingsSubtitle')}</p>
         </div>
 
         {/* Profile Picture & Info Form */}
@@ -511,6 +513,44 @@ export const Settings: React.FC = () => {
             </button>
           </div>
         </section>
+
+        {/* Delete My Account Section - For Students & Teachers Only (Hidden for Admin) */}
+        {user?.role !== 'Admin' && (
+          <section className="bg-[#121215] border border-red-500/20 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center gap-3 border-b border-red-500/20 pb-4">
+              <Trash2 className="w-5 h-5 text-red-400" />
+              <h2 className="text-base font-bold text-red-400">Delete Account</h2>
+            </div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Permanently remove your account and erase your profile settings. This action is irreversible.
+            </p>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  if (window.confirm('Are you sure you want to delete your account? All your profile data will be permanently removed.')) {
+                    try {
+                      const res = await fetch(`${API_URL}/profile/account`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${user?.token}` },
+                      });
+                      const data = await res.json().catch(() => null);
+                      if (!res.ok) throw new Error(data?.message || data?.details || 'Failed to delete account');
+                      toast.success(data?.message || 'Account deleted successfully.');
+                      logout();
+                    } catch (err: any) {
+                      toast.error(err.message || 'Failed to delete account.');
+                    }
+                  }
+                }}
+                className="px-4 py-2.5 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete My Account
+              </button>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );

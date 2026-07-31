@@ -129,6 +129,7 @@ const translations = {
     preferences: 'تفضيلات التطبيق',
     language: 'لغة العرض',
     theme: 'مظهر الواجهة',
+    settingsSubtitle: 'قم بإدارة بياناتك الشخصية وإعدادات الأمان واللغة والمظهر.',
     profileUpdatedSuccess: 'تم تحديث الملف الشخصي بنجاح!',
     passwordChangedSuccess: 'تم تغيير كلمة المرور بنجاح!'
   },
@@ -258,6 +259,7 @@ const translations = {
     preferences: 'App Preferences',
     language: 'Display Language',
     theme: 'Interface Theme',
+    settingsSubtitle: 'Manage your profile details, security preferences, language, and theme.',
     profileUpdatedSuccess: 'Profile updated successfully!',
     passwordChangedSuccess: 'Password changed successfully!'
   }

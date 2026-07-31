@@ -135,20 +135,92 @@ public class ProfileController : ControllerBase
             return NotFound(new { message = "User not found." });
         }
 
-        if (string.IsNullOrWhiteSpace(dto.OldPassword) || string.IsNullOrWhiteSpace(dto.NewPassword))
+        if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 6)
         {
-            return BadRequest(new { message = "Both old and new passwords are required." });
+            return BadRequest(new { message = "New password must be at least 6 characters long." });
         }
 
-        if (!_hashService.VerifyPassword(dto.OldPassword, user.PasswordHash))
+        if (!string.IsNullOrWhiteSpace(dto.OldPassword))
         {
-            return BadRequest(new { message = "Incorrect current password." });
+            var isCurrentPasswordValid = _hashService.VerifyPassword(dto.OldPassword, user.PasswordHash);
+            if (!isCurrentPasswordValid && string.IsNullOrEmpty(user.GoogleId))
+            {
+                return BadRequest(new { message = "Incorrect current password." });
+            }
+        }
+        else if (string.IsNullOrEmpty(user.GoogleId))
+        {
+            return BadRequest(new { message = "Current password is required." });
         }
 
         user.PasswordHash = _hashService.HashPassword(dto.NewPassword);
+        user.RefreshToken = null;
+        user.RefreshTokenExpires = null;
         await _context.SaveChangesAsync(cancellationToken);
 
-        return Ok(new { message = "Password updated successfully." });
+        return Ok(new { success = true, message = "Password updated successfully. You can now log in with either Google or your new password." });
+    }
+
+    [HttpDelete("account")]
+    public async Task<IActionResult> DeleteAccount(CancellationToken cancellationToken)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized(new { message = "User not found." });
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
+        {
+            return NotFound(new { message = "User not found." });
+        }
+
+        if (user.Role == Domain.Enums.UserRole.Admin)
+        {
+            return BadRequest(new { message = "The Administrator account cannot be deleted to preserve system ownership." });
+        }
+
+        var ownsCourses = await _context.Courses.AnyAsync(c => c.TeacherId == userId, cancellationToken);
+        if (ownsCourses)
+        {
+            return BadRequest(new { message = "Cannot delete account while owning active courses. Please transfer or delete your courses first." });
+        }
+
+        try
+        {
+            var enrollments = await _context.Enrollments.Where(e => e.StudentId == userId).ToListAsync(cancellationToken);
+            if (enrollments.Any()) _context.Enrollments.RemoveRange(enrollments);
+
+            var courseTeachers = await _context.CourseTeachers.Where(ct => ct.TeacherId == userId).ToListAsync(cancellationToken);
+            if (courseTeachers.Any()) _context.CourseTeachers.RemoveRange(courseTeachers);
+
+            var submissions = await _context.Submissions.Where(s => s.StudentId == userId).ToListAsync(cancellationToken);
+            if (submissions.Any()) _context.Submissions.RemoveRange(submissions);
+
+            var notifications = await _context.Notifications.Where(n => n.UserId == userId).ToListAsync(cancellationToken);
+            if (notifications.Any()) _context.Notifications.RemoveRange(notifications);
+
+            var taskViews = await _context.UserTaskViews.Where(v => v.StudentId == userId).ToListAsync(cancellationToken);
+            if (taskViews.Any()) _context.UserTaskViews.RemoveRange(taskViews);
+
+            var activityLogs = await _context.ActivityLogs.Where(a => a.UserId == userId).ToListAsync(cancellationToken);
+            if (activityLogs.Any()) _context.ActivityLogs.RemoveRange(activityLogs);
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return Ok(new { success = true, message = "Your account has been deleted successfully." });
+        }
+        catch (DbUpdateException ex)
+        {
+            var innerMsg = ex.InnerException?.Message ?? ex.Message;
+            return BadRequest(new { message = "Cannot delete account due to linked database records.", details = innerMsg });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Failed to delete account: {ex.Message}" });
+        }
     }
 
     [HttpPost("avatar")]

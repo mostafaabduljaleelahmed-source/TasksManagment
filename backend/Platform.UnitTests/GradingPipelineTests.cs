@@ -28,10 +28,10 @@ public class GradingPipelineTests
         return context;
     }
 
-    private IGradingEngineDispatcher GetGradingDispatcher(ICodeExecutionService runner, IExecutionService executionService)
+    private IGradingEngineDispatcher GetGradingDispatcher(IExecutionService executionService)
     {
         var langRegistry = new LanguageRegistry();
-        var manualModule = new ManualReviewModule(runner);
+        var manualModule = new ManualReviewModule(executionService, langRegistry);
         var autoModule = new Judge0AutoGradingModule(executionService, langRegistry);
         return new GradingEngineDispatcher(new IGradingModule[] { manualModule, autoModule });
     }
@@ -59,16 +59,16 @@ public class GradingPipelineTests
         context.ProgrammingTasks.Add(task);
         await context.SaveChangesAsync();
 
-        var mockRunner = new Mock<ICodeExecutionService>();
-        mockRunner.Setup(r => r.ExecuteAsync(It.IsAny<string>(), It.IsAny<List<TestCaseModel>>(), It.IsAny<int>()))
-            .ReturnsAsync(new ExecutionResult { ExecutionTimeMs = 10, TestResults = new List<TestCaseResult>() });
-
         var mockExec = new Mock<IExecutionService>();
+        mockExec.Setup(e => e.ExecuteAsync(It.IsAny<Judge0ExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Judge0ExecutionResult { StatusId = 3, StatusDescription = "Accepted", TimeSeconds = 0.01 });
+
         var mockActivityLogger = new Mock<IActivityLogger>();
         var mockEmail = new Mock<IEmailService>();
+        var langRegistry = new LanguageRegistry();
 
-        var dispatcher = GetGradingDispatcher(mockRunner.Object, mockExec.Object);
-        var service = new SubmissionService(context, mockRunner.Object, dispatcher, NullLogger<SubmissionService>.Instance, mockActivityLogger.Object, mockEmail.Object);
+        var dispatcher = GetGradingDispatcher(mockExec.Object);
+        var service = new SubmissionService(context, mockExec.Object, langRegistry, dispatcher, NullLogger<SubmissionService>.Instance, mockActivityLogger.Object, mockEmail.Object);
 
         // Act
         var result = await service.SubmitCodeAsync(studentId, task.Id, new SubmitCodeDto { Code = "print('Hello World')" });
@@ -106,7 +106,6 @@ public class GradingPipelineTests
         context.ProgrammingTasks.Add(task);
         await context.SaveChangesAsync();
 
-        var mockRunner = new Mock<ICodeExecutionService>();
         var mockExec = new Mock<IExecutionService>();
         mockExec.Setup(e => e.ExecuteAsync(It.IsAny<Judge0ExecutionRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Judge0ExecutionResult
@@ -121,9 +120,10 @@ public class GradingPipelineTests
 
         var mockActivityLogger = new Mock<IActivityLogger>();
         var mockEmail = new Mock<IEmailService>();
+        var langRegistry = new LanguageRegistry();
 
-        var dispatcher = GetGradingDispatcher(mockRunner.Object, mockExec.Object);
-        var service = new SubmissionService(context, mockRunner.Object, dispatcher, NullLogger<SubmissionService>.Instance, mockActivityLogger.Object, mockEmail.Object);
+        var dispatcher = GetGradingDispatcher(mockExec.Object);
+        var service = new SubmissionService(context, mockExec.Object, langRegistry, dispatcher, NullLogger<SubmissionService>.Instance, mockActivityLogger.Object, mockEmail.Object);
 
         // Act
         var result = await service.SubmitCodeAsync(studentId, task.Id, new SubmitCodeDto { Code = "print(1+2)" });
@@ -159,7 +159,6 @@ public class GradingPipelineTests
         context.ProgrammingTasks.Add(task);
         await context.SaveChangesAsync();
 
-        var mockRunner = new Mock<ICodeExecutionService>();
         var mockExec = new Mock<IExecutionService>();
         mockExec.Setup(e => e.ExecuteAsync(It.IsAny<Judge0ExecutionRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Judge0ExecutionResult
@@ -170,9 +169,10 @@ public class GradingPipelineTests
 
         var mockActivityLogger = new Mock<IActivityLogger>();
         var mockEmail = new Mock<IEmailService>();
+        var langRegistry = new LanguageRegistry();
 
-        var dispatcher = GetGradingDispatcher(mockRunner.Object, mockExec.Object);
-        var service = new SubmissionService(context, mockRunner.Object, dispatcher, NullLogger<SubmissionService>.Instance, mockActivityLogger.Object, mockEmail.Object);
+        var dispatcher = GetGradingDispatcher(mockExec.Object);
+        var service = new SubmissionService(context, mockExec.Object, langRegistry, dispatcher, NullLogger<SubmissionService>.Instance, mockActivityLogger.Object, mockEmail.Object);
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>

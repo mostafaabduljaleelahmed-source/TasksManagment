@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Platform.Application.Common.Interfaces;
-using Platform.Infrastructure.Execution;
 using Platform.Infrastructure.Persistence;
 using Platform.Infrastructure.Security;
 using Platform.Infrastructure.Services;
@@ -28,7 +27,7 @@ public static class DependencyInjection
 
         services.AddSingleton<IHashService, BCryptHashService>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
-        services.AddScoped<ICodeExecutionService, PythonExecutionService>();
+        services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 
         // Version 2.0 Isolated Code Execution Engine (Judge0)
         services.AddSingleton(new HttpClient());

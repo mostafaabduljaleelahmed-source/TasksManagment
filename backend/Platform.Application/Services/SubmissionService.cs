@@ -17,7 +17,8 @@ namespace Platform.Application.Services;
 public class SubmissionService : ISubmissionService
 {
     private readonly IApplicationDbContext _context;
-    private readonly ICodeExecutionService _executionService;
+    private readonly IExecutionService _executionService;
+    private readonly ILanguageRegistry _languageRegistry;
     private readonly IGradingEngineDispatcher _gradingEngineDispatcher;
     private readonly ILogger<SubmissionService> _logger;
     private readonly IActivityLogger _activityLogger;
@@ -25,7 +26,8 @@ public class SubmissionService : ISubmissionService
 
     public SubmissionService(
         IApplicationDbContext context,
-        ICodeExecutionService executionService,
+        IExecutionService executionService,
+        ILanguageRegistry languageRegistry,
         IGradingEngineDispatcher gradingEngineDispatcher,
         ILogger<SubmissionService> logger,
         IActivityLogger activityLogger,
@@ -33,6 +35,7 @@ public class SubmissionService : ISubmissionService
     {
         _context = context;
         _executionService = executionService;
+        _languageRegistry = languageRegistry;
         _gradingEngineDispatcher = gradingEngineDispatcher;
         _logger = logger;
         _activityLogger = activityLogger;
@@ -47,29 +50,57 @@ public class SubmissionService : ISubmissionService
             throw new InvalidOperationException("Programming task not found.");
         }
 
-        _logger.LogInformation("RunCodeAsync pure sandbox execution called for Task ID: {TaskId}.", task.Id);
+        _logger.LogInformation("RunCodeAsync Judge0 sandbox execution called for Task ID: {TaskId}, Language: {Language}.", task.Id, task.Language);
 
-        // Execute code in isolation with zero test case grading or output comparison
+        var langDef = _languageRegistry.GetLanguage(task.Language);
+        var languageId = langDef != null ? langDef.Judge0LanguageId : 71;
+
         var sandboxInput = !string.IsNullOrEmpty(dto.Input) ? dto.Input : (task.ExampleInput ?? string.Empty);
-        var singleCase = new List<TestCaseModel>
+        var request = new Judge0ExecutionRequest
         {
-            new TestCaseModel { Input = sandboxInput, ExpectedOutput = string.Empty }
+            SourceCode = dto.Code,
+            LanguageId = languageId,
+            Stdin = sandboxInput,
+            ExpectedOutput = string.Empty,
+            CpuTimeLimitSeconds = task.TimeLimitMs > 0 ? task.TimeLimitMs / 1000.0 : 3.0,
+            MemoryLimitKb = task.MemoryLimitMb > 0 ? task.MemoryLimitMb * 1024 : 256000
         };
 
-        var runResult = await _executionService.ExecuteAsync(dto.Code, singleCase, task.TimeLimitMs > 0 ? task.TimeLimitMs : 3000);
-        var testResult = runResult.TestResults.FirstOrDefault() ?? new TestCaseResult();
+        var judge0Result = await _executionService.ExecuteAsync(request, cancellationToken);
+
+        if (judge0Result.IsServiceUnavailable)
+        {
+            throw new InvalidOperationException($"Execution engine service is currently unavailable: {judge0Result.Stderr}");
+        }
+
+        int executionTimeMs = (int)(judge0Result.TimeSeconds * 1000.0);
+        bool passed = judge0Result.StatusId == 3 || (judge0Result.StatusId != 6 && string.IsNullOrEmpty(judge0Result.Stderr) && string.IsNullOrEmpty(judge0Result.CompileOutput));
+
+        string generalError = !string.IsNullOrEmpty(judge0Result.CompileOutput)
+            ? judge0Result.CompileOutput
+            : (!string.IsNullOrEmpty(judge0Result.Stderr) ? judge0Result.Stderr : (judge0Result.StatusId != 3 ? judge0Result.StatusDescription : string.Empty));
 
         return new RunResultDto
         {
-            Passed = string.IsNullOrEmpty(testResult.Error),
-            PassedCount = 0,
-            TotalCount = 0,
-            Feedback = string.IsNullOrEmpty(testResult.Error) ? "Execution completed." : "Execution encountered runtime error.",
-            Stdout = testResult.ActualOutput ?? string.Empty,
-            Stderr = testResult.Error ?? string.Empty,
-            Error = testResult.Error ?? string.Empty,
-            ExecutionTimeMs = runResult.ExecutionTimeMs,
-            Details = new List<RunResultDetailsDto>()
+            Passed = passed,
+            PassedCount = passed ? 1 : 0,
+            TotalCount = 1,
+            Feedback = judge0Result.StatusDescription,
+            Stdout = judge0Result.Stdout ?? string.Empty,
+            Stderr = generalError,
+            Error = generalError,
+            ExecutionTimeMs = executionTimeMs,
+            Details = new List<RunResultDetailsDto>
+            {
+                new RunResultDetailsDto
+                {
+                    Input = sandboxInput,
+                    ExpectedOutput = string.Empty,
+                    ActualOutput = judge0Result.Stdout ?? string.Empty,
+                    Passed = passed,
+                    Error = generalError
+                }
+            }
         };
     }
 
@@ -512,8 +543,9 @@ public class SubmissionService : ISubmissionService
     private double CalculateJaccardSimilarity(string code1, string code2)
     {
         if (string.IsNullOrWhiteSpace(code1) || string.IsNullOrWhiteSpace(code2)) return 0;
-        var set1 = new HashSet<string>(code1.Split((char[])null, StringSplitOptions.RemoveEmptyEntries));
-        var set2 = new HashSet<string>(code2.Split((char[])null, StringSplitOptions.RemoveEmptyEntries));
+        var separators = new[] { ' ', '\r', '\n', '\t' };
+        var set1 = new HashSet<string>(code1.Split(separators, StringSplitOptions.RemoveEmptyEntries));
+        var set2 = new HashSet<string>(code2.Split(separators, StringSplitOptions.RemoveEmptyEntries));
         if (set1.Count == 0 && set2.Count == 0) return 100.0;
         double intersection = set1.Intersect(set2).Count();
         double union = set1.Union(set2).Count();

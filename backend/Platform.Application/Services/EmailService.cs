@@ -97,22 +97,53 @@ public class EmailService : IEmailService
 
     public async Task SendPasswordResetNotificationAsync(User user, string resetTokenOrLink, CancellationToken cancellationToken = default)
     {
-        // Security emails ignore general marketing toggles, but still check setting if user explicitly blocked security
+        await SendPasswordResetEmailAsync(user.Email, user.Name, resetTokenOrLink, cancellationToken);
+    }
+
+    public async Task SendVerificationEmailAsync(string toEmail, string name, string token, CancellationToken cancellationToken = default)
+    {
+        var appBaseUrl = _configuration["App:BaseUrl"] ?? "http://jatask.runasp.net";
+        var verifyLink = $"{appBaseUrl.TrimEnd('/')}/verify-email?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(toEmail)}";
+
+        var subject = "[Action Required] Verify Your Email Address";
+        var body = WrapTemplate(
+            headerTitle: "Email Verification",
+            badgeColor: "#3B82F6",
+            contentHtml: $@"
+                <p>Hello <strong>{WebUtility.HtmlEncode(name)}</strong>,</p>
+                <p>Thank you for registering on our Academic Grading Platform. Please click the button below to verify your email address and activate your account:</p>
+                <div style=""text-align: center; margin: 30px 0;"">
+                    <a href=""{verifyLink}"" style=""display: inline-block; background-color: #3B82F6; color: #FFFFFF; font-weight: 700; font-size: 14px; text-decoration: none; padding: 12px 28px; border-radius: 8px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);"">Verify Email Address</a>
+                </div>
+                <p style=""font-size: 12px; color: #A1A1AA;"">Or copy and paste this link into your browser:</p>
+                <p style=""font-size: 12px; word-break: break-all; color: #60A5FA;"">{WebUtility.HtmlEncode(verifyLink)}</p>
+                <p style=""font-size: 12px; color: #71717A; margin-top: 20px;"">This verification link will expire in 24 hours.</p>"
+        );
+
+        await SendEmailAsync(toEmail, subject, body);
+    }
+
+    public async Task SendPasswordResetEmailAsync(string toEmail, string name, string token, CancellationToken cancellationToken = default)
+    {
+        var appBaseUrl = _configuration["App:BaseUrl"] ?? "http://jatask.runasp.net";
+        var resetLink = $"{appBaseUrl.TrimEnd('/')}/reset-password?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(toEmail)}";
+
         var subject = "[Security] Password Reset Request";
         var body = WrapTemplate(
             headerTitle: "Password Reset Request",
             badgeColor: "#F59E0B",
             contentHtml: $@"
-                <p>Hello <strong>{WebUtility.HtmlEncode(user.Name)}</strong>,</p>
-                <p>We received a request to reset the password for your educational platform account.</p>
-                <div style=""background: #1F1F24; border: 1px solid #2F2F37; padding: 16px; border-radius: 12px; margin: 20px 0; text-align: center;"">
-                    <p style=""margin: 0 0 10px 0; color: #A1A1AA; font-size: 12px;"">Your Security Token:</p>
-                    <code style=""font-family: monospace; font-size: 18px; font-weight: bold; color: #FBBF24; letter-spacing: 2px;"">{WebUtility.HtmlEncode(resetTokenOrLink)}</code>
+                <p>Hello <strong>{WebUtility.HtmlEncode(name)}</strong>,</p>
+                <p>We received a request to reset the password for your account. Click the button below to set a new password:</p>
+                <div style=""text-align: center; margin: 30px 0;"">
+                    <a href=""{resetLink}"" style=""display: inline-block; background-color: #F59E0B; color: #FFFFFF; font-weight: 700; font-size: 14px; text-decoration: none; padding: 12px 28px; border-radius: 8px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);"">Reset Password</a>
                 </div>
-                <p style=""font-size: 12px; color: #71717A;"">If you did not request a password reset, please ignore this email. Your password will remain unchanged.</p>"
+                <p style=""font-size: 12px; color: #A1A1AA;"">Or copy and paste this link into your browser:</p>
+                <p style=""font-size: 12px; word-break: break-all; color: #FBBF24;"">{WebUtility.HtmlEncode(resetLink)}</p>
+                <p style=""font-size: 12px; color: #71717A; margin-top: 20px;"">If you did not request a password reset, please ignore this email. This link will expire in 1 hour.</p>"
         );
 
-        await SendEmailAsync(user.Email, subject, body);
+        await SendEmailAsync(toEmail, subject, body);
     }
 
     private async Task SendEmailAsync(string toEmail, string subject, string htmlBody)

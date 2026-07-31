@@ -1,10 +1,10 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Platform.Application.Common.Interfaces;
 using Platform.Application.Features.Auth.Dtos;
-using Platform.Infrastructure.Persistence;
 
 namespace Platform.Api.Controllers;
 
@@ -17,6 +17,30 @@ public class AuthController : ControllerBase
     public AuthController(IAuthService authService)
     {
         _authService = authService;
+    }
+
+    [HttpPost("create-teacher")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> CreateTeacher([FromBody] CreateTeacherDto dto, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _authService.CreateTeacherAsync(dto, cancellationToken);
+            return Ok(response);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            var msg = ex.InnerException != null ? $"{ex.Message}: {ex.InnerException.Message}" : ex.Message;
+            return StatusCode(500, new { message = msg });
+        }
     }
 
     [HttpPost("register")]
@@ -65,33 +89,128 @@ public class AuthController : ControllerBase
         }
     }
 
-    [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword(
-        [FromBody] ForgotPasswordDto dto,
-        [FromServices] ApplicationDbContext context,
-        [FromServices] IEmailService emailService,
-        CancellationToken cancellationToken)
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto dto, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(dto.Email))
+        try
         {
-            return BadRequest(new { message = "Email address is required." });
+            var response = await _authService.GoogleLoginAsync(dto, cancellationToken);
+            return Ok(response);
         }
-
-        var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
-        var user = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
-            context.Users, u => u.Email == normalizedEmail, cancellationToken);
-
-        if (user != null)
+        catch (ArgumentException ex)
         {
-            var resetToken = $"RST-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
-            await emailService.SendPasswordResetNotificationAsync(user, resetToken, cancellationToken);
+            return BadRequest(new { message = ex.Message });
         }
-
-        return Ok(new { success = true, message = "If the email is registered, a password reset email has been dispatched." });
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            var msg = ex.InnerException != null ? $"{ex.Message}: {ex.InnerException.Message}" : ex.Message;
+            return StatusCode(500, new { message = msg });
+        }
     }
-}
 
-public class ForgotPasswordDto
-{
-    public string Email { get; set; } = string.Empty;
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto dto, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _authService.VerifyEmailAsync(dto, cancellationToken);
+            return Ok(new { success = result, message = "Email address verified successfully! You can now log in." });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("resend-verification")]
+    public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationDto dto, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _authService.ResendVerificationEmailAsync(dto, cancellationToken);
+            return Ok(new { success = true, message = "If the email is registered, a new verification link has been dispatched." });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _authService.ForgotPasswordAsync(dto, cancellationToken);
+            return Ok(new { success = true, message = "If the email is registered, a password reset link has been dispatched." });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _authService.ResetPasswordAsync(dto, cancellationToken);
+            return Ok(new { success = result, message = "Password reset successfully! You can now log in with your new password." });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _authService.RefreshTokenAsync(dto, cancellationToken);
+            return Ok(response);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
 }

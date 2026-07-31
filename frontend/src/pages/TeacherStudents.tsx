@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { ScoreBadge } from '../components/ScoreBadge';
 import { Link } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from '../utils/i18n';
+import { TableRowSkeleton } from '../components/SkeletonLoaders';
+import { EmptyState } from '../components/EmptyState';
 import { Search, Filter, Loader2, KeyRound } from 'lucide-react';
 
 interface StudentRosterItem {
@@ -148,17 +151,19 @@ export const TeacherStudents: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-3" />
-          <p className="text-xs">Loading students roster...</p>
+        <div className="space-y-3">
+          <TableRowSkeleton />
+          <TableRowSkeleton />
+          <TableRowSkeleton />
         </div>
       ) : error ? (
         <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-center text-sm">
           {error}
         </div>
       ) : (
-        <div className="bg-[#111827] border border-[#1F2937] rounded-2xl shadow-xl overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-[#111827] border border-[#1F2937] rounded-2xl shadow-xl overflow-hidden p-4 sm:p-0">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-xs text-zinc-300">
               <thead className="bg-[#1F2937]/50 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-[#1F2937]">
                 <tr>
@@ -202,9 +207,7 @@ export const TeacherStudents: React.FC = () => {
                         </Link>
                       </td>
                       <td className="px-4 py-3.5">
-                        <span className="font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg">
-                          {s.averageGrade}%
-                        </span>
+                        <ScoreBadge score={s.averageGrade} maxScore={100} showPercentage={true} />
                       </td>
                       <td className="px-4 py-3.5">
                         <span className="text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
@@ -227,12 +230,6 @@ export const TeacherStudents: React.FC = () => {
                       </td>
                       <td className="px-4 py-3.5 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <Link
-                            to="/profile"
-                            className="px-3 py-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] rounded-xl text-xs font-semibold text-blue-300 transition-colors inline-flex items-center gap-1"
-                          >
-                            Profile
-                          </Link>
                           <button
                             onClick={() => setResetStudent(s)}
                             className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1"
@@ -247,6 +244,39 @@ export const TeacherStudents: React.FC = () => {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="block md:hidden space-y-3">
+            {filteredStudents.length === 0 ? (
+              <EmptyState variant="students" title="No Students Found" description="No student records match your query." />
+            ) : (
+              filteredStudents.map((s) => (
+                <div key={s.studentId + s.courseId} className="p-4 bg-[#16161A] border border-[#24242B] rounded-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0">
+                        {s.avatarUrl ? <img src={s.avatarUrl} alt={s.name} className="w-full h-full object-cover" /> : s.name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-bold text-white text-xs">{s.name}</p>
+                        <p className="text-[10px] text-zinc-400 font-mono">{s.studentRegisterId}</p>
+                      </div>
+                    </div>
+                    <ScoreBadge score={s.averageGrade} maxScore={100} showPercentage={true} />
+                  </div>
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-[#24242B]">
+                    <span className="text-zinc-400">Group: <strong className="text-blue-400">{s.groupName}</strong></span>
+                    <button
+                      onClick={() => setResetStudent(s)}
+                      className="px-2.5 py-1 bg-amber-500/10 border border-amber-500/25 text-amber-400 font-bold rounded-lg text-xs flex items-center gap-1"
+                    >
+                      <KeyRound className="w-3 h-3" /> Reset
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}

@@ -39,9 +39,9 @@ public class CoursesController : ControllerBase
             return Unauthorized(new { message = "User not found." });
         }
 
-        if (role != "Teacher")
+        if (role != "Admin")
         {
-            return Forbid("Only teachers can create courses.");
+            return Forbid("Only the Administrator can create courses.");
         }
 
         try
@@ -112,9 +112,9 @@ public class CoursesController : ControllerBase
             return Unauthorized(new { message = "User not found." });
         }
 
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
-            return Forbid("Only teachers can delete courses.");
+            return Forbid("Only teachers and admins can delete courses.");
         }
 
         try
@@ -124,11 +124,20 @@ public class CoursesController : ControllerBase
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Forbid(ex.Message);
+            return StatusCode(403, new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            var innerMsg = ex.InnerException?.Message ?? ex.Message;
+            return BadRequest(new { message = "Cannot delete course due to linked database records.", details = innerMsg });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Error deleting course: {ex.Message}" });
         }
     }
 
@@ -143,19 +152,32 @@ public class CoursesController : ControllerBase
             return Unauthorized(new { message = "User not found." });
         }
 
-        if (role != "Teacher")
+        if (role != "Teacher" && role != "Admin")
         {
-            return Forbid("Only teachers can remove students from a course.");
+            return Forbid("Only teachers and admins can remove students from a course.");
         }
 
         try
         {
             await _courseService.RemoveStudentAsync(courseId, studentId, userId, cancellationToken);
-            return Ok(new { message = "Student removed successfully." });
+            return Ok(new { message = "Student removed from course successfully." });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            var innerMsg = ex.InnerException?.Message ?? ex.Message;
+            return BadRequest(new { message = "Cannot remove student due to linked database records.", details = innerMsg });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Error removing student: {ex.Message}" });
         }
     }
 
@@ -290,7 +312,7 @@ public class CoursesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher") return Forbid("Only teachers can reset student passwords.");
+        if (role != "Teacher" && role != "Admin") return Forbid("Only teachers and admins can reset student passwords.");
 
         var student = await _context.Users.FirstOrDefaultAsync(u => u.Id == studentId, cancellationToken);
         if (student == null) return NotFound(new { message = "Student not found." });
@@ -312,7 +334,7 @@ public class CoursesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher") return Forbid("Only teachers can send notifications.");
+        if (role != "Teacher" && role != "Admin") return Forbid("Only teachers and admins can send notifications.");
 
         if (string.IsNullOrWhiteSpace(dto.Message))
         {
@@ -333,6 +355,29 @@ public class CoursesController : ControllerBase
 
         return Ok(new { success = true, message = "Notification sent to student." });
     }
+
+    [HttpPost("{courseId}/assign-teacher")]
+    public async Task<IActionResult> AssignTeacher(Guid courseId, [FromBody] AssignTeacherDto dto, CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (role != "Admin") return Forbid("Only the Administrator can assign teachers to courses.");
+
+        var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == courseId, cancellationToken);
+        if (course == null) return NotFound(new { message = "Course not found." });
+
+        var teacher = await _context.Users.FirstOrDefaultAsync(u => u.Id == dto.TeacherId && u.Role == Domain.Enums.UserRole.Teacher, cancellationToken);
+        if (teacher == null) return BadRequest(new { message = "Target teacher not found." });
+
+        course.TeacherId = dto.TeacherId;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return Ok(new { success = true, message = $"Teacher '{teacher.Name}' assigned to course '{course.Name}'." });
+    }
+}
+
+public class AssignTeacherDto
+{
+    public Guid TeacherId { get; set; }
 }
 
 public class SendNotificationDto

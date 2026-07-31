@@ -3,8 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Editor from '@monaco-editor/react';
-import { ArrowLeft, Play, Send, History, Loader2, Code, Clock, Award, ShieldAlert, Sparkles, Upload, Terminal, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, History, Loader2, Code, Clock, Award, ShieldAlert, Sparkles, Upload, Terminal, Trash2 } from 'lucide-react';
 import { RichTextViewer } from '../components/RichTextEditor';
+
 
 interface Task {
   id: string;
@@ -96,6 +97,9 @@ export const TaskWorkspace: React.FC = () => {
   } | null>(null);
 
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [fontSize] = useState<number>(14);
+  const [editorTheme] = useState<string>('vs-dark');
+
 
   const fetchTaskDetails = async () => {
     if (!user || !taskId) return;
@@ -166,7 +170,10 @@ export const TaskWorkspace: React.FC = () => {
     }
   };
 
+  // Reserved for future re-activation of Run Code feature once execution engine URL is configured
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleRunCode = async () => {
+    void handleRunCode;
     if (!taskId || running) return;
     setRunning(true);
     setConsoleOutput(null);
@@ -179,23 +186,36 @@ export const TaskWorkspace: React.FC = () => {
         },
         body: JSON.stringify({ code }),
       });
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(`Server returned non-JSON response (${res.status}).`);
+      }
+
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Run failed');
+      if (!res.ok || data.passed === false) {
+        const errorDetail = data.error || data.stderr || data.message || 'Execution failed.';
+        setConsoleOutput({
+          type: 'error',
+          summary: 'Execution Error',
+          generalError: errorDetail,
+        });
+        toast.error('Code execution failed.');
+        return;
       }
 
       setConsoleOutput({
         type: 'run',
-        summary: `${data.executionTimeMs}ms`,
+        summary: `Execution Completed (${data.executionTimeMs}ms)`,
         executionTimeMs: data.executionTimeMs,
         generalError: data.stderr || data.error,
-        detailsMessage: data.stdout
+        detailsMessage: data.stdout || 'Program executed cleanly.'
       });
-      toast.info('Code executed.');
+      toast.success('Program executed successfully.');
     } catch (err: any) {
       setConsoleOutput({
         type: 'error',
-        summary: 'Execution Error',
+        summary: 'Execution Failure',
         generalError: err.message,
       });
       toast.error(err.message || 'Execution error');
@@ -240,6 +260,12 @@ export const TaskWorkspace: React.FC = () => {
         },
         body: JSON.stringify({ code }),
       });
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(`Server returned non-JSON response (${res.status}).`);
+      }
+
       const data = await res.json();
       if (!res.ok) {
         const errorMsg = data.message || 'Submission failed';
@@ -381,83 +407,120 @@ export const TaskWorkspace: React.FC = () => {
   const attemptsDisabled = !!(isHomework && stats && stats.remainingAttempts === 0);
   const deadlinePassed = !!(isHomework && stats && new Date(stats.deadline).getTime() < Date.now());
 
+  // Mobile workspace tab state: 'instructions' | 'editor' | 'history' | 'console'
+  const [mobileTab, setMobileTab] = useState<'instructions' | 'editor' | 'history' | 'console'>('editor');
+
   return (
     <div className="min-h-screen bg-[#0F0F11] text-zinc-200 flex flex-col overflow-hidden h-screen">
-      {/* Top bar */}
-      <header className="bg-[#16161A] border-b border-[#24242B] px-6 py-2.5 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
+      {/* Top Header Bar */}
+      <header className="bg-[#16161A] border-b border-[#24242B] px-3 sm:px-6 py-2.5 flex items-center justify-between shrink-0 min-h-[52px]">
+        <div className="flex items-center gap-2 min-w-0">
           <Link
             to={task ? `/course/${task.sessionId}` : '/'}
-            className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"
+            className="p-2 hover:bg-zinc-800 rounded-xl text-zinc-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             title="Back to syllabus"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
           </Link>
-          <span className="text-xs font-semibold text-zinc-400">Workspace</span>
-          <span className="text-zinc-600">/</span>
-          <span className="text-xs font-bold text-white truncate max-w-[200px] sm:max-w-none">{task.title}</span>
+          <span className="text-xs font-bold text-white truncate max-w-[140px] sm:max-w-none">{task.title}</span>
         </div>
 
         {/* Stats Summary Bar */}
-        <div className="flex items-center gap-3 text-xs font-semibold">
-          <span className="text-amber-300 bg-amber-600/20 border border-amber-500/30 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider flex items-center gap-1">
-            📝 Manual Review
-          </span>
-
-          <span className="text-indigo-300 bg-indigo-600/20 border border-indigo-500/30 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
-            Python 3.11
-          </span>
-
-          <div className="flex items-center gap-1 bg-zinc-800/50 border border-zinc-700/40 px-2.5 py-0.5 rounded text-zinc-300 text-[11px]">
-            <Award className="w-3.5 h-3.5 text-indigo-400" />
-            Max Grade: {task.maxGrade} pts
+        <div className="flex items-center gap-2 text-xs font-semibold">
+          <div className="flex items-center gap-1 bg-zinc-800/80 border border-zinc-700/50 px-2.5 py-1 rounded-xl text-zinc-200 text-xs font-bold">
+            <Award className="w-4 h-4 text-indigo-400" />
+            <span>{task.maxGrade} pts</span>
           </div>
           {isHomework && (
-            <>
-              <div className="hidden sm:flex items-center gap-1 bg-zinc-800/50 border border-zinc-700/40 px-2.5 py-0.5 rounded text-zinc-300 text-[11px]">
-                <Sparkles className="w-3 h-3 text-violet-400" />
-                Best Score: {stats?.bestScore ?? 0} pts
-              </div>
-              <div className="hidden sm:flex items-center gap-1 bg-zinc-800/50 border border-zinc-700/40 px-2.5 py-0.5 rounded text-zinc-300 text-[11px]">
-                <Clock className="w-3 h-3 text-rose-400" />
-                {getCountdown()}
-              </div>
-            </>
+            <div className="hidden sm:flex items-center gap-1 bg-zinc-800/80 border border-zinc-700/50 px-2.5 py-1 rounded-xl text-zinc-200 text-xs font-bold">
+              <Clock className="w-4 h-4 text-rose-400" />
+              <span>{getCountdown()}</span>
+            </div>
           )}
         </div>
       </header>
 
-      {/* Workspace Split Layout: Compact Description (30%) + Large Coding Area (70%) */}
+      {/* Mobile Workspace Navigation Tab Bar (Visible on < 768px) */}
+      <div className="md:hidden flex border-b border-[#24242B] bg-[#16161A] shrink-0">
+        <button
+          onClick={() => setMobileTab('editor')}
+          className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 min-h-[48px] ${
+            mobileTab === 'editor'
+              ? 'border-blue-500 text-blue-400 bg-blue-500/10'
+              : 'border-transparent text-zinc-400 hover:text-white'
+          }`}
+        >
+          <Code className="w-4 h-4" />
+          <span>Editor</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('instructions')}
+          className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 min-h-[48px] ${
+            mobileTab === 'instructions'
+              ? 'border-blue-500 text-blue-400 bg-blue-500/10'
+              : 'border-transparent text-zinc-400 hover:text-white'
+          }`}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Instructions</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('history')}
+          className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 min-h-[48px] ${
+            mobileTab === 'history'
+              ? 'border-blue-500 text-blue-400 bg-blue-500/10'
+              : 'border-transparent text-zinc-400 hover:text-white'
+          }`}
+        >
+          <History className="w-4 h-4" />
+          <span>History ({submissions.length})</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('console')}
+          className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 min-h-[48px] ${
+            mobileTab === 'console'
+              ? 'border-blue-500 text-blue-400 bg-blue-500/10'
+              : 'border-transparent text-zinc-400 hover:text-white'
+          }`}
+        >
+          <Terminal className="w-4 h-4" />
+          <span>Output</span>
+        </button>
+      </div>
+
+      {/* Main Container Layout */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
-        {/* Left Side: Compact Description / History */}
-        <div className="w-full md:w-[30%] lg:w-[28%] flex flex-col border-r border-[#24242B] bg-[#16161A] overflow-hidden min-h-0 shrink-0">
-          <div className="flex border-b border-[#24242B] shrink-0 bg-[#1A1A22]/50">
+        {/* Left Pane: Instructions & History (Desktop side pane, Mobile toggled) */}
+        <div className={`w-full md:w-[32%] lg:w-[28%] flex flex-col border-r border-[#24242B] bg-[#16161A] overflow-hidden min-h-0 shrink-0 ${
+          mobileTab === 'instructions' || mobileTab === 'history' ? 'flex flex-1' : 'hidden md:flex'
+        }`}>
+          <div className="hidden md:flex border-b border-[#24242B] shrink-0 bg-[#1A1A22]/50">
             <button
               onClick={() => setActiveTab('description')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold border-b-2 transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold border-b-2 transition-all ${
                 activeTab === 'description'
                   ? 'border-violet-500 text-white bg-[#1F1F28]/50'
                   : 'border-transparent text-zinc-400 hover:text-white'
               }`}
             >
-              <Code className="w-3.5 h-3.5" />
+              <Code className="w-4 h-4" />
               Description
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold border-b-2 transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold border-b-2 transition-all ${
                 activeTab === 'history'
                   ? 'border-violet-500 text-white bg-[#1F1F28]/50'
                   : 'border-transparent text-zinc-400 hover:text-white'
               }`}
             >
-              <History className="w-3.5 h-3.5" />
+              <History className="w-4 h-4" />
               Submissions ({submissions.length})
             </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 min-h-0 space-y-4">
-            {activeTab === 'description' ? (
+            {(mobileTab === 'instructions' || (activeTab === 'description' && mobileTab !== 'history')) ? (
               <div className="space-y-4 text-xs">
                 <div>
                   <h2 className="text-lg font-extrabold text-white tracking-tight">{task.title}</h2>
@@ -499,9 +562,9 @@ export const TaskWorkspace: React.FC = () => {
                       Task Attachments ({attachments.length})
                     </h4>
                     {user?.role === 'Teacher' && (
-                      <label className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-[11px] cursor-pointer transition-colors flex items-center gap-1">
+                      <label className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-[11px] cursor-pointer transition-colors flex items-center gap-1">
                         {uploadingAttachment ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-                        Upload File
+                        Upload
                         <input
                           type="file"
                           className="hidden"
@@ -538,7 +601,7 @@ export const TaskWorkspace: React.FC = () => {
                               download={att.fileName}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-2.5 py-1 bg-zinc-800 hover:bg-blue-600 text-zinc-300 hover:text-white font-bold rounded-lg text-[11px] transition-colors"
+                              className="px-2.5 py-1 bg-zinc-800 hover:bg-blue-600 text-zinc-300 hover:text-white font-bold rounded-xl text-xs transition-colors min-h-[36px] flex items-center justify-center"
                             >
                               Download
                             </a>
@@ -546,7 +609,7 @@ export const TaskWorkspace: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteAttachment(att.id)}
-                                className="p-1 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 rounded-lg transition-colors"
+                                className="p-1.5 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 rounded-lg transition-colors"
                                 title="Delete Attachment"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -558,6 +621,7 @@ export const TaskWorkspace: React.FC = () => {
                     </div>
                   )}
                 </div>
+
               </div>
             ) : (
               <div className="space-y-3">
@@ -604,31 +668,34 @@ export const TaskWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Side: Monaco Code Editor (Large) & Execution Console (Medium) */}
-        <div className="w-full md:w-[70%] lg:w-[72%] flex flex-col bg-[#0F0F11] overflow-hidden min-h-0 h-full" dir="ltr" style={{ direction: 'ltr', unicodeBidi: 'isolate' }}>
+        {/* Right Pane: Monaco Editor & Console */}
+        <div className={`w-full md:w-[68%] lg:w-[72%] flex flex-col bg-[#0F0F11] overflow-hidden min-h-0 h-full ${
+          mobileTab === 'editor' || mobileTab === 'console' ? 'flex flex-1' : 'hidden md:flex'
+        }`} dir="ltr" style={{ direction: 'ltr', unicodeBidi: 'isolate' }}>
           {/* Action Toolbar Header */}
-          <div className="flex items-center justify-between px-4 py-2 bg-[#16161A] border-b border-[#24242B] shrink-0" dir="ltr" style={{ direction: 'ltr' }}>
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-zinc-300 font-mono flex items-center gap-2">
-                <Code className="w-4 h-4 text-violet-400" />
+          <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-[#16161A] border-b border-[#24242B] shrink-0" dir="ltr" style={{ direction: 'ltr' }}>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-zinc-300 font-mono flex items-center gap-1.5">
+                <Code className="w-4 h-4 text-blue-400" />
                 <span>solution.py</span>
               </span>
+
               {code.trim() !== '' && (
                 <button
                   onClick={() => handleCodeChange('')}
-                  className="text-[10px] text-zinc-500 hover:text-red-400 transition-colors flex items-center gap-1"
+                  className="text-xs text-zinc-500 hover:text-red-400 transition-colors flex items-center gap-1 ml-2 p-1"
                   title="Clear Code"
                 >
-                  <Trash2 className="w-3 h-3" />
-                  Clear
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Clear</span>
                 </button>
               )}
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1.5 bg-[#1F1F24] hover:bg-zinc-800 border border-[#2F2F37] text-zinc-200 font-semibold py-1.5 px-3 rounded-lg text-xs cursor-pointer transition-all">
-                <Upload className="w-3.5 h-3.5 text-violet-400" />
-                <span>Upload .py File</span>
+              <label className="flex items-center gap-1 bg-[#1F1F24] hover:bg-zinc-800 border border-[#2F2F37] text-zinc-200 font-semibold py-1.5 px-3 rounded-xl text-xs cursor-pointer transition-all min-h-[38px]">
+                <Upload className="w-3.5 h-3.5 text-blue-400" />
+                <span>Upload .py</span>
                 <input
                   type="file"
                   accept=".py"
@@ -638,25 +705,9 @@ export const TaskWorkspace: React.FC = () => {
               </label>
 
               <button
-                onClick={handleRunCode}
-                disabled={running || submitting}
-                className="flex items-center gap-1.5 bg-[#1F1F24] hover:bg-zinc-800 border border-[#2F2F37] text-zinc-200 font-semibold py-1.5 px-3.5 rounded-lg text-xs transition-all disabled:opacity-50"
-              >
-                {running ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <>
-                    <Play className="w-3.5 h-3.5 text-zinc-400" />
-                    Run Code
-                  </>
-                )}
-              </button>
-
-              <button
                 onClick={handleSubmitCode}
                 disabled={running || submitting || attemptsDisabled || deadlinePassed}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold py-1.5 px-4 rounded-lg text-xs shadow-lg hover:shadow-violet-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                title={attemptsDisabled ? 'No attempts remaining' : deadlinePassed ? 'Deadline has passed' : 'Submit task'}
+                className="hidden sm:flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold py-1.5 px-4 rounded-xl text-xs shadow-lg transition-all min-h-[38px] disabled:opacity-50"
               >
                 {submitting ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -670,59 +721,57 @@ export const TaskWorkspace: React.FC = () => {
             </div>
           </div>
 
-          {/* Monaco Editor Container (Large main focus area) */}
-          <div className="flex-1 w-full min-h-[300px] relative overflow-hidden" dir="ltr" style={{ direction: 'ltr', unicodeBidi: 'isolate' }}>
+          {/* Monaco Editor Container */}
+          <div className={`flex-1 w-full min-h-[250px] relative overflow-hidden ${
+            mobileTab === 'console' ? 'hidden md:block' : 'block'
+          }`} dir="ltr" style={{ direction: 'ltr', unicodeBidi: 'isolate' }}>
             <Editor
               height="100%"
               width="100%"
               defaultLanguage="python"
               language="python"
-              theme="vs-dark"
+              theme={editorTheme}
               value={code}
               onChange={handleCodeChange}
               onMount={(editor) => {
                 setTimeout(() => {
                   editor.layout();
                   editor.setPosition({ lineNumber: 1, column: 1 });
-                  editor.focus();
                 }, 100);
               }}
               loading={
                 <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-xs bg-[#0F0F11]">
-                  <Loader2 className="w-6 h-6 animate-spin text-violet-500 mb-2" />
-                  <span>Loading Editor...</span>
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-500 mb-2" />
+                  <span>Loading Code Editor...</span>
                 </div>
               }
               options={{
-                fontSize: 15,
+                fontSize: fontSize,
                 minimap: { enabled: false },
                 scrollBeyondLastLine: false,
                 lineNumbers: 'on',
                 fontFamily: 'Consolas, "Fira Code", monospace',
                 automaticLayout: true,
                 smoothScrolling: true,
-                wordWrap: 'off',
+                wordWrap: 'on',
                 padding: { top: 12, bottom: 12 }
               }}
             />
           </div>
 
-          {/* Execution Console (Medium height with monospace Output & StdErr) */}
-          <div className="h-64 border-t border-[#24242B] bg-[#16161A] flex flex-col shrink-0 overflow-hidden">
-            <div className="bg-[#1E1E24]/40 border-b border-[#24242B] px-4 py-2 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wider font-bold text-zinc-300">
-                <Terminal className="w-4 h-4 text-violet-400" />
-                <span>Execution Console</span>
-                {consoleOutput?.executionTimeMs !== undefined && (
-                  <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono">
-                    ⚡ {consoleOutput.executionTimeMs}ms
-                  </span>
-                )}
+          {/* Console / Terminal Output Container */}
+          <div className={`h-[220px] md:h-[200px] bg-[#121216] border-t border-[#24242B] flex flex-col shrink-0 ${
+            mobileTab === 'console' ? 'flex flex-1 md:flex-none' : 'hidden md:flex'
+          }`}>
+            <div className="flex items-center justify-between px-4 py-2 bg-[#18181E] border-b border-[#24242B] text-xs font-semibold text-zinc-400">
+              <div className="flex items-center gap-2">
+                <Terminal className="w-3.5 h-3.5 text-blue-400" />
+                <span>Console Output</span>
               </div>
               {consoleOutput && (
                 <button
                   onClick={() => setConsoleOutput(null)}
-                  className="text-xs text-zinc-500 hover:text-white transition-colors"
+                  className="text-xs text-zinc-500 hover:text-white transition-colors p-1"
                 >
                   Clear Console
                 </button>
@@ -733,7 +782,7 @@ export const TaskWorkspace: React.FC = () => {
               {!consoleOutput ? (
                 <div className="text-zinc-500 flex flex-col items-center justify-center h-full">
                   <Terminal className="w-8 h-8 text-zinc-700 mb-2" />
-                  <p className="text-xs">Click Run Code to execute locally, or Submit to turn in your assignment.</p>
+                  <p className="text-xs">Click Submit Code to turn in your solution.</p>
                 </div>
               ) : consoleOutput.type === 'error' ? (
                 <div className="text-red-400 space-y-2">
@@ -742,32 +791,13 @@ export const TaskWorkspace: React.FC = () => {
                     {consoleOutput.generalError}
                   </pre>
                 </div>
-              ) : consoleOutput.type === 'submit' ? (
-                <div className="text-zinc-200 space-y-3">
-                  <p className="font-bold text-violet-400 text-sm mb-2">{consoleOutput.summary}</p>
-                  
-                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-3.5 space-y-1.5">
-                    <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Submission Status</p>
-                    <pre className="text-zinc-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">
-                      {consoleOutput.detailsMessage}
-                    </pre>
-                  </div>
-                </div>
               ) : (
                 <div className="text-zinc-200 space-y-3">
-                  {consoleOutput.generalError && (
-                    <div className="bg-red-950/20 border border-red-900/30 rounded-xl p-3.5 space-y-1">
-                      <p className="text-red-400 text-[10px] uppercase font-bold tracking-wider">Standard Error (stderr)</p>
-                      <pre className="text-red-300 font-mono text-xs whitespace-pre-wrap leading-relaxed overflow-x-auto">
-                        {consoleOutput.generalError}
-                      </pre>
-                    </div>
-                  )}
-
-                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-3.5 space-y-1">
-                    <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Standard Output (stdout)</p>
-                    <pre className="text-emerald-400 font-mono text-xs whitespace-pre-wrap leading-relaxed overflow-x-auto min-h-[50px]">
-                      {consoleOutput.detailsMessage || 'Program executed successfully with no output.'}
+                  <p className="font-bold text-blue-400 text-sm mb-2">{consoleOutput.summary}</p>
+                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-3.5 space-y-1.5">
+                    <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Submission Details</p>
+                    <pre className="text-zinc-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">
+                      {consoleOutput.detailsMessage}
                     </pre>
                   </div>
                 </div>
@@ -777,76 +807,84 @@ export const TaskWorkspace: React.FC = () => {
         </div>
       </div>
 
+      {/* Sticky Mobile Bottom Submit Bar */}
+      <div className="md:hidden sticky bottom-0 z-30 bg-[#16161A] border-t border-[#24242B] p-3 flex items-center justify-between gap-3 shadow-2xl">
+        <button
+          onClick={handleSubmitCode}
+          disabled={running || submitting || attemptsDisabled || deadlinePassed}
+          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-xl text-sm min-h-[52px] shadow-lg active:scale-[0.98] disabled:opacity-50"
+        >
+          {submitting ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <>
+              <Send className="w-5 h-5" />
+              <span>Submit Code Assignment</span>
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Historical Code Viewer Modal */}
       {selectedSubmission && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#16161A] border border-[#24242B] rounded-2xl w-full max-w-4xl p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center pb-4 mb-4 border-b border-[#24242B]">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#16161A] border-t sm:border border-[#24242B] rounded-t-3xl sm:rounded-2xl w-full max-w-4xl p-4 sm:p-6 shadow-2xl relative max-h-[92vh] flex flex-col">
+            <div className="flex justify-between items-center pb-3 mb-3 border-b border-[#24242B]">
               <div>
-                <h3 className="text-lg font-bold text-white">Submission Review (Attempt #{selectedSubmission.attemptNumber})</h3>
-                <p className="text-zinc-500 text-xs mt-0.5">Submitted at: {new Date(selectedSubmission.submittedAt).toLocaleString()}</p>
+                <h3 className="text-base font-bold text-white">Submission Review (Attempt #{selectedSubmission.attemptNumber})</h3>
+                <p className="text-zinc-400 text-xs">{new Date(selectedSubmission.submittedAt).toLocaleString()}</p>
               </div>
-              {task && (
-                <div className="bg-violet-500/10 border border-violet-500/20 text-violet-400 px-3 py-1 rounded-lg text-xs font-bold">
-                  Score: {selectedSubmission.grade} / {task.maxGrade} pts
+              <button
+                onClick={() => setSelectedSubmission(null)}
+                className="p-2 text-zinc-400 hover:text-white rounded-xl min-h-[44px] min-w-[44px] flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 flex flex-col gap-4 overflow-y-auto min-h-0">
+              <div className="h-[250px] sm:h-[350px] border border-[#2F2F37] rounded-xl overflow-hidden" dir="ltr" style={{ direction: 'ltr' }}>
+                <Editor
+                  height="100%"
+                  width="100%"
+                  defaultLanguage="python"
+                  language="python"
+                  theme="vs-dark"
+                  value={selectedSubmission.code || ''}
+                  options={{
+                    readOnly: true,
+                    minimap: { enabled: false },
+                    fontSize: 13,
+                    lineNumbers: 'on',
+                    fontFamily: 'Consolas, monospace',
+                  }}
+                />
+              </div>
+
+              {selectedSubmission.feedback && (
+                <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-3 space-y-1">
+                  <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Evaluation Feedback</p>
+                  <pre className="text-zinc-300 font-mono text-xs whitespace-pre-wrap">{selectedSubmission.feedback}</pre>
                 </div>
               )}
             </div>
 
-            <div className="flex-1 flex flex-col md:flex-row gap-6 min-h-0">
-              {/* Code Editor */}
-              <div className="flex-1 flex flex-col bg-[#0F0F11] border border-[#2F2F37] rounded-xl overflow-hidden min-h-[300px] md:min-h-0">
-                <div className="bg-[#1E1E24]/30 border-b border-[#24242B] px-4 py-1.5 flex justify-between items-center text-[10px] uppercase font-bold text-zinc-500">
-                  <span>Submitted Python Code</span>
-                </div>
-                <div className="flex-1 min-h-[250px] relative" dir="ltr" style={{ direction: 'ltr' }}>
-                  <Editor
-                    height="100%"
-                    width="100%"
-                    defaultLanguage="python"
-                    language="python"
-                    theme="vs-dark"
-                    value={selectedSubmission.code || ''}
-                    options={{
-                      readOnly: true,
-                      minimap: { enabled: false },
-                      fontSize: 13,
-                      lineNumbers: 'on',
-                      fontFamily: 'Consolas, monospace',
-                      automaticLayout: true,
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Execution Details Panel */}
-              <div className="w-full md:w-80 flex flex-col gap-4 overflow-y-auto min-h-0 pr-1">
-                {selectedSubmission.feedback && (
-                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-4 space-y-1">
-                    <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Evaluation Feedback</p>
-                    <pre className="text-zinc-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">
-                      {selectedSubmission.feedback}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 mt-4 border-t border-[#24242B]">
+            <div className="flex flex-col sm:flex-row gap-2 pt-3 mt-3 border-t border-[#24242B]">
               <button
                 type="button"
                 onClick={() => {
                   handleCodeChange(selectedSubmission.code);
                   setSelectedSubmission(null);
+                  setMobileTab('editor');
                 }}
-                className="bg-violet-600 hover:bg-violet-500 text-white font-semibold py-2 px-4 rounded-lg text-xs transition-all"
+                className="saas-button-primary min-h-[48px]"
               >
-                Restore to Workspace
+                Restore to Code Editor
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedSubmission(null)}
-                className="bg-[#1F1F24] border border-[#2F2F37] text-zinc-400 hover:text-white rounded-lg py-2 px-4 text-xs font-medium transition-all"
+                className="saas-button-secondary min-h-[48px]"
               >
                 Close
               </button>
@@ -857,3 +895,4 @@ export const TaskWorkspace: React.FC = () => {
     </div>
   );
 };
+

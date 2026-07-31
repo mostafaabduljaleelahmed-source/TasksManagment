@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import {
   Activity, Clock, BookOpen, FileCode, Search,
@@ -23,6 +23,11 @@ interface ActivityLogItem {
 
 export const ActivityLogPage: React.FC = () => {
   const { user } = useAuth();
+
+  if (user && user.role === 'Student') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   const [logs, setLogs] = useState<ActivityLogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
+import { ScoreBadge } from '../components/ScoreBadge';
 import { MetricsSkeleton } from '../components/SkeletonLoaders';
+import { DeadlineCountdown } from '../components/DeadlineCountdown';
+import { EmptyState } from '../components/EmptyState';
+import { QuickActions } from '../components/QuickActions';
 import {
-  FileCode, Users, School, CheckCircle2, Award, MessageSquare, Clock, Bell, ChevronRight, Activity, Calendar, CheckSquare
+  School, CheckCircle2, Award, MessageSquare, Clock, Bell, ChevronRight, Activity, Calendar, CheckSquare
 } from 'lucide-react';
 
 interface TeacherSummary {
@@ -126,7 +130,8 @@ export const Dashboard: React.FC = () => {
     setError(null);
 
     try {
-      if (user.role === 'Teacher') {
+      const isTeacherOrAdmin = user.role === 'Teacher' || user.role === 'Admin';
+      if (isTeacherOrAdmin) {
         const [sumRes, grpRes, revRes, actRes, notifRes] = await Promise.all([
           fetch(`${API_URL}/dashboard/teacher/summary`, { headers: { Authorization: `Bearer ${user.token}` } }),
           fetch(`${API_URL}/dashboard/teacher/groups`, { headers: { Authorization: `Bearer ${user.token}` } }),
@@ -159,9 +164,15 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const location = useLocation();
+
   useEffect(() => {
     fetchDashboardData();
-  }, [user?.id, user?.role, user?.token]);
+
+    const handleFocus = () => fetchDashboardData();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user?.id, user?.role, user?.token, location.key]);
 
   const handleNotificationClick = (n: NotificationItem) => {
     if (n.taskId) {
@@ -178,38 +189,21 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-10">
+    <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-8">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F2937] pb-6">
         <div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
-            {user?.role === 'Teacher' ? 'Daily Teaching Workspace' : 'Student Dashboard'}
+            {user?.role === 'Teacher' || user?.role === 'Admin' ? 'Executive Academy & Teaching Workspace' : 'Student Workspace'}
           </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            {user?.role === 'Teacher'
+            {user?.role === 'Teacher' || user?.role === 'Admin'
               ? 'Focus on your daily teaching workflow: pending reviews, student activity, and course management.'
               : 'Overview of your pending assignments, completed work, teacher feedback, and recent grades.'}
           </p>
         </div>
 
-        {user?.role === 'Teacher' && (
-          <div className="flex items-center gap-3">
-            <Link
-              to="/teacher/pending-reviews"
-              className="px-4 py-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 font-bold rounded-xl text-xs transition-all flex items-center gap-2"
-            >
-              <FileCode className="w-4 h-4" />
-              Pending Reviews ({summary?.pendingReviewsCount ?? 0})
-            </Link>
-            <Link
-              to="/teacher/students"
-              className="px-4 py-2.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-zinc-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-2"
-            >
-              <Users className="w-4 h-4 text-blue-400" />
-              Students Roster
-            </Link>
-          </div>
-        )}
+        {user && <QuickActions role={user.role as any} />}
       </div>
 
       {loading ? (
@@ -218,9 +212,34 @@ export const Dashboard: React.FC = () => {
         <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-center text-sm">
           {error}
         </div>
-      ) : user?.role === 'Teacher' ? (
-        /* TEACHER DASHBOARD VIEW */
+      ) : (user?.role === 'Teacher' || user?.role === 'Admin') ? (
+        /* TEACHER & EXECUTIVE DASHBOARD VIEW */
         <div className="space-y-10">
+          {/* Workload Overview Cards */}
+          {summary && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-[#121215] border border-[#24242B] p-4 rounded-2xl space-y-1">
+                <span className="text-[11px] font-bold text-zinc-400 uppercase">Pending Reviews</span>
+                <p className="text-2xl font-black text-amber-400">{summary.pendingReviewsCount}</p>
+                <span className="text-[10px] text-zinc-500">Submissions waiting</span>
+              </div>
+              <div className="bg-[#121215] border border-[#24242B] p-4 rounded-2xl space-y-1">
+                <span className="text-[11px] font-bold text-zinc-400 uppercase">Submitted Today</span>
+                <p className="text-2xl font-black text-emerald-400">{summary.submittedTodayCount}</p>
+                <span className="text-[10px] text-zinc-500">Student submissions</span>
+              </div>
+              <div className="bg-[#121215] border border-[#24242B] p-4 rounded-2xl space-y-1">
+                <span className="text-[11px] font-bold text-zinc-400 uppercase">Teaching Groups</span>
+                <p className="text-2xl font-black text-blue-400">{summary.totalGroupsCount}</p>
+                <span className="text-[10px] text-zinc-500">Active courses</span>
+              </div>
+              <div className="bg-[#121215] border border-[#24242B] p-4 rounded-2xl space-y-1">
+                <span className="text-[11px] font-bold text-zinc-400 uppercase">Enrolled Students</span>
+                <p className="text-2xl font-black text-violet-400">{summary.totalStudentsCount}</p>
+                <span className="text-[10px] text-zinc-500">Total roster</span>
+              </div>
+            </div>
+          )}
 
           {/* Section 1: Pending Reviews */}
           <div className="space-y-4">
@@ -353,9 +372,7 @@ export const Dashboard: React.FC = () => {
                         <td className="px-4 py-3.5 text-zinc-400">{new Date(act.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                         <td className="px-4 py-3.5">
                           {act.status === 'Graded' ? (
-                            <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold rounded-lg text-[11px]">
-                              🟢 Graded ({act.grade} pts)
-                            </span>
+                            <ScoreBadge score={act.grade} maxScore={100} />
                           ) : (
                             <span className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold rounded-lg text-[11px]">
                               🟡 Pending Review
@@ -496,8 +513,57 @@ export const Dashboard: React.FC = () => {
 
         </div>
       ) : (
-        /* MINIMAL STUDENT DASHBOARD VIEW */
+        /* LEETCODE & COURSERA STYLE STUDENT DASHBOARD VIEW */
         <div className="space-y-10">
+
+          {/* Gamification & Level Progress Banner */}
+          <div className="bg-gradient-to-r from-violet-950/40 via-[#13131B] to-indigo-950/40 border border-violet-500/30 rounded-3xl p-6 shadow-2xl space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 border-2 border-violet-400/40 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-violet-950/60">
+                  ⚡ 3
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-black text-white">Level 3 • Code Practitioner</h2>
+                    <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full text-[10px] font-extrabold flex items-center gap-1">
+                      🔥 5 Day Streak
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-400">Total XP: 350 / 500 XP to next level</p>
+                </div>
+              </div>
+
+              {/* Progress Tracker % */}
+              <div className="sm:text-right space-y-1">
+                <span className="text-[10px] text-zinc-400 uppercase font-extrabold tracking-wider">Overall Course Completion</span>
+                <p className="text-2xl font-black text-emerald-400">
+                  {studentData ? Math.round((studentData.completedTasks / Math.max(1, studentData.completedTasks + studentData.pendingTasks)) * 100) : 0}%
+                </p>
+              </div>
+            </div>
+
+            {/* XP Progress Bar */}
+            <div className="space-y-1.5">
+              <div className="w-full bg-[#1A1A22] rounded-full h-3 overflow-hidden border border-[#2B2B38] p-0.5">
+                <div className="bg-gradient-to-r from-violet-600 to-indigo-500 h-full rounded-full transition-all duration-500" style={{ width: '70%' }} />
+              </div>
+            </div>
+
+            {/* Badges Showcase */}
+            <div className="pt-2 border-t border-[#1F1F2A] flex flex-wrap items-center gap-3">
+              <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Earned Badges:</span>
+              <span className="px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                🏆 First Solved
+              </span>
+              <span className="px-2.5 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-300 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                ⚡ Speed Demon
+              </span>
+              <span className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                ⭐ Perfect Score
+              </span>
+            </div>
+          </div>
 
           {/* Section 1: Pending Assignments */}
           <div className="space-y-4">
@@ -510,52 +576,67 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {!studentData?.pendingAssignments || studentData.pendingAssignments.length === 0 ? (
-              <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-8 text-center text-zinc-400 text-sm">
-                🎉 You have no pending assignments.
-              </div>
+              <EmptyState
+                variant="tasks"
+                title="No Pending Tasks"
+                description="Awesome job! You have submitted all your assignments and have zero pending work."
+              />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {studentData.pendingAssignments.map((item) => (
                   <div
                     key={item.taskId}
-                    className="bg-[#111827] border border-[#1F2937] hover:border-blue-500/40 rounded-2xl p-5 shadow-lg transition-all flex flex-col justify-between space-y-4 group"
+                    className="bg-[#13131B] border border-[#242432] hover:border-violet-500/50 rounded-2xl p-6 shadow-xl transition-all duration-200 flex flex-col justify-between space-y-4 group hover:-translate-y-0.5"
                   >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-lg">
-                          {item.courseName}
+                    <div className="space-y-3">
+                      {/* Top Badges */}
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-bold text-violet-400 bg-violet-500/10 border border-violet-500/25 px-3 py-1 rounded-full shadow-sm">
+                            {item.courseName}
+                          </span>
+                          <span className="text-[11px] font-medium text-zinc-400 bg-zinc-800/80 px-2.5 py-0.5 rounded-md">
+                            {item.sessionName}
+                          </span>
+                        </div>
+
+                        <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-extrabold rounded-full text-xs flex items-center gap-1.5 shadow-sm animate-pulse-glow">
+                          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                          Waiting for Submission
                         </span>
-                        {item.status === 'Late' ? (
-                          <span className="px-2.5 py-0.5 bg-orange-500/10 border border-orange-500/30 text-orange-400 font-bold rounded-lg text-[11px]">
-                            🟠 Late
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold rounded-lg text-[11px]">
-                            🟡 Pending
-                          </span>
-                        )}
                       </div>
 
-                      <h3 className="text-base font-extrabold text-white group-hover:text-blue-300 transition-colors">
-                        {item.title}
-                      </h3>
-                      <p className="text-xs text-zinc-400 font-medium">Session: {item.sessionName}</p>
+                      {/* Title & Description */}
+                      <div className="space-y-1">
+                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-violet-300 transition-colors">
+                          {item.title}
+                        </h3>
+                      </div>
+
+                      {/* Countdown Timer Component */}
+                      <div className="pt-1">
+                        <div className="text-[11px] text-zinc-400 uppercase tracking-wider font-bold mb-1">Time Remaining:</div>
+                        <DeadlineCountdown deadline={item.deadline} size="md" />
+                      </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-[#1F2937] text-xs text-zinc-400">
-                      <div className="space-y-0.5">
-                        <p className="text-zinc-400 flex items-center gap-1 text-[11px]">
-                          <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                          Due: {new Date(item.deadline).toLocaleDateString()}
+                    {/* Bottom Metadata & CTA */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[#1F1F2A] text-xs text-zinc-400">
+                      <div className="space-y-1">
+                        <p className="text-zinc-400 flex items-center gap-1 text-[11px] font-medium">
+                          <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+                          Due: {new Date(item.deadline).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                         </p>
-                        <p className="text-[11px] text-zinc-500">{item.remainingAttempts} attempts left</p>
+                        <p className="text-[11px] text-zinc-400">
+                          Attempts remaining: <span className="font-bold text-zinc-200">{item.remainingAttempts}</span>
+                        </p>
                       </div>
 
                       <Link
                         to={`/task/${item.taskId}`}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs transition-all inline-flex items-center gap-1.5 shadow-lg hover:shadow-blue-600/20"
+                        className="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs transition-all inline-flex items-center gap-2 shadow-lg shadow-violet-950/40 active:scale-95"
                       >
-                        Open Assignment &rarr;
+                        Start Task &rarr;
                       </Link>
                     </div>
                   </div>
@@ -675,9 +756,7 @@ export const Dashboard: React.FC = () => {
                         <td className="px-4 py-3.5 font-mono text-zinc-400">#{item.attemptNumber}</td>
                         <td className="px-4 py-3.5 text-zinc-400">{new Date(item.submittedAt).toLocaleString()}</td>
                         <td className="px-4 py-3.5">
-                          <span className="font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
-                            {item.grade} pts
-                          </span>
+                          <ScoreBadge score={item.grade} maxScore={100} />
                         </td>
                       </tr>
                     ))}

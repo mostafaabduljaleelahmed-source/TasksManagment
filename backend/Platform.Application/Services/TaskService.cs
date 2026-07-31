@@ -209,6 +209,7 @@ public class TaskService : ITaskService
 
     public async Task DeleteTaskAsync(Guid taskId, Guid teacherId, CancellationToken cancellationToken = default)
     {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == teacherId, cancellationToken);
         var task = await _context.ProgrammingTasks
             .FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken);
 
@@ -217,6 +218,43 @@ public class TaskService : ITaskService
             throw new InvalidOperationException("Task not found.");
         }
 
+        if (user == null || (user.Role != Domain.Enums.UserRole.Admin && user.Role != Domain.Enums.UserRole.Teacher))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to delete tasks.");
+        }
+
+        // 1. Delete associated Submissions
+        var submissions = await _context.Submissions.Where(s => s.TaskId == taskId).ToListAsync(cancellationToken);
+        if (submissions.Any())
+        {
+            _context.Submissions.RemoveRange(submissions);
+        }
+
+        // 2. Delete associated UserTaskViews
+        var views = await _context.UserTaskViews.Where(v => v.TaskId == taskId).ToListAsync(cancellationToken);
+        if (views.Any())
+        {
+            _context.UserTaskViews.RemoveRange(views);
+        }
+
+        // 3. Delete associated Notifications referencing this task
+        var notifications = await _context.Notifications.Where(n => n.TaskId == taskId).ToListAsync(cancellationToken);
+        if (notifications.Any())
+        {
+            _context.Notifications.RemoveRange(notifications);
+        }
+
+        // 4. Nullify ActivityLogs referencing this task
+        var activityLogs = await _context.ActivityLogs.Where(a => a.TaskId == taskId).ToListAsync(cancellationToken);
+        if (activityLogs.Any())
+        {
+            foreach (var log in activityLogs)
+            {
+                log.TaskId = null;
+            }
+        }
+
+        // 5. Remove task entity
         _context.ProgrammingTasks.Remove(task);
         await _context.SaveChangesAsync(cancellationToken);
     }

@@ -191,16 +191,57 @@ public class CourseService : ICourseService
             throw new InvalidOperationException("Course not found.");
         }
 
-        if (course.TeacherId != teacherId)
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == teacherId, cancellationToken);
+        if (course.TeacherId != teacherId && (user == null || user.Role != Domain.Enums.UserRole.Admin))
         {
             var isCollaborator = await _context.CourseTeachers
                 .AnyAsync(ct => ct.CourseId == courseId && ct.TeacherId == teacherId, cancellationToken);
             if (!isCollaborator)
             {
-                throw new UnauthorizedAccessException("Only authorized course teachers can delete this course.");
+                throw new UnauthorizedAccessException("Only authorized course teachers or admins can delete this course.");
             }
         }
 
+        // 1. Get all session IDs for this course
+        var sessions = await _context.Sessions.Where(s => s.CourseId == courseId).ToListAsync(cancellationToken);
+        var sessionIds = sessions.Select(s => s.Id).ToList();
+
+        // 2. Get all task IDs for these sessions
+        var tasks = await _context.ProgrammingTasks.Where(t => sessionIds.Contains(t.SessionId)).ToListAsync(cancellationToken);
+        var taskIds = tasks.Select(t => t.Id).ToList();
+
+        // 3. Purge Submissions
+        var submissions = await _context.Submissions.Where(s => taskIds.Contains(s.TaskId)).ToListAsync(cancellationToken);
+        if (submissions.Any()) _context.Submissions.RemoveRange(submissions);
+
+        // 4. Purge UserTaskViews
+        var taskViews = await _context.UserTaskViews.Where(v => taskIds.Contains(v.TaskId)).ToListAsync(cancellationToken);
+        if (taskViews.Any()) _context.UserTaskViews.RemoveRange(taskViews);
+
+        // 5. Purge Task Notifications
+        var notifications = await _context.Notifications.Where(n => n.TaskId.HasValue && taskIds.Contains(n.TaskId.Value)).ToListAsync(cancellationToken);
+        if (notifications.Any()) _context.Notifications.RemoveRange(notifications);
+
+        // 6. Purge Tasks & Sessions
+        if (tasks.Any()) _context.ProgrammingTasks.RemoveRange(tasks);
+        if (sessions.Any()) _context.Sessions.RemoveRange(sessions);
+
+        // 7. Purge Enrollments & CourseTeachers
+        var enrollments = await _context.Enrollments.Where(e => e.CourseId == courseId).ToListAsync(cancellationToken);
+        if (enrollments.Any()) _context.Enrollments.RemoveRange(enrollments);
+
+        var courseTeachers = await _context.CourseTeachers.Where(ct => ct.CourseId == courseId).ToListAsync(cancellationToken);
+        if (courseTeachers.Any()) _context.CourseTeachers.RemoveRange(courseTeachers);
+
+        // 8. Nullify ActivityLogs
+        var activityLogs = await _context.ActivityLogs.Where(a => a.CourseId == courseId).ToListAsync(cancellationToken);
+        foreach (var log in activityLogs)
+        {
+            log.CourseId = null;
+            log.TaskId = null;
+        }
+
+        // 9. Remove Course
         _context.Courses.Remove(course);
         await _context.SaveChangesAsync(cancellationToken);
     }

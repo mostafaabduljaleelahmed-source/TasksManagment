@@ -28,14 +28,14 @@ public class ArchiveController : ControllerBase
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || role != "Teacher")
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var teacherId) || (role != "Teacher" && role != "Admin"))
         {
-            return Forbid("Only teachers can access archived items.");
+            return Forbid("Only teachers and admins can access archived items.");
         }
 
-        // Teacher's courses
+        // Teacher/Admin courses
         var courses = await _context.Courses
-            .Where(c => c.TeacherId == teacherId && c.IsArchived)
+            .Where(c => (role == "Admin" || c.TeacherId == teacherId) && c.IsArchived)
             .Select(c => new
             {
                 id = c.Id,
@@ -46,9 +46,9 @@ public class ArchiveController : ControllerBase
             })
             .ToListAsync(cancellationToken);
 
-        // Teacher's all course IDs
+        // Teacher/Admin course IDs
         var teacherCourseIds = await _context.Courses
-            .Where(c => c.TeacherId == teacherId)
+            .Where(c => role == "Admin" || c.TeacherId == teacherId)
             .Select(c => c.Id)
             .ToListAsync(cancellationToken);
 
@@ -67,7 +67,7 @@ public class ArchiveController : ControllerBase
             })
             .ToListAsync(cancellationToken);
 
-        // Teacher's all session IDs
+        // Teacher/Admin session IDs
         var teacherSessionIds = await _context.Sessions
             .Where(s => teacherCourseIds.Contains(s.CourseId))
             .Select(s => s.Id)
@@ -103,7 +103,7 @@ public class ArchiveController : ControllerBase
     public async Task<IActionResult> ArchiveCourse(Guid id, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher") return Forbid();
+        if (role != "Admin") return Forbid();
 
         var course = await _context.Courses.FindAsync(new object[] { id }, cancellationToken);
         if (course == null) return NotFound(new { message = "Course not found." });
@@ -117,7 +117,7 @@ public class ArchiveController : ControllerBase
     public async Task<IActionResult> RestoreCourse(Guid id, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher") return Forbid();
+        if (role != "Admin") return Forbid();
 
         var course = await _context.Courses.FindAsync(new object[] { id }, cancellationToken);
         if (course == null) return NotFound(new { message = "Course not found." });
@@ -131,7 +131,7 @@ public class ArchiveController : ControllerBase
     public async Task<IActionResult> ArchiveSession(Guid id, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher") return Forbid();
+        if (role != "Teacher" && role != "Admin") return Forbid();
 
         var session = await _context.Sessions.FindAsync(new object[] { id }, cancellationToken);
         if (session == null) return NotFound(new { message = "Session not found." });
@@ -145,7 +145,7 @@ public class ArchiveController : ControllerBase
     public async Task<IActionResult> RestoreSession(Guid id, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher") return Forbid();
+        if (role != "Teacher" && role != "Admin") return Forbid();
 
         var session = await _context.Sessions.FindAsync(new object[] { id }, cancellationToken);
         if (session == null) return NotFound(new { message = "Session not found." });
@@ -159,7 +159,7 @@ public class ArchiveController : ControllerBase
     public async Task<IActionResult> ArchiveTask(Guid id, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher") return Forbid();
+        if (role != "Teacher" && role != "Admin") return Forbid();
 
         var task = await _context.ProgrammingTasks.FindAsync(new object[] { id }, cancellationToken);
         if (task == null) return NotFound(new { message = "Task not found." });
@@ -173,7 +173,7 @@ public class ArchiveController : ControllerBase
     public async Task<IActionResult> RestoreTask(Guid id, CancellationToken cancellationToken)
     {
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
-        if (role != "Teacher") return Forbid();
+        if (role != "Teacher" && role != "Admin") return Forbid();
 
         var task = await _context.ProgrammingTasks.FindAsync(new object[] { id }, cancellationToken);
         if (task == null) return NotFound(new { message = "Task not found." });

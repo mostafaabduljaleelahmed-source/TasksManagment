@@ -6,7 +6,15 @@ using Platform.Application;
 using Platform.Infrastructure;
 using Platform.Infrastructure.Persistence;
 
+using Microsoft.Extensions.FileProviders;
+
 var builder = WebApplication.CreateBuilder(args);
+
+if (!Directory.Exists(Path.Combine(builder.Environment.ContentRootPath, "wwwroot")))
+{
+    builder.Environment.WebRootPath = builder.Environment.ContentRootPath;
+    builder.Environment.WebRootFileProvider = new PhysicalFileProvider(builder.Environment.ContentRootPath);
+}
 
 // Add Clean Architecture project services
 builder.Services.AddApplication();
@@ -52,6 +60,13 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+var staticRootPath = Directory.Exists(Path.Combine(app.Environment.ContentRootPath, "wwwroot"))
+    ? Path.Combine(app.Environment.ContentRootPath, "wwwroot")
+    : app.Environment.ContentRootPath;
+
+app.Environment.WebRootPath = staticRootPath;
+app.Environment.WebRootFileProvider = new PhysicalFileProvider(staticRootPath);
+
 // Global Exception Middleware (catches all exceptions and guarantees JSON error responses)
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
@@ -81,14 +96,41 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors("AllowAll");
-app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = app.Environment.WebRootFileProvider });
+app.UseStaticFiles(new StaticFileOptions { FileProvider = app.Environment.WebRootFileProvider });
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapFallbackToFile("index.html");
+
+app.MapFallback(async context =>
+{
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        context.Response.ContentType = "application/json; charset=utf-8";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            statusCode = 404,
+            message = $"API endpoint '{context.Request.Path}' not found.",
+            error = "NotFound"
+        });
+        return;
+    }
+
+    var indexPath = Path.Combine(app.Environment.WebRootPath, "index.html");
+    if (File.Exists(indexPath))
+    {
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.SendFileAsync(indexPath);
+    }
+    else
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        await context.Response.WriteAsync("Application index.html not found.");
+    }
+});
 
 app.Run();

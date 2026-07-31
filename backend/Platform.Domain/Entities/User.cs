@@ -13,7 +13,18 @@ public class User
     public UserRole Role { get; set; }
     public string? StudentId { get; set; }
     public string? AvatarUrl { get; set; }
+    public string? GoogleId { get; set; }
+    public bool IsEmailVerified { get; set; } = false;
+    public string? EmailVerificationToken { get; set; }
+    public DateTime? EmailVerificationTokenExpires { get; set; }
+    public string? PasswordResetToken { get; set; }
+    public DateTime? PasswordResetTokenExpires { get; set; }
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpires { get; set; }
+    public int FailedLoginAttempts { get; set; } = 0;
+    public DateTime? LockoutEnd { get; set; }
     public bool EmailNotificationsEnabled { get; set; } = true;
+    public bool IsDisabled { get; set; } = false;
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties

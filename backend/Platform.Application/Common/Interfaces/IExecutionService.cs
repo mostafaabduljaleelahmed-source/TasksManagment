@@ -4,6 +4,24 @@ using System.Threading.Tasks;
 
 namespace Platform.Application.Common.Interfaces;
 
+public class TestCaseModel
+{
+    public string Input { get; set; } = string.Empty;
+    public string ExpectedOutput { get; set; } = string.Empty;
+}
+
+public class TestCaseResult
+{
+    public string Input { get; set; } = string.Empty;
+    public string ExpectedOutput { get; set; } = string.Empty;
+    public string ActualOutput { get; set; } = string.Empty;
+    public string Stdout { get; set; } = string.Empty;
+    public string Stderr { get; set; } = string.Empty;
+    public int ExitCode { get; set; }
+    public bool Passed { get; set; }
+    public string Error { get; set; } = string.Empty;
+}
+
 public class Judge0ExecutionRequest
 {
     public string SourceCode { get; set; } = string.Empty;

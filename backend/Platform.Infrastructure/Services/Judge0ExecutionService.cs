@@ -14,6 +14,7 @@ namespace Platform.Infrastructure.Services;
 public class Judge0ExecutionService : IExecutionService
 {
     private readonly HttpClient _httpClient;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<Judge0ExecutionService> _logger;
     private readonly string _baseUrl;
     private readonly string? _apiKey;
@@ -21,6 +22,7 @@ public class Judge0ExecutionService : IExecutionService
     public Judge0ExecutionService(HttpClient httpClient, IConfiguration configuration, ILogger<Judge0ExecutionService> logger)
     {
         _httpClient = httpClient;
+        _configuration = configuration;
         _logger = logger;
         _baseUrl = configuration["Judge0:BaseUrl"] ?? "http://localhost:2358";
         _apiKey = configuration["Judge0:ApiKey"];
@@ -28,8 +30,12 @@ public class Judge0ExecutionService : IExecutionService
 
     public async Task<Judge0ExecutionResult> ExecuteAsync(Judge0ExecutionRequest request, CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Step 1: RunCodeAsync / Judge0 execution started. BaseUrl: {BaseUrl}, ApiKey Present: {HasKey}", _baseUrl, !string.IsNullOrWhiteSpace(_apiKey));
+
         try
         {
+            _logger.LogInformation("Step 2: Preparing HTTP payload for LanguageId: {LangId}", request.LanguageId);
+
             var payload = new
             {
                 source_code = Convert.ToBase64String(Encoding.UTF8.GetBytes(request.SourceCode ?? "")),
@@ -40,8 +46,9 @@ public class Judge0ExecutionService : IExecutionService
                 memory_limit = request.MemoryLimitKb
             };
 
+            var targetUri = $"{_baseUrl.TrimEnd('/')}/submissions?wait=true&base64_encoded=true";
             var jsonContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl.TrimEnd('/')}/submissions?wait=true&base64_encoded=true")
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, targetUri)
             {
                 Content = jsonContent
             };
@@ -49,9 +56,15 @@ public class Judge0ExecutionService : IExecutionService
             if (!string.IsNullOrWhiteSpace(_apiKey))
             {
                 httpRequest.Headers.Add("X-RapidAPI-Key", _apiKey);
+                var rapidApiHost = _configuration["Judge0:Host"] ?? "judge0-ce.p.rapidapi.com";
+                httpRequest.Headers.Add("X-RapidAPI-Host", rapidApiHost);
             }
 
+            _logger.LogInformation("Step 3: Sending HTTP request to {TargetUri}", targetUri);
+
             var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+            _logger.LogInformation("Step 4: Receiving response. HTTP Status: {StatusCode}", response.StatusCode);
+
             if (response.IsSuccessStatusCode)
             {
                 var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -86,26 +99,34 @@ public class Judge0ExecutionService : IExecutionService
                     Passed = passed
                 };
             }
+            else
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                var failureMsg = $"Judge0 HTTP {response.StatusCode}: {errorBody} (Target: {targetUri})";
+                _logger.LogWarning("Step 4 Failure: {FailureMsg}", failureMsg);
+
+                return new Judge0ExecutionResult
+                {
+                    IsServiceUnavailable = true,
+                    StatusDescription = $"Judge0 Returned Non-Success Status: {response.StatusCode}",
+                    Stdout = string.Empty,
+                    Stderr = failureMsg
+                };
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Judge0 execution request failed due to connectivity or service error.");
+            var fullException = $"Exception: {ex.GetType().FullName}: {ex.Message}\nStackTrace: {ex.StackTrace}\nInnerException: {ex.InnerException?.Message}";
+            _logger.LogError(ex, "Step 3/4 Exception: {FullException}", fullException);
+
             return new Judge0ExecutionResult
             {
                 IsServiceUnavailable = true,
-                StatusDescription = "Automatic grading service is unavailable.",
+                StatusDescription = "Execution Engine Connectivity Failure",
                 Stdout = string.Empty,
-                Stderr = ex.Message
+                Stderr = fullException
             };
         }
-
-        return new Judge0ExecutionResult
-        {
-            IsServiceUnavailable = true,
-            StatusDescription = "Automatic grading service is unavailable.",
-            Stdout = string.Empty,
-            Stderr = "Judge0 returned non-success HTTP status."
-        };
     }
 
     public async Task<List<Judge0ExecutionResult>> ExecuteBatchAsync(List<Judge0ExecutionRequest> requests, CancellationToken cancellationToken = default)

@@ -28,7 +28,8 @@ public class GlobalExceptionMiddleware
             await _next(context);
 
             // Intercept non-success status codes (401, 403, 404, 500) if response body hasn't started
-            if (!context.Response.HasStarted && context.Response.StatusCode >= 400 && !context.Response.ContentType?.Contains("application/json") == true)
+            var contentType = context.Response.ContentType;
+            if (!context.Response.HasStarted && context.Response.StatusCode >= 400 && (string.IsNullOrEmpty(contentType) || !contentType.Contains("application/json", StringComparison.OrdinalIgnoreCase)))
             {
                 context.Response.ContentType = "application/json; charset=utf-8";
                 var errorResponse = new
