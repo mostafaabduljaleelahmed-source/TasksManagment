@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth, API_URL } from '../context/AuthContext';
-import { Navbar } from '../components/Navbar';
 import { Calendar as CalendarIcon, CheckSquare, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CalendarEvent {
@@ -84,11 +83,8 @@ export const CalendarPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-zinc-100 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 space-y-8">
-        {/* Header */}
+    <div className="space-y-8">
+      {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-3">
@@ -168,7 +164,6 @@ export const CalendarPage: React.FC = () => {
             })}
           </div>
         </div>
-      </main>
     </div>
   );
 };

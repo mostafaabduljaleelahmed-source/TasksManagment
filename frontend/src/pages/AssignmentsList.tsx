@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
-import { Navbar } from '../components/Navbar';
 import {
   FileCode, Calendar, Award, Users, Search,
   Loader2, ArrowRight, BookOpen
@@ -61,11 +60,8 @@ export const AssignmentsList: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-zinc-100 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 space-y-8">
-        {/* Header & Search */}
+    <div className="space-y-8">
+      {/* Header & Search */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F1F26] pb-6">
           <div>
             <h1 className="text-2xl font-extrabold text-white flex items-center gap-3">
@@ -180,7 +176,6 @@ export const AssignmentsList: React.FC = () => {
             })}
           </div>
         )}
-      </main>
     </div>
   );
 };

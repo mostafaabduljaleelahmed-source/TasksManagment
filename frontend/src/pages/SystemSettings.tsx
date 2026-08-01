@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Navbar } from '../components/Navbar';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { Settings, Save, Loader2, Palette, Mail, ShieldCheck, HelpCircle, Image } from 'lucide-react';
 
@@ -77,24 +76,18 @@ export const SystemSettings: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090B] text-zinc-100 flex flex-col">
-        <Navbar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex items-center gap-3 text-violet-400">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span className="text-sm font-semibold">Loading System Settings...</span>
-          </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="flex items-center gap-3 text-violet-400">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="text-sm font-semibold">Loading System Settings...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-zinc-100 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-6 space-y-6">
-        <Breadcrumbs items={[{ label: 'Admin', href: '/admin/dashboard' }, { label: 'System Settings' }]} />
+    <div className="space-y-6">
+      <Breadcrumbs items={[{ label: 'Admin', href: '/admin/dashboard' }, { label: 'System Settings' }]} />
 
         <div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
@@ -243,7 +236,6 @@ export const SystemSettings: React.FC = () => {
             </button>
           </div>
         </form>
-      </main>
     </div>
   );
 };

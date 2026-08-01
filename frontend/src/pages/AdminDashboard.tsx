@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth, API_URL } from '../context/AuthContext';
-import { Navbar } from '../components/Navbar';
 import { 
   Users, GraduationCap, BookOpen, Layers, CheckSquare, Send, 
   Clock, AlertCircle, ChevronRight, ShieldCheck, UserCheck 
@@ -69,24 +68,18 @@ export const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090B] text-zinc-100 flex flex-col">
-        <Navbar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex items-center gap-3 text-violet-400">
-            <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm font-semibold">Loading Admin Dashboard...</span>
-          </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="flex items-center gap-3 text-violet-400">
+          <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm font-semibold">Loading Admin Dashboard...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-zinc-100 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 space-y-6">
-        <Breadcrumbs items={[{ label: 'Admin Executive Dashboard' }]} />
+    <div className="space-y-6">
+      <Breadcrumbs items={[{ label: 'Admin Executive Dashboard' }]} />
 
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-violet-950/40 via-[#121217] to-indigo-950/40 p-6 rounded-2xl border border-violet-500/20">
@@ -258,7 +251,6 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-      </main>
     </div>
   );
 };

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from '../utils/i18n';
-import { Navbar } from '../components/Navbar';
 import { MetricsSkeleton } from '../components/SkeletonLoaders';
 import { EmptyState } from '../components/EmptyState';
 import {
@@ -157,12 +156,9 @@ export const StudentProfile: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-zinc-100 pb-16 relative overflow-hidden">
-      <Navbar />
-
-      <main className="max-w-7xl mx-auto px-6 mt-8 relative z-10 space-y-8">
-        <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+    <div className="pb-16 relative overflow-hidden space-y-8">
+      <div>
+        <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
             <User className="w-8 h-8 text-violet-400" />
             {t('studentProfile')}
           </h1>
@@ -385,7 +381,6 @@ export const StudentProfile: React.FC = () => {
             )}
           </>
         ) : null}
-      </main>
     </div>
   );
 };

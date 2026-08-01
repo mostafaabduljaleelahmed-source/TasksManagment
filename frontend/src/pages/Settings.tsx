@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from '../utils/i18n';
-import { Navbar } from '../components/Navbar';
 import { User, Lock, Camera, Trash2, Globe, Palette, Save, Loader2, CheckCircle2, Mail, Bell, BellOff } from 'lucide-react';
 
 export const Settings: React.FC = () => {
@@ -185,12 +184,9 @@ export const Settings: React.FC = () => {
     : 'U';
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-zinc-100 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-10 space-y-10">
-        <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">{t('settings')}</h1>
+    <div className="space-y-10">
+      <div>
+        <h1 className="text-3xl font-extrabold text-white tracking-tight">{t('settings')}</h1>
           <p className="text-sm text-zinc-400 mt-1">{t('settingsSubtitle')}</p>
         </div>
 
@@ -552,7 +548,6 @@ export const Settings: React.FC = () => {
             </div>
           </section>
         )}
-      </main>
     </div>
   );
 };

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Navbar } from '../components/Navbar';
 import { TableRowSkeleton } from '../components/SkeletonLoaders';
 import { EmptyState } from '../components/EmptyState';
 import { Breadcrumbs } from '../components/Breadcrumbs';
@@ -173,11 +172,8 @@ export const UserManagement: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-zinc-100 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 space-y-6">
-        <Breadcrumbs items={[{ label: 'Admin', href: '/admin/dashboard' }, { label: 'User Management' }]} />
+    <div className="space-y-6">
+      <Breadcrumbs items={[{ label: 'Admin', href: '/admin/dashboard' }, { label: 'User Management' }]} />
 
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -386,7 +382,6 @@ export const UserManagement: React.FC = () => {
             </div>
           )}
         </div>
-      </main>
 
       {/* Create Teacher Modal */}
       {showCreateTeacher && (

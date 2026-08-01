@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { getScoreColorStyle } from '../utils/scoreColor';
-import { Navbar } from '../components/Navbar';
 import { LeaderboardSkeleton } from '../components/SkeletonLoaders';
 import { EmptyState } from '../components/EmptyState';
 import {
@@ -85,14 +84,10 @@ export const Leaderboard: React.FC = () => {
   const top3 = list.slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-zinc-100 pb-16 relative overflow-hidden">
-      <Navbar />
-
+    <div className="pb-16 relative overflow-hidden space-y-8">
       {/* Decorative glows */}
       <div className="absolute top-20 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-violet-600/5 rounded-full blur-3xl pointer-events-none" />
-
-      <main className="max-w-7xl mx-auto px-6 mt-8 relative z-10 space-y-8">
         {/* Title Header & Filters */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -336,7 +331,6 @@ export const Leaderboard: React.FC = () => {
             </div>
           </>
         )}
-      </main>
     </div>
   );
 };

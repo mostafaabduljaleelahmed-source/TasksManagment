@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from '../utils/i18n';
-import { Navbar } from '../components/Navbar';
 import { School, BookOpen, Users, Award, FileText, Camera, Trash2, Loader2 } from 'lucide-react';
 
 interface TeacherProfileData {
@@ -107,16 +106,13 @@ export const TeacherProfile: React.FC = () => {
     : 'TC';
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-zinc-100 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8 space-y-8">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-10 h-10 animate-spin text-violet-500 mb-3" />
-            <p className="text-sm text-zinc-400">{t('loading')}</p>
-          </div>
-        ) : (
+    <div className="space-y-8">
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 animate-spin text-violet-500 mb-3" />
+          <p className="text-sm text-zinc-400">{t('loading')}</p>
+        </div>
+      ) : (
           <div className="space-y-8">
             {/* Header Banner Card */}
             <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-8 shadow-xl flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
@@ -221,7 +217,6 @@ export const TeacherProfile: React.FC = () => {
             </div>
           </div>
         )}
-      </main>
     </div>
   );
 };

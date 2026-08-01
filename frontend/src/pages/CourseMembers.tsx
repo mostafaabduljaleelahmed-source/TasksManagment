@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
-import { Navbar } from '../components/Navbar';
 import {
   Users, Search, Filter, School, GraduationCap, Loader2, ArrowLeft, ArrowRight,
   CheckCircle2, Clock, AlertTriangle, Eye
@@ -101,12 +100,9 @@ export const CourseMembers: React.FC = () => {
   const filteredStudents = getFilteredAndSortedStudents();
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-zinc-100 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 space-y-8">
-        {/* Header Breadcrumb & Controls */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F1F26] pb-6">
+    <div className="space-y-8">
+      {/* Header Breadcrumb & Controls */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F1F26] pb-6">
           <div>
             <Link
               to={`/course/${courseId}`}
@@ -302,7 +298,6 @@ export const CourseMembers: React.FC = () => {
             </div>
           </div>
         )}
-      </main>
 
       {/* Student Details Page Modal */}
       {selectedStudent && (
