@@ -32,18 +32,31 @@ export const Leaderboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCourses = async () => {
+  const fetchCoursesAndLeaderboard = async () => {
     if (!user) return;
+    setLoading(true);
+    setError(null);
     try {
-      const endpoint = user.role === 'Teacher' ? 'teacher' : 'student';
+      let fetchedCourses: CourseItem[] = [];
+      const endpoint = user.role === 'Admin' ? 'teacher' : (user.role === 'Teacher' ? 'teacher' : 'student');
       const res = await fetch(`${API_URL}/courses/${endpoint}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (res.ok) {
-        setCourses(await res.json());
+        fetchedCourses = await res.json();
+        setCourses(fetchedCourses);
       }
-    } catch (err) {
-      console.error(err);
+
+      let initialCourseId = '';
+      if (user.role !== 'Admin' && fetchedCourses.length > 0) {
+        initialCourseId = fetchedCourses[0].id;
+        setSelectedCourseId(initialCourseId);
+      }
+
+      await fetchLeaderboard(initialCourseId);
+    } catch (err: any) {
+      setError(err.message || 'Error initializing leaderboard');
+      setLoading(false);
     }
   };
 
@@ -70,8 +83,7 @@ export const Leaderboard: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchCourses();
-    fetchLeaderboard();
+    fetchCoursesAndLeaderboard();
   }, [user]);
 
   const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -129,7 +141,7 @@ export const Leaderboard: React.FC = () => {
                 onChange={handleCourseChange}
                 className="bg-[#1F1F24] border border-[#2F2F37] text-white text-xs font-semibold rounded-lg px-3 py-1.5 focus:outline-none"
               >
-                <option value="">All Groups (Platform-wide)</option>
+                {user?.role === 'Admin' && <option value="">All Groups (Platform-wide)</option>}
                 {courses.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name} ({c.courseCode})
