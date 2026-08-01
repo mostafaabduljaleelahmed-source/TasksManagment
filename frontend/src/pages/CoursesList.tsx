@@ -5,7 +5,7 @@ import { useToast } from '../context/ToastContext';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CardSkeleton } from '../components/SkeletonLoaders';
 import { EmptyState } from '../components/EmptyState';
-import { Plus, Key, Clock, Trash2, BookOpen, Loader2, Archive, Users, Settings } from 'lucide-react';
+import { Plus, Key, Clock, Trash2, BookOpen, Loader2, Archive, Users, Settings, Edit, Copy, CheckCircle } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -35,9 +35,15 @@ export const CoursesList: React.FC = () => {
   const [joinCode, setJoinCode] = useState('');
   const [joinLoading, setJoinLoading] = useState(false);
 
-  // Course deletion state
+  // Course deletion & editing state
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [courseToEdit, setCourseToEdit] = useState<Course | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editCode, setEditCode] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
 
   const fetchCourses = async () => {
     if (!user) return;
@@ -176,6 +182,60 @@ export const CoursesList: React.FC = () => {
     }
   };
 
+  const handleOpenEditModal = (c: Course) => {
+    setCourseToEdit(c);
+    setEditName(c.name);
+    setEditDesc(c.description || '');
+    setEditCode(c.courseCode);
+  };
+
+  const handleEditCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!courseToEdit || !editName.trim()) return;
+    setEditLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/courses/${courseToEdit.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({
+          name: editName.trim(),
+          description: editDesc.trim(),
+          courseCode: editCode.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to update course');
+
+      toast.success('Group settings updated!');
+      setCourseToEdit(null);
+      fetchCourses();
+    } catch (err: any) {
+      toast.error(err.message || 'Error updating course');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDuplicateCourse = async (courseId: string) => {
+    try {
+      const res = await fetch(`${API_URL}/courses/${courseId}/duplicate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${user?.token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to duplicate course');
+
+      toast.success('Group duplicated successfully!');
+      fetchCourses();
+    } catch (err: any) {
+      toast.error(err.message || 'Error duplicating course');
+    }
+  };
+
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       {/* Top Header */}
@@ -221,15 +281,13 @@ export const CoursesList: React.FC = () => {
               Create Group
             </button>
           ) : (
-            courses.length === 0 && (
-              <button
-                onClick={() => setShowJoinModal(true)}
-                className="saas-button-primary"
-              >
-                <Key className="w-4 h-4" />
-                Join Group
-              </button>
-            )
+            <button
+              onClick={() => setShowJoinModal(true)}
+              className="saas-button-primary"
+            >
+              <Key className="w-4 h-4" />
+              Join Group
+            </button>
           )}
         </div>
       </div>
@@ -286,29 +344,58 @@ export const CoursesList: React.FC = () => {
                       <span>{course.courseCode}</span>
                       <span className="text-[10px] opacity-70">📋</span>
                     </button>
-                    {user?.role === 'Teacher' && (
-                      <>
+                    {user?.role === 'Student' && (
+                      <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> Joined
+                      </span>
+                    )}
+
+                    {(user?.role === 'Teacher' || user?.role === 'Admin') && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEditModal(course);
+                          }}
+                          className="p-1 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-lg transition-colors"
+                          title="Edit Group Settings"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDuplicateCourse(course.id);
+                          }}
+                          className="p-1 hover:bg-violet-500/20 text-zinc-400 hover:text-violet-400 rounded-lg transition-colors"
+                          title="Duplicate Group"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleArchiveCourse(course.id);
                           }}
-                          className="p-1 hover:bg-amber-500/20 text-zinc-500 hover:text-amber-400 rounded-lg transition-colors"
+                          className="p-1 hover:bg-amber-500/20 text-zinc-400 hover:text-amber-400 rounded-lg transition-colors"
                           title="Archive Group"
                         >
                           <Archive className="w-4 h-4" />
                         </button>
+
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setCourseToDelete(course);
                           }}
-                          className="p-1 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 rounded-lg transition-colors"
+                          className="p-1 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors"
                           title="Delete Group"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -429,6 +516,69 @@ export const CoursesList: React.FC = () => {
         </div>
       )}
 
+
+      {/* Edit Group Modal */}
+      {courseToEdit && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#111827] border-t sm:border border-[#1F2937] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+            <div>
+              <h3 className="text-lg font-bold text-white">Edit Group Settings</h3>
+              <p className="text-xs text-zinc-400 mt-1">Update group name, description, or join code.</p>
+            </div>
+
+            <form onSubmit={handleEditCourse} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Group Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="saas-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Join Code</label>
+                <input
+                  type="text"
+                  required
+                  value={editCode}
+                  onChange={(e) => setEditCode(e.target.value)}
+                  className="saas-input font-mono uppercase"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Description</label>
+                <textarea
+                  rows={3}
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  className="saas-input resize-none"
+                />
+              </div>
+
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCourseToEdit(null)}
+                  className="saas-button-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="saas-button-primary"
+                >
+                  {editLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {courseToDelete && (

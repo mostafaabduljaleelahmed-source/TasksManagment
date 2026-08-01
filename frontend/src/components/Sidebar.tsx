@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import {
   LayoutDashboard, BookOpen, FileCode, Users, Settings, User, LogOut,
-  Globe, ShieldCheck, X, Trophy, Archive, Activity, Calendar,
+  Globe, ShieldCheck, X, Trophy, Archive, Activity, Calendar, MessageSquare,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
 
@@ -166,6 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {renderNavLink('/dashboard', t('dashboard'), <LayoutDashboard className="w-4 h-4 text-blue-400" />)}
           {renderNavLink('/', t('courses'), <BookOpen className="w-4 h-4 text-indigo-400" />)}
+          {renderNavLink('/chat', lang === 'ar' ? 'المحادثات' : 'Chat', <MessageSquare className="w-4 h-4 text-emerald-400" />, 'bg-emerald-400')}
           {renderNavLink('/leaderboard', t('leaderboard'), <Trophy className="w-4 h-4 text-amber-400" />, 'bg-amber-400')}
           {renderNavLink('/calendar', t('calendar'), <Calendar className="w-4 h-4 text-sky-400" />, 'bg-sky-400')}
 

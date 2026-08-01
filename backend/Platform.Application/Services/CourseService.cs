@@ -143,12 +143,12 @@ public class CourseService : ICourseService
             throw new InvalidOperationException("Invalid course code. Course not found.");
         }
 
-        var alreadyInAnyGroup = await _context.Enrollments
-            .AnyAsync(e => e.StudentId == studentId, cancellationToken);
+        var alreadyInThisCourse = await _context.Enrollments
+            .AnyAsync(e => e.StudentId == studentId && e.CourseId == course.Id, cancellationToken);
 
-        if (alreadyInAnyGroup)
+        if (alreadyInThisCourse)
         {
-            throw new InvalidOperationException("You are already enrolled in a group. Students can only belong to one group at a time.");
+            throw new InvalidOperationException("You are already enrolled in this group.");
         }
 
         var enrollment = new Enrollment

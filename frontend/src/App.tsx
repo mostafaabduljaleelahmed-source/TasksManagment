@@ -20,6 +20,7 @@ const StudentProfile = lazy(() => import('./pages/StudentProfile').then(m => ({ 
 const TeacherProfile = lazy(() => import('./pages/TeacherProfile').then(m => ({ default: m.TeacherProfile })));
 const TeacherAnalytics = lazy(() => import('./pages/TeacherAnalytics').then(m => ({ default: m.TeacherAnalytics })));
 const Leaderboard = lazy(() => import('./pages/Leaderboard').then(m => ({ default: m.Leaderboard })));
+const Chat = lazy(() => import('./pages/Chat').then(m => ({ default: m.Chat })));
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 const TeacherPendingReviews = lazy(() => import('./pages/TeacherPendingReviews').then(m => ({ default: m.TeacherPendingReviews })));
 const TeacherStudents = lazy(() => import('./pages/TeacherStudents').then(m => ({ default: m.TeacherStudents })));
@@ -176,6 +177,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Leaderboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/chat"
+                element={
+                  <ProtectedRoute>
+                    <Chat />
                   </ProtectedRoute>
                 }
               />

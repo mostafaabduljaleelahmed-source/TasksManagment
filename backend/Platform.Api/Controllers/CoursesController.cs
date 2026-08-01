@@ -39,9 +39,9 @@ public class CoursesController : ControllerBase
             return Unauthorized(new { message = "User not found." });
         }
 
-        if (role != "Admin")
+        if (role != "Admin" && role != "Teacher")
         {
-            return Forbid("Only the Administrator can create courses.");
+            return Forbid("Only teachers and administrators can create courses.");
         }
 
         try
@@ -373,6 +373,110 @@ public class CoursesController : ControllerBase
 
         return Ok(new { success = true, message = $"Teacher '{teacher.Name}' assigned to course '{course.Name}'." });
     }
+
+    [HttpPut("{courseId}")]
+    public async Task<IActionResult> UpdateCourse(Guid courseId, [FromBody] UpdateCourseDto dto, CancellationToken cancellationToken)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized(new { message = "User not found." });
+        }
+
+        var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == courseId, cancellationToken);
+        if (course == null) return NotFound(new { message = "Course not found." });
+
+        if (role != "Admin" && course.TeacherId != userId)
+        {
+            var isCollaborator = await _context.CourseTeachers.AnyAsync(ct => ct.CourseId == courseId && ct.TeacherId == userId, cancellationToken);
+            if (!isCollaborator) return Forbid("You can only edit your own groups.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.Name)) course.Name = dto.Name.Trim();
+        if (dto.Description != null) course.Description = dto.Description.Trim();
+        if (!string.IsNullOrWhiteSpace(dto.CourseCode))
+        {
+            var normalizedCode = dto.CourseCode.Trim().ToUpperInvariant();
+            var codeExists = await _context.Courses.AnyAsync(c => c.CourseCode == normalizedCode && c.Id != courseId, cancellationToken);
+            if (codeExists) return BadRequest(new { message = $"Course code '{normalizedCode}' is already in use." });
+            course.CourseCode = normalizedCode;
+        }
+
+        if (role == "Admin" && dto.TeacherId.HasValue)
+        {
+            var targetTeacher = await _context.Users.FirstOrDefaultAsync(u => u.Id == dto.TeacherId.Value && u.Role == Domain.Enums.UserRole.Teacher, cancellationToken);
+            if (targetTeacher != null) course.TeacherId = dto.TeacherId.Value;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return Ok(new { success = true, message = "Group updated successfully.", course });
+    }
+
+    [HttpPost("{courseId}/duplicate")]
+    public async Task<IActionResult> DuplicateCourse(Guid courseId, CancellationToken cancellationToken)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized(new { message = "User not found." });
+        }
+
+        var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == courseId, cancellationToken);
+        if (course == null) return NotFound(new { message = "Course not found." });
+
+        if (role != "Admin" && course.TeacherId != userId)
+        {
+            return Forbid("Only group teachers or admins can duplicate this group.");
+        }
+
+        string newCode;
+        var random = new Random();
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        do
+        {
+            newCode = new string(Enumerable.Repeat(chars, 6).Select(s => s[random.Next(s.Length)]).ToArray());
+        } while (await _context.Courses.AnyAsync(c => c.CourseCode == newCode, cancellationToken));
+
+        var dupCourse = new Course
+        {
+            Id = Guid.NewGuid(),
+            Name = $"{course.Name} (Copy)",
+            Description = course.Description,
+            CourseCode = newCode,
+            TeacherId = course.TeacherId,
+            CreatedAt = DateTime.UtcNow,
+            IsArchived = false
+        };
+
+        _context.Courses.Add(dupCourse);
+        _context.CourseTeachers.Add(new CourseTeacher
+        {
+            CourseId = dupCourse.Id,
+            TeacherId = course.TeacherId,
+            AssignedAt = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return Ok(new { success = true, message = $"Group duplicated as '{dupCourse.Name}' (Code: {dupCourse.CourseCode}).", course = dupCourse });
+    }
+
+    [HttpPost("{courseId}/restore")]
+    public async Task<IActionResult> RestoreCourse(Guid courseId, CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (role != "Teacher" && role != "Admin") return Forbid("Only teachers and admins can restore groups.");
+
+        var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == courseId, cancellationToken);
+        if (course == null) return NotFound(new { message = "Course not found." });
+
+        course.IsArchived = false;
+        await _context.SaveChangesAsync(cancellationToken);
+        return Ok(new { success = true, message = $"Group '{course.Name}' restored from archive." });
+    }
 }
 
 public class AssignTeacherDto
@@ -388,4 +492,12 @@ public class SendNotificationDto
 public class JoinRequestDto
 {
     public string CourseCode { get; set; } = string.Empty;
+}
+
+public class UpdateCourseDto
+{
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public string? CourseCode { get; set; }
+    public Guid? TeacherId { get; set; }
 }
