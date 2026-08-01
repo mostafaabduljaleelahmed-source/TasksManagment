@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Platform.Application.Common.Interfaces;
+using Platform.Application.Common.Utils;
 using Platform.Domain.Entities;
 using Platform.Domain.Enums;
 
@@ -88,7 +89,7 @@ public class DashboardController : ControllerBase
                 {
                     completedTasksCount++;
                     var bestSubmission = studentSubmissions.OrderByDescending(s => s.Grade).First();
-                    totalGradesSum += bestSubmission.Grade;
+                    totalGradesSum += GradeCalculator.CalculatePercentage(bestSubmission.Grade, task.MaxGrade);
                     gradesCount++;
 
                     if (studentSubmissions.Any(s => s.SubmittedAt > task.Deadline))
@@ -687,14 +688,14 @@ public class DashboardController : ControllerBase
         var taskPerformance = tasks.Select(task =>
         {
             var taskSubs = submissions.Where(s => s.TaskId == task.Id).ToList();
-            var studentBest = taskSubs.GroupBy(s => s.StudentId).Select(g => g.Max(s => s.Grade)).ToList();
-            double avg = studentBest.Any() ? studentBest.Average() : 0;
+            var studentBestPcts = taskSubs.GroupBy(s => s.StudentId).Select(g => GradeCalculator.CalculatePercentage(g.Max(s => s.Grade), task.MaxGrade)).ToList();
+            double avgPct = studentBestPcts.Any() ? studentBestPcts.Average() : 0;
             return new
             {
                 TaskId = task.Id,
                 TaskTitle = task.Title,
                 MaxGrade = task.MaxGrade,
-                AverageGrade = Math.Round(avg, 1),
+                AverageGrade = Math.Round(avgPct, 1),
                 SubmissionsCount = taskSubs.Count
             };
         }).OrderBy(t => t.AverageGrade).Take(5).ToList();
@@ -708,7 +709,7 @@ public class DashboardController : ControllerBase
                 StudentName = g.Key.StudentName,
                 RegisterId = g.Key.RegisterId ?? "-",
                 SubmissionsCount = g.Count(),
-                AverageGrade = Math.Round(g.Average(s => s.Grade), 1)
+                AverageGrade = Math.Round(g.Average(s => GradeCalculator.CalculatePercentage(s.Grade, s.Task?.MaxGrade ?? 100)), 1)
             })
             .OrderByDescending(s => s.SubmissionsCount)
             .Take(5)
@@ -781,12 +782,15 @@ public class DashboardController : ControllerBase
         var completedTaskIds = submissions.Select(s => s.TaskId).Distinct().ToList();
         int completedCount = completedTaskIds.Count;
 
-        var bestGrades = submissions
+        var bestGradesPcts = submissions
             .GroupBy(s => s.TaskId)
-            .Select(g => g.Max(s => s.Grade))
+            .Select(g => {
+                var bestSub = g.OrderByDescending(s => s.Grade).First();
+                return GradeCalculator.CalculatePercentage(bestSub.Grade, bestSub.Task?.MaxGrade ?? 100);
+            })
             .ToList();
 
-        double averageGrade = bestGrades.Any() ? Math.Round(bestGrades.Average(), 1) : 0;
+        double averageGrade = bestGradesPcts.Any() ? Math.Round(bestGradesPcts.Average(), 1) : 0;
         double completionRate = totalTasksAssigned > 0 ? Math.Round(((double)completedCount / totalTasksAssigned) * 100, 1) : 0;
 
         var historyList = submissions.Select(s => new
@@ -844,6 +848,7 @@ public class DashboardController : ControllerBase
         var studentIds = enrollments.Select(e => e.StudentId).Distinct().ToList();
 
         var submissions = await _context.Submissions
+            .Include(s => s.Task)
             .Where(s => studentIds.Contains(s.StudentId))
             .ToListAsync(cancellationToken);
 
@@ -855,13 +860,16 @@ public class DashboardController : ControllerBase
             if (studentObj == null) continue;
 
             var studentSubs = submissions.Where(s => s.StudentId == studentId).ToList();
-            var bestPerTask = studentSubs
+            var bestPerTaskPcts = studentSubs
                 .GroupBy(s => s.TaskId)
-                .Select(g => g.Max(s => s.Grade))
+                .Select(g => {
+                    var bestSub = g.OrderByDescending(s => s.Grade).First();
+                    return GradeCalculator.CalculatePercentage(bestSub.Grade, bestSub.Task?.MaxGrade ?? 100);
+                })
                 .ToList();
 
-            double avgGrade = bestPerTask.Any() ? Math.Round(bestPerTask.Average(), 1) : 0;
-            int completedTasks = bestPerTask.Count;
+            double avgGrade = bestPerTaskPcts.Any() ? Math.Round(bestPerTaskPcts.Average(), 1) : 0;
+            int completedTasks = bestPerTaskPcts.Count;
             int totalSubmissions = studentSubs.Count;
 
             leaderboard.Add(new

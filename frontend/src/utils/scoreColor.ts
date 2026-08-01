@@ -8,8 +8,14 @@ export interface ScoreColorConfig {
   label: string;
 }
 
+export function calculateGradePercentage(score: number, maxScore: number = 100): number {
+  if (maxScore <= 0) return 0;
+  const pct = (score / maxScore) * 100;
+  return Math.min(100, Math.max(0, Math.round(pct * 10) / 10));
+}
+
 export function getScoreColorStyle(score: number, maxScore: number = 100): ScoreColorConfig {
-  const percentage = maxScore > 0 ? Math.min(100, Math.max(0, (score / maxScore) * 100)) : 0;
+  const percentage = calculateGradePercentage(score, maxScore);
 
   if (percentage < 25) {
     return {

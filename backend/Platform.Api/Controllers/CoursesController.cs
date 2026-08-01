@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Platform.Application.Common.Interfaces;
+using Platform.Application.Common.Utils;
 using Platform.Application.Features.Courses.Dtos;
 using Platform.Domain.Entities;
 
@@ -247,12 +248,16 @@ public class CoursesController : ControllerBase
                 }
             }
 
-            var bestPerTask = studentSubs
+            var bestPerTaskPcts = studentSubs
                 .GroupBy(s => s.TaskId)
-                .Select(g => g.Max(s => s.Grade))
+                .Select(g => {
+                    var bestSub = g.OrderByDescending(s => s.Grade).First();
+                    var taskObj = tasks.FirstOrDefault(t => t.Id == g.Key);
+                    return GradeCalculator.CalculatePercentage(bestSub.Grade, taskObj?.MaxGrade ?? 100);
+                })
                 .ToList();
 
-            double avgGrade = bestPerTask.Any() ? Math.Round(bestPerTask.Average(), 1) : 0;
+            double avgGrade = bestPerTaskPcts.Any() ? Math.Round(bestPerTaskPcts.Average(), 1) : 0;
             int totalAssigned = tasks.Count;
             double progress = totalAssigned > 0 ? Math.Round(((double)completedTasks / totalAssigned) * 100, 1) : 0;
 

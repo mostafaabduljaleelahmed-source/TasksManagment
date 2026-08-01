@@ -261,7 +261,7 @@ export const TeacherAnalytics: React.FC = () => {
                       <YAxis stroke="#71717A" tick={{ fontSize: 11 }} domain={[0, 100]} />
                       <Tooltip
                         contentStyle={{ backgroundColor: '#1A1A22', borderColor: '#2F2F37', borderRadius: '12px', color: '#FFF' }}
-                        formatter={(val: any) => [`${val} avg pts`, 'Average Grade']}
+                        formatter={(val: any) => [`${val}%`, 'Average Grade']}
                       />
                       <Bar dataKey="averageGrade" radius={[6, 6, 0, 0]}>
                         {analyticsData.difficultTasks.map((entry, index) => (
