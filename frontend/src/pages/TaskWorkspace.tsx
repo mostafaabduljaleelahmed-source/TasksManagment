@@ -100,6 +100,9 @@ export const TaskWorkspace: React.FC = () => {
   const [fontSize] = useState<number>(14);
   const [editorTheme] = useState<string>('vs-dark');
 
+  // Mobile workspace tab state: 'instructions' | 'editor' | 'history' | 'console'
+  const [mobileTab, setMobileTab] = useState<'instructions' | 'editor' | 'history' | 'console'>('editor');
+
 
   const fetchTaskDetails = async () => {
     if (!user || !taskId) return;
@@ -407,8 +410,6 @@ export const TaskWorkspace: React.FC = () => {
   const attemptsDisabled = !!(isHomework && stats && stats.remainingAttempts === 0);
   const deadlinePassed = !!(isHomework && stats && new Date(stats.deadline).getTime() < Date.now());
 
-  // Mobile workspace tab state: 'instructions' | 'editor' | 'history' | 'console'
-  const [mobileTab, setMobileTab] = useState<'instructions' | 'editor' | 'history' | 'console'>('editor');
 
   return (
     <div className="min-h-screen bg-[#0F0F11] text-zinc-200 flex flex-col overflow-hidden h-screen">
