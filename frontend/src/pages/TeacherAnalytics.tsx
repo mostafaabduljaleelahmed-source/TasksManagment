@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, API_URL } from '../context/AuthContext';
+import { useTranslation } from '../utils/i18n';
 import { MetricsSkeleton } from '../components/SkeletonLoaders';
 import { EmptyState } from '../components/EmptyState';
 import { StudentDetailsModal } from './StudentDetailsModal';
@@ -84,6 +85,8 @@ export const TeacherAnalytics: React.FC = () => {
     }
   };
 
+  const { t } = useTranslation();
+
   const fetchAnalytics = async (courseId?: string) => {
     if (!user) return;
     setLoading(true);
@@ -124,11 +127,11 @@ export const TeacherAnalytics: React.FC = () => {
         {/* Header with Filter */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-              <BarChart3 className="w-8 h-8 text-emerald-400" />
-              Teacher Classroom Analytics
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+              <BarChart3 className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400 shrink-0" />
+              <span>{t('analyticsOverview')}</span>
             </h1>
-            <p className="text-zinc-400 text-sm mt-1">
+            <p className="text-zinc-400 text-xs sm:text-sm mt-1 line-clamp-2">
               Cross-course analytics, submission velocity, difficulty trends, and pending evaluations.
             </p>
           </div>
@@ -140,7 +143,7 @@ export const TeacherAnalytics: React.FC = () => {
               onChange={handleCourseChange}
               className="bg-[#1F1F24] border border-[#2F2F37] text-white text-xs font-semibold rounded-lg px-3 py-2 focus:outline-none"
             >
-              <option value="">All Teaching Groups</option>
+              <option value="">{t('allGroups')}</option>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name} ({c.courseCode})

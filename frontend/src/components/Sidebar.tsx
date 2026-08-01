@@ -160,26 +160,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <nav className="space-y-1 w-full">
           {!collapsed && (
             <div className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 px-3.5 mb-2 truncate">
-              Academic Hub
+              {t('academicHub')}
             </div>
           )}
 
           {renderNavLink('/dashboard', t('dashboard'), <LayoutDashboard className="w-4 h-4 text-blue-400" />)}
           {renderNavLink('/', t('courses'), <BookOpen className="w-4 h-4 text-indigo-400" />)}
           {renderNavLink('/leaderboard', t('leaderboard'), <Trophy className="w-4 h-4 text-amber-400" />, 'bg-amber-400')}
-          {renderNavLink('/calendar', 'Calendar', <Calendar className="w-4 h-4 text-sky-400" />, 'bg-sky-400')}
+          {renderNavLink('/calendar', t('calendar'), <Calendar className="w-4 h-4 text-sky-400" />, 'bg-sky-400')}
 
           {isTeacherOrAdmin && (
             <>
               {!collapsed && (
                 <div className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 px-3.5 pt-4 mb-2 truncate">
-                  Teacher Tools
+                  {t('teacherTools')}
                 </div>
               )}
               {renderNavLink('/teacher/pending-reviews', t('pendingReviews'), <FileCode className="w-4 h-4 text-amber-400" />, 'bg-amber-400')}
               {renderNavLink('/teacher/students', t('students'), <Users className="w-4 h-4 text-sky-400" />, 'bg-sky-400')}
-              {renderNavLink('/archive', 'Archive', <Archive className="w-4 h-4 text-amber-400" />, 'bg-amber-400')}
-              {renderNavLink('/activity-log', 'Activity Audit Log', <Activity className="w-4 h-4 text-indigo-400" />, 'bg-indigo-400')}
+              {renderNavLink('/archive', t('archive'), <Archive className="w-4 h-4 text-amber-400" />, 'bg-amber-400')}
+              {renderNavLink('/activity-log', t('activityLog'), <Activity className="w-4 h-4 text-indigo-400" />, 'bg-indigo-400')}
             </>
           )}
 
@@ -187,18 +187,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <>
               {!collapsed && (
                 <div className="text-[10px] font-extrabold uppercase tracking-wider text-violet-400 px-3.5 pt-4 mb-2 truncate">
-                  Academy Admin
+                  {t('academyAdmin')}
                 </div>
               )}
-              {renderNavLink('/admin/dashboard', 'Admin Dashboard', <ShieldCheck className="w-4 h-4 text-violet-400" />, 'bg-violet-400')}
-              {renderNavLink('/admin/users', 'User Management', <Users className="w-4 h-4 text-violet-400" />, 'bg-violet-400')}
-              {renderNavLink('/admin/settings', 'System Settings', <Settings className="w-4 h-4 text-violet-400" />, 'bg-violet-400')}
+              {renderNavLink('/admin/dashboard', t('adminDashboard'), <ShieldCheck className="w-4 h-4 text-violet-400" />, 'bg-violet-400')}
+              {renderNavLink('/admin/users', t('userManagement'), <Users className="w-4 h-4 text-violet-400" />, 'bg-violet-400')}
+              {renderNavLink('/admin/settings', t('systemSettings'), <Settings className="w-4 h-4 text-violet-400" />, 'bg-violet-400')}
             </>
           )}
 
           {!collapsed && (
             <div className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 px-3.5 pt-4 mb-2 truncate">
-              Preferences
+              {t('preferences')}
             </div>
           )}
 

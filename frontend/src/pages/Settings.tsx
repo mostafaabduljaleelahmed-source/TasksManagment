@@ -368,7 +368,7 @@ export const Settings: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white flex items-center gap-2">
                   <Globe className="w-4 h-4 text-violet-400" />
-                  {t('language')}
+                  {lang === 'ar' ? 'لغة العرض' : 'Display Language'}
                 </span>
                 <span className="text-[10px] uppercase font-bold text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded">
                   {lang.toUpperCase()}
@@ -408,7 +408,7 @@ export const Settings: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white flex items-center gap-2">
                   <Palette className="w-4 h-4 text-violet-400" />
-                  {t('theme')}
+                  {lang === 'ar' ? 'مظهر الواجهة' : 'Interface Theme'}
                 </span>
                 <span className="text-[10px] uppercase font-bold text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded">
                   {theme.toUpperCase()}

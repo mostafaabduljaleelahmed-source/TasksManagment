@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { ConfirmModal } from '../components/ConfirmModal';
 import {
-  ArrowLeft, Loader2, Plus, FileCode, Clock, AlertCircle,
+  Loader2, Plus, FileCode, Clock, AlertCircle,
   Award, BarChart3, Users, BookOpen, CheckCircle, AlertTriangle, FileSpreadsheet,
   Download, Eye, Search, ChevronRight, ChevronDown, Bell, RefreshCw, X, Trash2, Archive,
   Lock, Unlock
@@ -585,58 +585,48 @@ export const CourseDetails: React.FC = () => {
       <div className="absolute top-0 right-0 w-96 h-96 bg-violet-600/5 rounded-full blur-[128px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-600/5 rounded-full blur-[128px] pointer-events-none" />
 
-      {/* Navigation */}
-      <nav className="border-b border-[#1E1E24] bg-[#0F0F13]/80 backdrop-blur-md sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            to="/"
-            className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <span className="text-xl font-bold tracking-tight text-white">Course Syllabus</span>
-        </div>
-
-        {isTeacherOrAdmin && (
-          <div className="flex items-center bg-[#16161A] border border-[#24242B] rounded-lg p-1">
+      {/* Tab Control */}
+      {isTeacherOrAdmin && (
+        <div className="bg-[#121215] border-b border-[#1E1E24] px-4 sm:px-6 py-3">
+          <div className="max-w-6xl mx-auto flex items-center gap-1.5 overflow-x-auto no-scrollbar bg-[#16161A] border border-[#24242B] rounded-xl p-1">
             <button
               onClick={() => setActiveTab('curriculum')}
-              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                activeTab === 'curriculum' ? 'bg-violet-600 text-white shadow' : 'text-zinc-400 hover:text-white'
+              className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap text-center ${
+                activeTab === 'curriculum' ? 'bg-violet-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
               }`}
             >
               Curriculum
             </button>
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                activeTab === 'dashboard' ? 'bg-violet-600 text-white shadow' : 'text-zinc-400 hover:text-white'
+              className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap text-center ${
+                activeTab === 'dashboard' ? 'bg-violet-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
               }`}
             >
               Dashboard
             </button>
             <button
               onClick={() => setActiveTab('notifications')}
-              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 relative ${
-                activeTab === 'notifications' ? 'bg-violet-600 text-white shadow' : 'text-zinc-400 hover:text-white'
+              className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap text-center flex items-center justify-center gap-1.5 relative ${
+                activeTab === 'notifications' ? 'bg-violet-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
               }`}
             >
               Notifications
               {notifications.filter(n => !n.isRead).length > 0 && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse shrink-0" />
               )}
             </button>
             <button
               onClick={() => setActiveTab('export')}
-              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                activeTab === 'export' ? 'bg-violet-600 text-white shadow' : 'text-zinc-400 hover:text-white'
+              className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap text-center ${
+                activeTab === 'export' ? 'bg-violet-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
               }`}
             >
               Export
             </button>
           </div>
-        )}
-      </nav>
+        </div>
+      )}
 
       {/* Main Container */}
       <div className="max-w-6xl mx-auto px-6 mt-6 relative z-10 space-y-6">
@@ -713,25 +703,25 @@ export const CourseDetails: React.FC = () => {
                         {/* Session Header (Clickable Accordion) */}
                         <div
                           onClick={() => toggleSessionExpand(session.id)}
-                          className="bg-[#1A1A22] border-b border-[#24242B] px-6 py-4 flex items-center justify-between cursor-pointer select-none hover:bg-[#1E1E28] transition-colors"
+                          className="bg-[#1A1A22] border-b border-[#24242B] px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none hover:bg-[#1E1E28] transition-colors"
                         >
-                          <div className="flex items-center gap-3">
-                            <button type="button" className="text-zinc-400 p-1 rounded-lg">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <button type="button" className="text-zinc-400 p-1 rounded-lg shrink-0">
                               {isExpanded ? (
                                 <ChevronDown className="w-5 h-5 text-blue-400" />
                               ) : (
                                 <ChevronRight className="w-5 h-5 text-zinc-400" />
                               )}
                             </button>
-                            <span className="text-xs bg-violet-500/10 border border-violet-500/25 text-violet-400 font-bold uppercase tracking-wider py-1 px-2.5 rounded-full">
+                            <span className="text-[10px] sm:text-xs bg-violet-500/10 border border-violet-500/25 text-violet-400 font-bold uppercase tracking-wider py-0.5 sm:py-1 px-2 sm:px-2.5 rounded-full shrink-0">
                               Session {session.order}
                             </span>
-                            <h3 className="text-lg font-bold text-white tracking-tight">{session.title}</h3>
-                            <span className="text-xs text-zinc-400 font-mono">({session.tasks.length} tasks)</span>
+                            <h3 className="text-sm sm:text-lg font-bold text-white tracking-tight truncate">{session.title}</h3>
+                            <span className="text-xs text-zinc-400 font-mono shrink-0">({session.tasks.length})</span>
                           </div>
 
                           {isTeacherOrAdmin && (
-                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0" onClick={(e) => e.stopPropagation()}>
                               <button
                                 disabled={processingSessionId === session.id}
                                 onClick={() => handleToggleSessionLock(session.id, session.isUnlocked)}

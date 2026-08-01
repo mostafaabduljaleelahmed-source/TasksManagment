@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { GlobalSearchModal } from './GlobalSearchModal';
 import {
-  Menu, Bell, Globe
+  Menu, Bell
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -13,16 +13,12 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
   const { user } = useAuth();
-  const { t, lang, setLanguage } = useTranslation();
+  const { t, lang } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   if (!user) return null;
-
-  const toggleLanguage = () => {
-    setLanguage(lang === 'ar' ? 'en' : 'ar');
-  };
 
   const getPageTitle = () => {
     const path = location.pathname;
@@ -66,8 +62,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
           </h1>
         </div>
 
-        {/* Right Side: Notifications, Language, Avatar */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5">
+        {/* Right Side: Notifications & User Profile Avatar */}
+        <div className="flex items-center gap-2">
           {/* Notifications */}
           {(user.role === 'Teacher' || user.role === 'Admin') && (
             <button
@@ -79,16 +75,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
               <span className="absolute top-2 right-2 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
             </button>
           )}
-
-          {/* Language Selector */}
-          <button
-            onClick={toggleLanguage}
-            className="min-h-[44px] px-2.5 sm:px-3 bg-[#1F2937]/70 hover:bg-[#374151] border border-[#374151]/50 text-zinc-200 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 active:scale-95"
-            aria-label="Toggle Language"
-          >
-            <Globe className="w-4 h-4 text-blue-400" />
-            <span className="uppercase">{lang === 'ar' ? 'EN' : 'عربي'}</span>
-          </button>
 
           {/* User Profile Avatar */}
           <Link
