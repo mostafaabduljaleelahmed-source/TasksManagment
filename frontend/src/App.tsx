@@ -183,7 +183,9 @@ function App() {
                 path="/teacher/pending-reviews"
                 element={
                   <TeacherRoute>
-                    <TeacherPendingReviews />
+                    <ProtectedRoute>
+                      <TeacherPendingReviews />
+                    </ProtectedRoute>
                   </TeacherRoute>
                 }
               />
@@ -191,7 +193,9 @@ function App() {
                 path="/teacher/students"
                 element={
                   <TeacherRoute>
-                    <TeacherStudents />
+                    <ProtectedRoute>
+                      <TeacherStudents />
+                    </ProtectedRoute>
                   </TeacherRoute>
                 }
               />
@@ -199,7 +203,9 @@ function App() {
                 path="/assignment/:taskId/review"
                 element={
                   <TeacherRoute>
-                    <AssignmentReview />
+                    <ProtectedRoute>
+                      <AssignmentReview />
+                    </ProtectedRoute>
                   </TeacherRoute>
                 }
               />
@@ -207,7 +213,9 @@ function App() {
                 path="/assignments"
                 element={
                   <TeacherRoute>
-                    <AssignmentsList />
+                    <ProtectedRoute>
+                      <AssignmentsList />
+                    </ProtectedRoute>
                   </TeacherRoute>
                 }
               />
@@ -215,7 +223,9 @@ function App() {
                 path="/analytics"
                 element={
                   <TeacherRoute>
-                    <TeacherAnalytics />
+                    <ProtectedRoute>
+                      <TeacherAnalytics />
+                    </ProtectedRoute>
                   </TeacherRoute>
                 }
               />
@@ -223,7 +233,9 @@ function App() {
                 path="/archive"
                 element={
                   <TeacherRoute>
-                    <Archive />
+                    <ProtectedRoute>
+                      <Archive />
+                    </ProtectedRoute>
                   </TeacherRoute>
                 }
               />
@@ -231,7 +243,9 @@ function App() {
                 path="/activity-log"
                 element={
                   <TeacherRoute>
-                    <ActivityLogPage />
+                    <ProtectedRoute>
+                      <ActivityLogPage />
+                    </ProtectedRoute>
                   </TeacherRoute>
                 }
               />
