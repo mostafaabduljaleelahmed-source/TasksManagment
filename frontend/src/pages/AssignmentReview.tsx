@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
-import { StudentDetailsModal } from './StudentDetailsModal';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import {
   Code, Search, FileCode, Loader2, Users, CheckCircle2, XCircle, Clock, Award
@@ -36,14 +35,12 @@ export const AssignmentReview: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const [data, setData] = useState<AssignmentOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Quick review modal
-  const [reviewIndex, setReviewIndex] = useState<number | null>(null);
 
   const fetchAssignmentData = async () => {
     if (!user || !taskId) return;
@@ -127,8 +124,6 @@ export const AssignmentReview: React.FC = () => {
     s.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.studentRegisterId.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const activeSub = reviewIndex !== null && searchFilteredSubmitted[reviewIndex] ? searchFilteredSubmitted[reviewIndex] : null;
 
   return (
     <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-6">
@@ -247,7 +242,7 @@ export const AssignmentReview: React.FC = () => {
                   No submitted students found.
                 </div>
               ) : (
-                searchFilteredSubmitted.map((s, idx) => (
+                searchFilteredSubmitted.map((s) => (
                   <div key={s.studentId} className="bg-[#111827] border border-[#1F2937] rounded-2xl p-4 space-y-3 shadow-xl">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -274,7 +269,7 @@ export const AssignmentReview: React.FC = () => {
                     </div>
 
                     <button
-                      onClick={() => setReviewIndex(idx)}
+                      onClick={() => navigate(`/grading-workspace/${taskId}`)}
                       className="saas-button-primary min-h-[48px] w-full mt-2"
                     >
                       <FileCode className="w-4 h-4" />
@@ -308,7 +303,7 @@ export const AssignmentReview: React.FC = () => {
                         </td>
                       </tr>
                     ) : (
-                      searchFilteredSubmitted.map((s, idx) => (
+                      searchFilteredSubmitted.map((s) => (
                         <tr key={s.studentId} className="hover:bg-[#1A2234] transition-colors">
                           <td className="px-5 py-3.5">
                             <div className="w-9 h-9 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0">
@@ -353,7 +348,7 @@ export const AssignmentReview: React.FC = () => {
                           </td>
                           <td className="px-4 py-3.5 text-center">
                             <button
-                              onClick={() => setReviewIndex(idx)}
+                              onClick={() => navigate(`/grading-workspace/${taskId}`)}
                               className="saas-button-primary"
                             >
                               <FileCode className="w-3.5 h-3.5" />
@@ -476,27 +471,6 @@ export const AssignmentReview: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Quick Review Modal */}
-      {activeSub && reviewIndex !== null && data && (
-        <StudentDetailsModal
-          studentId={activeSub.studentId}
-          studentName={activeSub.studentName}
-          studentRegisterId={activeSub.studentRegisterId}
-          studentAvatarUrl={activeSub.studentAvatarUrl}
-          taskId={data.taskId}
-          taskTitle={data.taskTitle}
-          maxGrade={data.maxGrade}
-          onClose={() => setReviewIndex(null)}
-          onGraded={() => {
-            fetchAssignmentData();
-          }}
-          hasPrevious={reviewIndex > 0}
-          hasNext={reviewIndex < searchFilteredSubmitted.length - 1}
-          onPrevious={() => setReviewIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : prev))}
-          onNext={() => setReviewIndex((prev) => (prev !== null && prev < searchFilteredSubmitted.length - 1 ? prev + 1 : prev))}
-        />
       )}
     </div>
   );

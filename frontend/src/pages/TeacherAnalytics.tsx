@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { MetricsSkeleton } from '../components/SkeletonLoaders';
 import { EmptyState } from '../components/EmptyState';
-import { StudentDetailsModal } from './StudentDetailsModal';
 import {
   BarChart3, Users, BookOpen, Clock, AlertTriangle, CheckCircle2,
   Award, TrendingUp, Filter, FileCode
@@ -54,21 +54,12 @@ interface CourseItem {
 
 export const TeacherAnalytics: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [analyticsData, setAnalyticsData] = useState<TeacherAnalyticsData | null>(null);
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Student review modal state
-  const [selectedReview, setSelectedReview] = useState<{
-    studentId: string;
-    studentName: string;
-    studentRegisterId: string;
-    taskId: string;
-    taskTitle: string;
-    maxGrade: number;
-  } | null>(null);
 
   const fetchCourses = async () => {
     if (!user) return;
@@ -317,14 +308,7 @@ export const TeacherAnalytics: React.FC = () => {
                           <td className="p-3.5 text-zinc-400">Attempt #{sub.attemptNumber}</td>
                           <td className="p-3.5 text-right">
                             <button
-                              onClick={() => setSelectedReview({
-                                studentId: sub.studentId,
-                                studentName: sub.studentName,
-                                studentRegisterId: sub.studentRegisterId,
-                                taskId: sub.taskId,
-                                taskTitle: sub.taskTitle,
-                                maxGrade: sub.maxGrade
-                              })}
+                              onClick={() => navigate(`/grading-workspace/${sub.taskId}`)}
                               className="px-3.5 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-lg font-semibold shadow-md transition-all ml-auto flex items-center gap-1.5"
                             >
                               <FileCode className="w-3.5 h-3.5" />
@@ -340,23 +324,6 @@ export const TeacherAnalytics: React.FC = () => {
             </div>
           </>
         ) : null}
-
-      {/* Review Modal */}
-      {selectedReview && (
-        <StudentDetailsModal
-          studentId={selectedReview.studentId}
-          studentName={selectedReview.studentName}
-          studentRegisterId={selectedReview.studentRegisterId}
-          taskId={selectedReview.taskId}
-          taskTitle={selectedReview.taskTitle}
-          maxGrade={selectedReview.maxGrade}
-          onClose={() => setSelectedReview(null)}
-          onGraded={() => {
-            fetchAnalytics(selectedCourseId);
-            setSelectedReview(null);
-          }}
-        />
-      )}
     </div>
   );
 };

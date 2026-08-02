@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
-import { StudentDetailsModal } from './StudentDetailsModal';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import {
   Clock, CheckCircle2, FileCode, Search, SortAsc, Loader2
@@ -35,9 +34,6 @@ export const TeacherPendingReviews: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('newest');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
-  // Selected for review modal
-  const [reviewIndex, setReviewIndex] = useState<number | null>(null);
-
   const fetchPendingSubmissions = async () => {
     if (!user) return;
     setLoading(true);
@@ -69,8 +65,6 @@ export const TeacherPendingReviews: React.FC = () => {
       sub.groupName.toLowerCase().includes(term)
     );
   });
-
-  const activeSub = reviewIndex !== null && filteredSubmissions[reviewIndex] ? filteredSubmissions[reviewIndex] : null;
 
   return (
     <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-6">
@@ -197,28 +191,6 @@ export const TeacherPendingReviews: React.FC = () => {
               </div>
             ))}
           </div>
-        )}
-
-        {/* Modal with Quick Review Navigation */}
-        {activeSub && reviewIndex !== null && (
-          <StudentDetailsModal
-            studentId={activeSub.studentId}
-            studentName={activeSub.studentName}
-            studentRegisterId={activeSub.studentRegisterId}
-            studentAvatarUrl={activeSub.studentAvatarUrl}
-            taskId={activeSub.taskId}
-            taskTitle={activeSub.taskTitle}
-            maxGrade={activeSub.maxGrade}
-            onClose={() => setReviewIndex(null)}
-            onGraded={() => {
-              fetchPendingSubmissions();
-            }}
-            // Quick Review Navigation props
-            hasPrevious={reviewIndex > 0}
-            hasNext={reviewIndex < filteredSubmissions.length - 1}
-            onPrevious={() => setReviewIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : prev))}
-            onNext={() => setReviewIndex((prev) => (prev !== null && prev < filteredSubmissions.length - 1 ? prev + 1 : prev))}
-          />
         )}
       </div>
   );
