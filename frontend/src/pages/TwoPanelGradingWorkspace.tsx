@@ -7,7 +7,8 @@ import { RichTextViewer } from '../components/RichTextEditor';
 import {
   Code, ArrowLeft, Save, CheckCircle, ChevronLeft, ChevronRight,
   Maximize2, Minimize2, Copy, Check, FileText, Download, Lock,
-  AlertCircle, Eye, Loader2, BookOpen
+  AlertCircle, Eye, Loader2, BookOpen, FileCode, X, Pin, Search,
+  Printer, Link as LinkIcon, ChevronDown, ChevronUp
 } from 'lucide-react';
 
 interface PublicTestCase {
@@ -91,6 +92,27 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(45); // percentage for desktop split view
   const isResizing = useRef(false);
 
+  // --- Original Task Drawer & Bonus Features State ---
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDrawerPinned, setIsDrawerPinned] = useState(false);
+  const [drawerSearchQuery, setDrawerSearchQuery] = useState('');
+  const [expandedSections, setExpandedSections] = useState<{
+    metadata: boolean;
+    description: boolean;
+    examples: boolean;
+    attachments: boolean;
+    publicCases: boolean;
+  }>({
+    metadata: true,
+    description: true,
+    examples: true,
+    attachments: true,
+    publicCases: true,
+  });
+
+  const drawerScrollRef = useRef<HTMLDivElement>(null);
+  const savedDrawerScrollPos = useRef<number>(0);
+
   const fetchData = async () => {
     if (!user || !taskId) return;
     setLoading(true);
@@ -121,6 +143,17 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     fetchData();
   }, [taskId, user]);
 
+  // ESC key listener for Drawer close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isDrawerOpen && !isDrawerPinned) {
+        handleCloseDrawer();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDrawerOpen, isDrawerPinned]);
+
   const populateGradingForm = (subItem: StudentSubmissionItem, defaultMaxGrade: number) => {
     if (subItem) {
       setGradeInput(subItem.grade !== null && subItem.grade !== undefined ? subItem.grade : defaultMaxGrade);
@@ -136,6 +169,47 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
   };
 
   const currentStudent = data?.submissions[activeStudentIdx] || null;
+
+  // Drawer open/close handlers with scroll position retention
+  const handleOpenDrawer = () => {
+    setIsDrawerOpen(true);
+    setTimeout(() => {
+      if (drawerScrollRef.current) {
+        drawerScrollRef.current.scrollTop = savedDrawerScrollPos.current;
+      }
+    }, 50);
+  };
+
+  const handleCloseDrawer = () => {
+    if (drawerScrollRef.current) {
+      savedDrawerScrollPos.current = drawerScrollRef.current.scrollTop;
+    }
+    if (!isDrawerPinned) {
+      setIsDrawerOpen(false);
+    }
+  };
+
+  // Bonus Actions inside Drawer
+  const handleCopyTaskDescription = () => {
+    if (data?.description) {
+      navigator.clipboard.writeText(data.description);
+      toast.success('Task description copied to clipboard!');
+    }
+  };
+
+  const handleCopyTaskLink = () => {
+    const taskUrl = `${window.location.origin}/task/${taskId}`;
+    navigator.clipboard.writeText(taskUrl);
+    toast.success('Task link copied to clipboard!');
+  };
+
+  const handlePrintTask = () => {
+    window.print();
+  };
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
   // Save Grade Handler
   const handleSaveGrade = async (approvedMaxGrade?: boolean) => {
@@ -331,8 +405,19 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Quick Grade & Action Controls */}
+        {/* Right: Open Original Task Drawer Button, Quick Grade & Action Controls */}
         <div className="flex items-center gap-3 shrink-0 flex-wrap">
+          
+          {/* 📄 Open Original Task Button */}
+          <button
+            onClick={handleOpenDrawer}
+            className="px-3.5 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-bold text-xs rounded-xl flex items-center gap-2 transition-all shadow-md"
+            title="View complete task specifications in a slide-out drawer without leaving"
+          >
+            <FileCode className="w-4 h-4 text-indigo-400" />
+            📄 Open Original Task
+          </button>
+
           {currentStudent && (
             <>
               {/* Grade Input & Save */}
@@ -797,6 +882,304 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
         </div>
 
       </div>
+
+      {/* ========================== ORIGINAL TASK SLIDE-OUT DRAWER / MODAL ========================== */}
+      {isDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          
+          {/* Backdrop (Click outside to close if unpinned) */}
+          <div
+            onClick={handleCloseDrawer}
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+          />
+
+          {/* Drawer Container (Desktop: 42% right drawer, Mobile: Full screen bottom sheet) */}
+          <div
+            className={`relative z-10 w-full sm:w-[90vw] md:w-[45vw] lg:w-[42vw] h-full bg-[#111827] border-l border-[#1F2937] shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
+              isDrawerOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          >
+            {/* Drawer Header & Tools */}
+            <div className="px-6 py-4 bg-[#1A2234] border-b border-[#1F2937] flex flex-col gap-3 shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <FileCode className="w-5 h-5 text-indigo-400" />
+                  <h2 className="text-base font-extrabold text-white">Original Task Specifications</h2>
+                </div>
+
+                {/* Header Action Tools */}
+                <div className="flex items-center gap-2">
+                  
+                  {/* Pin Drawer */}
+                  <button
+                    onClick={() => setIsDrawerPinned(!isDrawerPinned)}
+                    className={`p-2 rounded-xl border text-xs flex items-center gap-1.5 transition-all ${
+                      isDrawerPinned
+                        ? 'bg-indigo-600 text-white border-indigo-400'
+                        : 'bg-[#111827] text-zinc-400 hover:text-white border-[#374151]'
+                    }`}
+                    title={isDrawerPinned ? 'Drawer Pinned Open' : 'Pin Drawer'}
+                  >
+                    <Pin className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{isDrawerPinned ? 'Pinned' : 'Pin'}</span>
+                  </button>
+
+                  {/* Copy Description */}
+                  <button
+                    onClick={handleCopyTaskDescription}
+                    className="p-2 bg-[#111827] hover:bg-zinc-800 text-zinc-300 border border-[#374151] rounded-xl text-xs transition-colors"
+                    title="Copy Task Description"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Copy Task Link */}
+                  <button
+                    onClick={handleCopyTaskLink}
+                    className="p-2 bg-[#111827] hover:bg-zinc-800 text-zinc-300 border border-[#374151] rounded-xl text-xs transition-colors"
+                    title="Copy Task Link"
+                  >
+                    <LinkIcon className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Print Task */}
+                  <button
+                    onClick={handlePrintTask}
+                    className="p-2 bg-[#111827] hover:bg-zinc-800 text-zinc-300 border border-[#374151] rounded-xl text-xs transition-colors"
+                    title="Print Task"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Close Button */}
+                  <button
+                    onClick={handleCloseDrawer}
+                    className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl transition-colors"
+                    title="Close Drawer (ESC)"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* In-Drawer Search Input */}
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search in task description & specs..."
+                  value={drawerSearchQuery}
+                  onChange={(e) => setDrawerSearchQuery(e.target.value)}
+                  className="w-full bg-[#0B0F19] border border-[#374151] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            {/* Drawer Body (Scrollable with state preservation) */}
+            <div ref={drawerScrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+              
+              {/* Section 1: Task Header & Metadata */}
+              <div className="bg-[#161E2E] border border-[#1F2937] rounded-2xl overflow-hidden shadow-lg">
+                <button
+                  onClick={() => toggleSection('metadata')}
+                  className="w-full px-4 py-3 bg-[#1A2234] flex items-center justify-between text-xs font-bold text-white border-b border-[#1F2937]"
+                >
+                  <span className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-indigo-400" />
+                    Overview & Settings
+                  </span>
+                  {expandedSections.metadata ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+
+                {expandedSections.metadata && (
+                  <div className="p-4 space-y-3">
+                    <h3 className="text-base font-extrabold text-white">{data.taskTitle}</h3>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <span className="text-[10px] text-zinc-500 uppercase font-bold block">Course</span>
+                        <span className="font-semibold text-zinc-200">{data.courseName}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-zinc-500 uppercase font-bold block">Session</span>
+                        <span className="font-semibold text-zinc-200">{data.sessionName}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-zinc-500 uppercase font-bold block">Language</span>
+                        <span className="font-mono text-blue-400 font-bold">{data.language}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-zinc-500 uppercase font-bold block">Evaluation Mode</span>
+                        <span className="font-semibold text-purple-400">{data.evaluationMode}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-zinc-500 uppercase font-bold block">Max Grade</span>
+                        <span className="font-extrabold text-amber-400">{data.maxGrade} pts</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-zinc-500 uppercase font-bold block">Deadline</span>
+                        <span className="font-medium text-zinc-300">
+                          {data.deadline ? new Date(data.deadline).toLocaleString() : 'No Deadline'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Section 2: Full Description & Markdown */}
+              <div className="bg-[#161E2E] border border-[#1F2937] rounded-2xl overflow-hidden shadow-lg">
+                <button
+                  onClick={() => toggleSection('description')}
+                  className="w-full px-4 py-3 bg-[#1A2234] flex items-center justify-between text-xs font-bold text-white border-b border-[#1F2937]"
+                >
+                  <span className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-400" />
+                    Task Description & Instructions
+                  </span>
+                  {expandedSections.description ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+
+                {expandedSections.description && (
+                  <div className="p-4 text-xs text-zinc-300 leading-relaxed">
+                    <RichTextViewer content={data.description || 'No detailed instructions provided.'} />
+                  </div>
+                )}
+              </div>
+
+              {/* Section 3: Example Input & Output */}
+              {(data.exampleInput || data.exampleOutput) && (
+                <div className="bg-[#161E2E] border border-[#1F2937] rounded-2xl overflow-hidden shadow-lg">
+                  <button
+                    onClick={() => toggleSection('examples')}
+                    className="w-full px-4 py-3 bg-[#1A2234] flex items-center justify-between text-xs font-bold text-white border-b border-[#1F2937]"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Code className="w-4 h-4 text-emerald-400" />
+                      Example Input / Output
+                    </span>
+                    {expandedSections.examples ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+
+                  {expandedSections.examples && (
+                    <div className="p-4 grid grid-cols-1 gap-3">
+                      {data.exampleInput && (
+                        <div>
+                          <span className="text-[10px] text-zinc-400 font-bold block mb-1">Example Input:</span>
+                          <pre className="bg-[#0B0F19] border border-[#1F2937] p-3 rounded-xl font-mono text-xs text-blue-300 overflow-x-auto">
+                            {data.exampleInput}
+                          </pre>
+                        </div>
+                      )}
+                      {data.exampleOutput && (
+                        <div>
+                          <span className="text-[10px] text-zinc-400 font-bold block mb-1">Example Output:</span>
+                          <pre className="bg-[#0B0F19] border border-[#1F2937] p-3 rounded-xl font-mono text-xs text-emerald-300 overflow-x-auto">
+                            {data.exampleOutput}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Section 4: Public Test Cases */}
+              {publicTestCases.length > 0 && (
+                <div className="bg-[#161E2E] border border-[#1F2937] rounded-2xl overflow-hidden shadow-lg">
+                  <button
+                    onClick={() => toggleSection('publicCases')}
+                    className="w-full px-4 py-3 bg-[#1A2234] flex items-center justify-between text-xs font-bold text-white border-b border-[#1F2937]"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-amber-400" />
+                      Public Test Cases ({publicTestCases.length})
+                    </span>
+                    {expandedSections.publicCases ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+
+                  {expandedSections.publicCases && (
+                    <div className="p-4 space-y-3">
+                      {publicTestCases.map((tc, i) => (
+                        <div key={i} className="bg-[#0B0F19] border border-[#1F2937] p-3 rounded-xl space-y-2 text-xs">
+                          <div className="text-amber-400 font-bold text-[11px]">Public Test Case #{i + 1}</div>
+                          <div className="grid grid-cols-2 gap-2 font-mono">
+                            <div>
+                              <span className="text-[10px] text-zinc-500 block">Input:</span>
+                              <div className="bg-[#111827] p-2 rounded-lg text-zinc-300">{tc.input || '(empty)'}</div>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-zinc-500 block">Expected Output:</span>
+                              <div className="bg-[#111827] p-2 rounded-lg text-emerald-400">{tc.expectedOutput || '(empty)'}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Section 5: Downloadable Attachments */}
+              {attachments.length > 0 && (
+                <div className="bg-[#161E2E] border border-[#1F2937] rounded-2xl overflow-hidden shadow-lg">
+                  <button
+                    onClick={() => toggleSection('attachments')}
+                    className="w-full px-4 py-3 bg-[#1A2234] flex items-center justify-between text-xs font-bold text-white border-b border-[#1F2937]"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Download className="w-4 h-4 text-blue-400" />
+                      Attachments ({attachments.length})
+                    </span>
+                    {expandedSections.attachments ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+
+                  {expandedSections.attachments && (
+                    <div className="p-4 space-y-2">
+                      {attachments.map((att) => (
+                        <a
+                          key={att.id}
+                          href={att.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between p-3 bg-[#0B0F19] border border-[#1F2937] hover:border-blue-500/50 rounded-xl text-xs text-zinc-200 transition-all"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <FileText className="w-4 h-4 text-blue-400" />
+                            <span className="font-semibold">{att.fileName}</span>
+                            <span className="text-[10px] text-zinc-500 font-mono">({Math.round(att.fileSize / 1024)} KB)</span>
+                          </div>
+                          <Download className="w-3.5 h-3.5 text-zinc-400" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Section 6: Protected Hidden Test Cases Info */}
+              <div className="bg-violet-950/20 border border-violet-500/30 p-4 rounded-2xl flex items-center gap-3">
+                <div className="p-2.5 bg-violet-500/20 rounded-xl text-violet-400 shrink-0">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-violet-300 flex items-center gap-2">
+                    Hidden Test Cases Protected
+                    <span className="bg-violet-500/30 text-violet-200 px-2 py-0.5 rounded-full text-[10px]">
+                      {data.hiddenTestCaseCount} Hidden Cases
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    Test cases are securely held on the server for automated grading validation.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   );
