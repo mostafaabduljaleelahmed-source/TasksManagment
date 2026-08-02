@@ -24,7 +24,6 @@ const Chat = lazy(() => import('./pages/Chat').then(m => ({ default: m.Chat })))
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 const TeacherPendingReviews = lazy(() => import('./pages/TeacherPendingReviews').then(m => ({ default: m.TeacherPendingReviews })));
 const TeacherStudents = lazy(() => import('./pages/TeacherStudents').then(m => ({ default: m.TeacherStudents })));
-const AssignmentReview = lazy(() => import('./pages/AssignmentReview').then(m => ({ default: m.AssignmentReview })));
 const TwoPanelGradingWorkspace = lazy(() => import('./pages/TwoPanelGradingWorkspace').then(m => ({ default: m.TwoPanelGradingWorkspace })));
 const AssignmentsList = lazy(() => import('./pages/AssignmentsList').then(m => ({ default: m.AssignmentsList })));
 const Archive = lazy(() => import('./pages/Archive').then(m => ({ default: m.Archive })));
@@ -214,7 +213,7 @@ function App() {
                 element={
                   <TeacherRoute>
                     <ProtectedRoute>
-                      <AssignmentReview />
+                      <TwoPanelGradingWorkspace />
                     </ProtectedRoute>
                   </TeacherRoute>
                 }

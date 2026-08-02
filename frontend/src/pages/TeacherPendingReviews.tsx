@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { StudentDetailsModal } from './StudentDetailsModal';
@@ -26,6 +27,7 @@ interface PendingSubmission {
 export const TeacherPendingReviews: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const [submissions, setSubmissions] = useState<PendingSubmission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,7 +139,7 @@ export const TeacherPendingReviews: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSubmissions.map((sub, idx) => (
+            {filteredSubmissions.map((sub) => (
               <div
                 key={sub.submissionId}
                 className="bg-[#121215] border border-[#24242B] hover:border-amber-500/40 rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-4 group transition-all"
@@ -186,7 +188,7 @@ export const TeacherPendingReviews: React.FC = () => {
 
                 {/* Review Action */}
                 <button
-                  onClick={() => setReviewIndex(idx)}
+                  onClick={() => navigate(`/grading-workspace/${sub.taskId}`)}
                   className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-950/30 transition-all flex items-center justify-center gap-2"
                 >
                   <FileCode className="w-4 h-4" />
