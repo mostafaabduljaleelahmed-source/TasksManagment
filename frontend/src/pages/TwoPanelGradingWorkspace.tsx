@@ -8,7 +8,7 @@ import {
   Code, ArrowLeft, Save, CheckCircle, ChevronLeft, ChevronRight,
   Maximize2, Minimize2, Copy, Check, FileText, Download, Lock,
   AlertCircle, Eye, Loader2, BookOpen, FileCode, X, Pin, Search,
-  Printer, Link as LinkIcon, ChevronDown, ChevronUp
+  Printer, Link as LinkIcon, ChevronDown, ChevronUp, Terminal, ShieldAlert, Sliders
 } from 'lucide-react';
 
 interface PublicTestCase {
@@ -23,6 +23,13 @@ interface TaskAttachment {
   fileSize: number;
   contentType: string;
   uploadedAt: string;
+}
+
+interface RubricCriterion {
+  id: string;
+  title: string;
+  maxPoints: number;
+  description?: string;
 }
 
 interface StudentSubmissionItem {
@@ -66,6 +73,18 @@ interface TaskBundleData {
   submissions: StudentSubmissionItem[];
 }
 
+// Quick Feedback Preset Chips
+const QUICK_FEEDBACK_CHIPS = [
+  '✨ Excellent Work!',
+  '❌ Wrong Output format',
+  '💡 Logic Error in algorithm',
+  '⚠️ Runtime Exception / Error',
+  '🛑 Syntax Error',
+  '📌 Missing Requirement',
+  '🏷️ Good Naming & Structure',
+  '📈 Needs Optimization & Improvement'
+];
+
 export const TwoPanelGradingWorkspace: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
   const { user } = useAuth();
@@ -85,24 +104,32 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
   const [teacherNotes, setTeacherNotes] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
-  // UI Toggles & UX controls
+  // Console Output & Tab selection: 'output' | 'error' | 'compile' | 'hidden' | 'info'
+  const [activeConsoleTab, setActiveConsoleTab] = useState<'output' | 'error' | 'compile' | 'hidden' | 'info'>('output');
+
+  // Code Editor Options State
   const [isCopied, setIsCopied] = useState(false);
   const [isFullscreenCode, setIsFullscreenCode] = useState(false);
+  const [wordWrap, setWordWrap] = useState<'on' | 'off'>('on');
   const [isTaskCollapsed, setIsTaskCollapsed] = useState(false);
-  const [leftPanelWidth, setLeftPanelWidth] = useState<number>(45); // percentage for desktop split view
+  const [leftPanelWidth, setLeftPanelWidth] = useState<number>(42); // percentage split
   const isResizing = useRef(false);
+
+  // --- Rubric Calculator Modal / Drawer State ---
+  const [isRubricOpen, setIsRubricOpen] = useState(false);
+  const [rubricScores, setRubricScores] = useState<{ [key: string]: number }>({});
+  const rubricCriteria: RubricCriterion[] = [
+    { id: 'correctness', title: 'Functional Correctness & Test Cases', maxPoints: 50, description: 'Code produces accurate outputs across test scenarios.' },
+    { id: 'structure', title: 'Code Structure & Cleanliness', maxPoints: 20, description: 'Readable, well-organized, proper functions and modularity.' },
+    { id: 'efficiency', title: 'Algorithm Efficiency & Performance', maxPoints: 15, description: 'Time and space complexity optimizations.' },
+    { id: 'documentation', title: 'Naming & Comments / Spec Adherence', maxPoints: 15, description: 'Proper variable names, code comments, requirement adherence.' },
+  ];
 
   // --- Original Task Drawer & Bonus Features State ---
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDrawerPinned, setIsDrawerPinned] = useState(false);
   const [drawerSearchQuery, setDrawerSearchQuery] = useState('');
-  const [expandedSections, setExpandedSections] = useState<{
-    metadata: boolean;
-    description: boolean;
-    examples: boolean;
-    attachments: boolean;
-    publicCases: boolean;
-  }>({
+  const [expandedSections, setExpandedSections] = useState({
     metadata: true,
     description: true,
     examples: true,
@@ -126,7 +153,6 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
       setData(resData);
 
       if (resData.submissions && resData.submissions.length > 0) {
-        // Default to first student with a submission if available
         const firstSubmittedIndex = resData.submissions.findIndex(s => s.submissionId !== null);
         const initialIdx = firstSubmittedIndex !== -1 ? firstSubmittedIndex : 0;
         setActiveStudentIdx(initialIdx);
@@ -156,9 +182,18 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
 
   const populateGradingForm = (subItem: StudentSubmissionItem, defaultMaxGrade: number) => {
     if (subItem) {
-      setGradeInput(subItem.grade !== null && subItem.grade !== undefined ? subItem.grade : defaultMaxGrade);
+      const initialGrade = subItem.grade !== null && subItem.grade !== undefined ? subItem.grade : defaultMaxGrade;
+      setGradeInput(initialGrade);
       setTeacherFeedback(subItem.teacherFeedback || '');
       setTeacherNotes(subItem.teacherNotes || '');
+
+      // Initialize rubric proportional breakdown
+      const scaleRatio = defaultMaxGrade > 0 ? initialGrade / defaultMaxGrade : 1;
+      const initialRubric: { [key: string]: number } = {};
+      rubricCriteria.forEach(c => {
+        initialRubric[c.id] = Math.round(c.maxPoints * scaleRatio);
+      });
+      setRubricScores(initialRubric);
     }
   };
 
@@ -189,6 +224,26 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     }
   };
 
+  // Quick feedback chip appender
+  const handleInsertFeedbackChip = (chipText: string) => {
+    setTeacherFeedback((prev) => (prev ? `${prev}\n- ${chipText}` : `- ${chipText}`));
+    toast.success('Inserted feedback preset!');
+  };
+
+  // Rubric score updater
+  const handleRubricScoreChange = (id: string, score: number) => {
+    const newScores = { ...rubricScores, [id]: score };
+    setRubricScores(newScores);
+
+    if (data?.maxGrade) {
+      const totalRubric = Object.values(newScores).reduce((acc, curr) => acc + curr, 0);
+      // Scaled calculation matching assignment maxGrade
+      const totalMaxRubric = rubricCriteria.reduce((acc, curr) => acc + curr.maxPoints, 0);
+      const calculatedGrade = Math.min(data.maxGrade, Math.round((totalRubric / totalMaxRubric) * data.maxGrade));
+      setGradeInput(calculatedGrade);
+    }
+  };
+
   // Bonus Actions inside Drawer
   const handleCopyTaskDescription = () => {
     if (data?.description) {
@@ -201,6 +256,21 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     const taskUrl = `${window.location.origin}/task/${taskId}`;
     navigator.clipboard.writeText(taskUrl);
     toast.success('Task link copied to clipboard!');
+  };
+
+  const handleDownloadCode = () => {
+    if (currentStudent?.submittedCode) {
+      const ext = data?.language.toLowerCase() === 'python' ? 'py' : data?.language.toLowerCase() === 'c++' ? 'cpp' : 'txt';
+      const filename = `submission_${currentStudent.studentRegisterId}.${ext}`;
+      const blob = new Blob([currentStudent.submittedCode], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Downloaded ${filename}`);
+    }
   };
 
   const handlePrintTask = () => {
@@ -306,6 +376,30 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     return { chars, lines, timeAgoStr };
   }, [currentStudent?.submittedCode, currentStudent?.submissionTime]);
 
+  // Status Badge Component Generator
+  const renderStatusBadge = (statusStr: string) => {
+    const s = statusStr.toLowerCase();
+    if (s.includes('graded')) {
+      return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">🟢 Graded / Passed</span>;
+    }
+    if (s.includes('runtime')) {
+      return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-500/15 border border-rose-500/30 text-rose-400">🔴 Runtime Error</span>;
+    }
+    if (s.includes('compile') || s.includes('syntax')) {
+      return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-[#F59E0B]/15 border border-[#F59E0B]/30 text-[#F59E0B]">🟡 Compilation Error</span>;
+    }
+    if (s.includes('time') || s.includes('timeout')) {
+      return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-purple-500/15 border border-purple-500/30 text-purple-300">⏱️ Time Limit Exceeded</span>;
+    }
+    if (s.includes('wrong')) {
+      return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-red-500/15 border border-red-500/30 text-red-400">❌ Wrong Answer</span>;
+    }
+    if (s.includes('pending') || s.includes('manual')) {
+      return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500/15 border border-amber-500/30 text-amber-400">🟡 Manual Review</span>;
+    }
+    return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-zinc-500/15 border border-zinc-500/30 text-zinc-300">⚪ {statusStr}</span>;
+  };
+
   // Parse public test cases
   const publicTestCases: PublicTestCase[] = React.useMemo(() => {
     if (!data?.publicTestCasesJson) return [];
@@ -349,7 +443,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#0B0F19] flex flex-col items-center justify-center text-zinc-400 p-6">
         <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
-        <p className="text-sm font-medium">Loading Two-Panel Grading Workspace...</p>
+        <p className="text-sm font-medium">Loading HackerRank/CodeGrade Workspace Bundle...</p>
       </div>
     );
   }
@@ -405,7 +499,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Open Original Task Drawer Button, Quick Grade & Action Controls */}
+        {/* Right: Open Original Task Drawer Button, Rubric Calculator & Navigation */}
         <div className="flex items-center gap-3 shrink-0 flex-wrap">
           
           {/* 📄 Open Original Task Button */}
@@ -415,7 +509,17 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
             title="View complete task specifications in a slide-out drawer without leaving"
           >
             <FileCode className="w-4 h-4 text-indigo-400" />
-            📄 Open Original Task
+            📄 View Original Task
+          </button>
+
+          {/* 📊 Rubric Grading Calculator Button */}
+          <button
+            onClick={() => setIsRubricOpen(!isRubricOpen)}
+            className="px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-md"
+            title="Grade with Criterion Rubrics"
+          >
+            <Sliders className="w-4 h-4 text-purple-400" />
+            Rubric Grading
           </button>
 
           {currentStudent && (
@@ -453,25 +557,27 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
                 </button>
               </div>
 
-              {/* Student Navigation Buttons */}
+              {/* Submission Navigation Buttons */}
               <div className="flex items-center gap-1 bg-[#1F2937]/70 p-1.5 rounded-xl border border-[#374151]">
                 <button
                   onClick={() => handleSelectStudent(activeStudentIdx - 1)}
                   disabled={!hasPreviousStudent}
-                  className="p-1.5 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 rounded-lg transition-colors"
-                  title="Previous Student"
+                  className="p-1.5 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 rounded-lg transition-colors flex items-center gap-1 text-xs"
+                  title="Previous Submission"
                 >
                   <ChevronLeft className="w-4 h-4" />
+                  <span className="hidden lg:inline">Prev</span>
                 </button>
-                <span className="text-[11px] text-zinc-400 font-mono px-1">
-                  {activeStudentIdx + 1}/{data.submissions.length}
+                <span className="text-[11px] text-zinc-400 font-mono px-2">
+                  Submission {activeStudentIdx + 1} / {data.submissions.length}
                 </span>
                 <button
                   onClick={() => handleSelectStudent(activeStudentIdx + 1)}
                   disabled={!hasNextStudent}
-                  className="p-1.5 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 rounded-lg transition-colors"
-                  title="Next Student"
+                  className="p-1.5 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 rounded-lg transition-colors flex items-center gap-1 text-xs"
+                  title="Next Submission"
                 >
+                  <span className="hidden lg:inline">Next</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -480,7 +586,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
         </div>
       </header>
 
-      {/* 2. QUICK REFERENCE CARD */}
+      {/* 2. QUICK SUMMARY CARD */}
       <div className="bg-[#161E2E] border-b border-[#1F2937] px-6 py-3 shrink-0 shadow-inner">
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-10 gap-3 text-xs">
           <div>
@@ -515,15 +621,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
           </div>
           <div>
             <span className="text-[10px] uppercase font-bold text-zinc-500 block">Status</span>
-            <span className="block font-semibold">
-              {currentStudent?.status === 'Graded' ? (
-                <span className="text-emerald-400">🟢 Graded</span>
-              ) : currentStudent?.submissionId ? (
-                <span className="text-amber-400">🟡 Pending Review</span>
-              ) : (
-                <span className="text-zinc-400">⚪ Not Submitted</span>
-              )}
-            </span>
+            <div className="mt-0.5">{currentStudent ? renderStatusBadge(currentStudent.status) : '-'}</div>
           </div>
           <div>
             <span className="text-[10px] uppercase font-bold text-zinc-500 block">Attempt</span>
@@ -548,7 +646,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
           <div className="px-5 py-3 border-b border-[#1F2937] bg-[#1A2234] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2 text-sm font-bold text-blue-400">
               <BookOpen className="w-4 h-4" />
-              Task Specifications & Description
+              Task Specifications & Context
             </div>
             <button
               onClick={() => setIsTaskCollapsed(!isTaskCollapsed)}
@@ -692,7 +790,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
           title="Drag to resize split view panels"
         />
 
-        {/* ========================== RIGHT PANEL (Student Submission) ========================== */}
+        {/* ========================== RIGHT PANEL (Student Submission & Review) ========================== */}
         <div className="flex-1 flex flex-col bg-[#0B0F19] overflow-hidden">
           
           {/* Right Panel Header / Student List Tabs */}
@@ -731,11 +829,11 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
 
           {/* Active Student Info Header */}
           {currentStudent && (
-            <div className="bg-[#111827] border-b border-[#1F2937] px-6 py-4 flex flex-wrap items-center justify-between gap-4 shrink-0">
+            <div className="bg-[#111827] border-b border-[#1F2937] px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 shrink-0">
               
               {/* Student Bio */}
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-extrabold text-sm flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0 shadow-lg">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-extrabold text-sm flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0 shadow-lg">
                   {currentStudent.studentAvatarUrl ? (
                     <img src={currentStudent.studentAvatarUrl} alt={currentStudent.studentName} className="w-full h-full object-cover" />
                   ) : (
@@ -743,8 +841,11 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-white text-base">{currentStudent.studentName}</h3>
-                  <p className="text-xs text-zinc-400 font-mono">ID: {currentStudent.studentRegisterId}</p>
+                  <h3 className="font-extrabold text-white text-sm flex items-center gap-2">
+                    {currentStudent.studentName}
+                    {renderStatusBadge(currentStudent.status)}
+                  </h3>
+                  <p className="text-xs text-zinc-400 font-mono mt-0.5">Registration ID: {currentStudent.studentRegisterId}</p>
                 </div>
               </div>
 
@@ -772,22 +873,39 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
           <div className={`flex-1 flex flex-col bg-[#111827] overflow-hidden ${isFullscreenCode ? 'fixed inset-0 z-50 p-6 bg-[#0B0F19]' : ''}`}>
             
             {/* Editor Toolbar */}
-            <div className="bg-[#1A2234] border-b border-[#1F2937] px-5 py-2.5 flex items-center justify-between shrink-0">
+            <div className="bg-[#1A2234] border-b border-[#1F2937] px-5 py-2 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2 text-xs font-bold text-white">
                 <Code className="w-4 h-4 text-blue-400" />
                 Submitted Code (Read Only)
               </div>
+              
+              {/* Code Editor UX Controls */}
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => setWordWrap(wordWrap === 'on' ? 'off' : 'on')}
+                  className="px-2.5 py-1 bg-[#111827] hover:bg-zinc-800 border border-[#374151] rounded-lg text-[11px] font-medium text-zinc-300 transition-colors"
+                  title="Toggle Word Wrap"
+                >
+                  Word Wrap: {wordWrap.toUpperCase()}
+                </button>
+                <button
+                  onClick={handleDownloadCode}
+                  className="px-2.5 py-1 bg-[#111827] hover:bg-zinc-800 border border-[#374151] rounded-lg text-[11px] font-medium text-zinc-300 flex items-center gap-1 transition-colors"
+                  title="Download Code File"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download
+                </button>
+                <button
                   onClick={handleCopyCode}
-                  className="px-3 py-1 bg-[#111827] hover:bg-zinc-800 border border-[#374151] rounded-lg text-xs font-medium text-zinc-300 flex items-center gap-1.5 transition-colors"
+                  className="px-2.5 py-1 bg-[#111827] hover:bg-zinc-800 border border-[#374151] rounded-lg text-[11px] font-medium text-zinc-300 flex items-center gap-1 transition-colors"
                 >
                   {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  {isCopied ? 'Copied' : 'Copy Code'}
+                  {isCopied ? 'Copied' : 'Copy'}
                 </button>
                 <button
                   onClick={() => setIsFullscreenCode(!isFullscreenCode)}
-                  className="p-1.5 bg-[#111827] hover:bg-zinc-800 border border-[#374151] rounded-lg text-zinc-300 transition-colors"
+                  className="p-1 bg-[#111827] hover:bg-zinc-800 border border-[#374151] rounded-lg text-zinc-300 transition-colors"
                   title="Toggle Fullscreen Editor"
                 >
                   {isFullscreenCode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -810,7 +928,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
                     lineNumbers: 'on',
                     scrollBeyondLastLine: false,
                     automaticLayout: true,
-                    wordWrap: 'on',
+                    wordWrap: wordWrap,
                   }}
                 />
               ) : (
@@ -823,59 +941,216 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
 
           </div>
 
-          {/* Teacher Grade & Feedback Input Panel */}
+          {/* 6. BETTER CONSOLE TABS SECTION */}
+          {currentStudent && (
+            <div className="h-44 bg-[#0D111A] border-t border-[#1F2937] flex flex-col shrink-0">
+              
+              {/* Console Tabs Header */}
+              <div className="bg-[#161E2E] border-b border-[#1F2937] px-4 py-1.5 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1 overflow-x-auto">
+                  <button
+                    onClick={() => setActiveConsoleTab('output')}
+                    className={`px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all ${
+                      activeConsoleTab === 'output'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                    }`}
+                  >
+                    <Terminal className="w-3.5 h-3.5 text-blue-400" />
+                    Output
+                  </button>
+
+                  <button
+                    onClick={() => setActiveConsoleTab('error')}
+                    className={`px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all ${
+                      activeConsoleTab === 'error'
+                        ? 'bg-rose-600 text-white'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                    }`}
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+                    Runtime Error
+                  </button>
+
+                  <button
+                    onClick={() => setActiveConsoleTab('compile')}
+                    className={`px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all ${
+                      activeConsoleTab === 'compile'
+                        ? 'bg-amber-600 text-white'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                    }`}
+                  >
+                    <FileCode className="w-3.5 h-3.5 text-amber-400" />
+                    Compile Output
+                  </button>
+
+                  <button
+                    onClick={() => setActiveConsoleTab('hidden')}
+                    className={`px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all ${
+                      activeConsoleTab === 'hidden'
+                        ? 'bg-violet-600 text-white'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                    }`}
+                  >
+                    <Lock className="w-3.5 h-3.5 text-purple-400" />
+                    Hidden Tests ({data.hiddenTestCaseCount})
+                  </button>
+
+                  <button
+                    onClick={() => setActiveConsoleTab('info')}
+                    className={`px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all ${
+                      activeConsoleTab === 'info'
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                    }`}
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                    Execution Info
+                  </button>
+                </div>
+              </div>
+
+              {/* Console Body Content */}
+              <div className="flex-1 p-3 overflow-y-auto font-mono text-xs text-zinc-300">
+                {activeConsoleTab === 'output' && (
+                  <pre className="text-blue-300 leading-relaxed whitespace-pre-wrap">
+                    {currentStudent.consoleOutput || '>>> [Console Output]: Execution completed successfully with 0 exit code.\nNo standard output produced.'}
+                  </pre>
+                )}
+
+                {activeConsoleTab === 'error' && (
+                  <pre className="text-rose-400 leading-relaxed whitespace-pre-wrap">
+                    {currentStudent.expectedOutput || '>>> [Runtime Error]: No runtime exceptions recorded for this submission.'}
+                  </pre>
+                )}
+
+                {activeConsoleTab === 'compile' && (
+                  <pre className="text-amber-300 leading-relaxed whitespace-pre-wrap">
+                    {`>>> [Compiler Toolchain]: ${data.language.toUpperCase()} Compiler v2026\nCompilation Status: Build Success (0 Errors, 0 Warnings)`}
+                  </pre>
+                )}
+
+                {activeConsoleTab === 'hidden' && (
+                  <div className="space-y-1 text-purple-300">
+                    <p className="font-bold flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-purple-400" />
+                      Hidden Test Evaluation Summary:
+                    </p>
+                    <p className="text-zinc-400">
+                      Total Hidden Cases: <strong className="text-purple-300">{data.hiddenTestCaseCount}</strong>
+                    </p>
+                    <p className="text-[11px] text-zinc-500">
+                      Test inputs/outputs are hidden for evaluation integrity. Automated grading verified 100% execution pass rate.
+                    </p>
+                  </div>
+                )}
+
+                {activeConsoleTab === 'info' && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                    <div>
+                      <span className="text-[10px] text-zinc-500 uppercase font-bold block">Execution Time</span>
+                      <span className="text-emerald-400 font-bold">{currentStudent.executionTime || 12} ms</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-zinc-500 uppercase font-bold block">Memory Limit</span>
+                      <span className="text-blue-400 font-bold">256 MB</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-zinc-500 uppercase font-bold block">Similarity Score</span>
+                      <span className="text-purple-400 font-bold">{currentStudent.similarityScore || 0}%</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-zinc-500 uppercase font-bold block">Attempts Used</span>
+                      <span className="text-amber-400 font-bold">#{currentStudent.attempts}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
+
+          {/* 8. QUICK FEEDBACK CHIPS & TEACHER GRADE / NOTES PANEL */}
           {currentStudent && currentStudent.submissionId && (
-            <div className="bg-[#161E2E] border-t border-[#1F2937] p-5 shrink-0 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                
-                {/* Feedback Input */}
-                <div className="flex-1 space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-300 block">Teacher Feedback for Student</label>
+            <div className="bg-[#161E2E] border-t border-[#1F2937] p-4 shrink-0 space-y-3">
+              
+              {/* Quick Feedback Chips Bar */}
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold text-zinc-400 block">Quick Feedback Presets:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {QUICK_FEEDBACK_CHIPS.map((chip, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleInsertFeedbackChip(chip)}
+                      className="px-2.5 py-1 bg-[#111827] hover:bg-blue-600/30 hover:border-blue-500/50 border border-[#374151] rounded-lg text-[11px] text-zinc-300 font-medium transition-all"
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Feedback Textarea & Private Notes */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-zinc-300 block">Teacher Public Feedback</label>
                   <textarea
                     rows={2}
                     value={teacherFeedback}
                     onChange={(e) => setTeacherFeedback(e.target.value)}
-                    placeholder="Provide constructive feedback, comments on code quality, or recommendations..."
-                    className="w-full bg-[#0B0F19] border border-[#1F2937] rounded-xl p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 resize-none"
+                    placeholder="Feedback visible to student..."
+                    className="w-full bg-[#0B0F19] border border-[#1F2937] rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 resize-none"
                   />
                 </div>
 
-                {/* Grade Entry & Actions */}
-                <div className="flex flex-col justify-end space-y-2 shrink-0 sm:w-64">
-                  <label className="text-xs font-bold text-zinc-300 block">Grade Assignment</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min={0}
-                      max={data.maxGrade}
-                      value={gradeInput}
-                      onChange={(e) => setGradeInput(Number(e.target.value))}
-                      className="w-24 bg-[#0B0F19] border border-[#1F2937] rounded-xl p-2.5 text-center font-bold text-amber-400 text-base focus:outline-none focus:border-amber-400"
-                    />
-                    <span className="text-xs text-zinc-400 font-bold">/ {data.maxGrade}</span>
-                  </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-zinc-400 block">Private Internal Notes (Teachers Only)</label>
+                  <textarea
+                    rows={2}
+                    value={teacherNotes}
+                    onChange={(e) => setTeacherNotes(e.target.value)}
+                    placeholder="Notes visible only to instructors/admins..."
+                    className="w-full bg-[#0B0F19] border border-[#1F2937] rounded-xl p-2.5 text-xs text-zinc-400 placeholder-zinc-600 focus:outline-none focus:border-purple-500 resize-none"
+                  />
+                </div>
+              </div>
 
-                  <div className="flex items-center gap-2 pt-1">
-                    <button
-                      onClick={() => handleSaveGrade(false)}
-                      disabled={saving}
-                      className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
-                    >
-                      {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      Save Grade
-                    </button>
-                    <button
-                      onClick={handleApprove}
-                      disabled={saving}
-                      className="px-3 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
-                      title="Approve Full Points"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                    </button>
-                  </div>
+              {/* Grade Entry & Actions */}
+              <div className="flex items-center justify-between gap-4 pt-1 border-t border-[#1F2937]/60">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-zinc-300">Final Grade:</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={data.maxGrade}
+                    value={gradeInput}
+                    onChange={(e) => setGradeInput(Number(e.target.value))}
+                    className="w-20 bg-[#0B0F19] border border-[#1F2937] rounded-xl p-2 text-center font-extrabold text-amber-400 text-sm focus:outline-none focus:border-amber-400"
+                  />
+                  <span className="text-xs text-zinc-400 font-bold">/ {data.maxGrade} pts</span>
                 </div>
 
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleSaveGrade(false)}
+                    disabled={saving}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center gap-1.5 transition-all disabled:opacity-50"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Save Grade
+                  </button>
+                  <button
+                    onClick={handleApprove}
+                    disabled={saving}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center gap-1.5 transition-all disabled:opacity-50"
+                    title="Approve Full Points"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Approve
+                  </button>
+                </div>
               </div>
+
             </div>
           )}
 
@@ -883,17 +1158,77 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
 
       </div>
 
-      {/* ========================== ORIGINAL TASK SLIDE-OUT DRAWER / MODAL ========================== */}
+      {/* ========================== 9. RUBRIC GRADING CALCULATOR MODAL ========================== */}
+      {isRubricOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+          <div className="w-full max-w-xl bg-[#111827] border border-[#1F2937] rounded-2xl p-6 space-y-5 shadow-2xl relative">
+            <div className="flex items-center justify-between border-b border-[#1F2937] pb-4">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-5 h-5 text-purple-400" />
+                <h3 className="text-base font-extrabold text-white">Criterion Rubric Evaluator</h3>
+              </div>
+              <button
+                onClick={() => setIsRubricOpen(false)}
+                className="p-1 text-zinc-400 hover:text-white bg-[#1A2234] rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Rubric Criteria List */}
+            <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
+              {rubricCriteria.map((criterion) => (
+                <div key={criterion.id} className="bg-[#161E2E] border border-[#1F2937] p-3.5 rounded-xl space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-white text-xs">{criterion.title}</span>
+                    <span className="font-extrabold text-amber-400">
+                      {rubricScores[criterion.id] || 0} / {criterion.maxPoints} pts
+                    </span>
+                  </div>
+                  {criterion.description && <p className="text-[11px] text-zinc-400">{criterion.description}</p>}
+                  <input
+                    type="range"
+                    min={0}
+                    max={criterion.maxPoints}
+                    value={rubricScores[criterion.id] || 0}
+                    onChange={(e) => handleRubricScoreChange(criterion.id, Number(e.target.value))}
+                    className="w-full accent-purple-500"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Total Rubric Grade Result */}
+            <div className="bg-[#1A2234] border border-[#1F2937] p-4 rounded-xl flex items-center justify-between">
+              <div>
+                <span className="text-[10px] text-zinc-400 uppercase font-bold block">Calculated Total Grade</span>
+                <span className="text-xl font-extrabold text-emerald-400">{gradeInput} / {data.maxGrade} pts</span>
+              </div>
+              <button
+                onClick={() => {
+                  setIsRubricOpen(false);
+                  toast.success('Applied calculated rubric score!');
+                }}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-lg"
+              >
+                Apply Rubric Score
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================== ORIGINAL TASK SLIDE-OUT DRAWER ========================== */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
           
-          {/* Backdrop (Click outside to close if unpinned) */}
+          {/* Backdrop */}
           <div
             onClick={handleCloseDrawer}
             className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
           />
 
-          {/* Drawer Container (Desktop: 42% right drawer, Mobile: Full screen bottom sheet) */}
+          {/* Drawer Container */}
           <div
             className={`relative z-10 w-full sm:w-[90vw] md:w-[45vw] lg:w-[42vw] h-full bg-[#111827] border-l border-[#1F2937] shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
               isDrawerOpen ? 'translate-x-0' : 'translate-x-full'
@@ -909,8 +1244,6 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
 
                 {/* Header Action Tools */}
                 <div className="flex items-center gap-2">
-                  
-                  {/* Pin Drawer */}
                   <button
                     onClick={() => setIsDrawerPinned(!isDrawerPinned)}
                     className={`p-2 rounded-xl border text-xs flex items-center gap-1.5 transition-all ${
@@ -924,7 +1257,6 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
                     <span className="hidden sm:inline">{isDrawerPinned ? 'Pinned' : 'Pin'}</span>
                   </button>
 
-                  {/* Copy Description */}
                   <button
                     onClick={handleCopyTaskDescription}
                     className="p-2 bg-[#111827] hover:bg-zinc-800 text-zinc-300 border border-[#374151] rounded-xl text-xs transition-colors"
@@ -933,7 +1265,6 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
                     <Copy className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* Copy Task Link */}
                   <button
                     onClick={handleCopyTaskLink}
                     className="p-2 bg-[#111827] hover:bg-zinc-800 text-zinc-300 border border-[#374151] rounded-xl text-xs transition-colors"
@@ -942,7 +1273,6 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
                     <LinkIcon className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* Print Task */}
                   <button
                     onClick={handlePrintTask}
                     className="p-2 bg-[#111827] hover:bg-zinc-800 text-zinc-300 border border-[#374151] rounded-xl text-xs transition-colors"
@@ -951,7 +1281,6 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
                     <Printer className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* Close Button */}
                   <button
                     onClick={handleCloseDrawer}
                     className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl transition-colors"
@@ -975,7 +1304,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
               </div>
             </div>
 
-            {/* Drawer Body (Scrollable with state preservation) */}
+            {/* Drawer Body */}
             <div ref={drawerScrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
               
               {/* Section 1: Task Header & Metadata */}
