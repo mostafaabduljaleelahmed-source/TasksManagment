@@ -8,7 +8,7 @@ import {
   Code, ArrowLeft, Save, ChevronLeft, ChevronRight, Copy,
   FileText, Download, AlertCircle, Eye, Loader2,
   BookOpen, FileCode, X, Pin, Search, Printer, Link as LinkIcon,
-  ChevronDown, ChevronUp, Terminal, CheckCircle2
+  ChevronDown, ChevronUp, Terminal, Star
 } from 'lucide-react';
 
 interface PublicTestCase {
@@ -43,6 +43,7 @@ interface StudentSubmissionItem {
   teacherNotes?: string | null;
   consoleOutput?: string | null;
   expectedOutput?: string | null;
+  reviewLater?: boolean;
 }
 
 interface TaskBundleData {
@@ -66,57 +67,21 @@ interface TaskBundleData {
   submissions: StudentSubmissionItem[];
 }
 
-// Quick Feedback Templates (Arabic-first presets with automatic score ratios)
 interface FeedbackTemplate {
   emoji: string;
   title: string;
   text: string;
-  ratio: number; // 1 = 100%, 0.75 = 75%, 0.5 = 50%, 0.25 = 25%, 0 = 0%
+  ratio: number;
 }
 
 const ARABIC_FEEDBACK_TEMPLATES: FeedbackTemplate[] = [
-  {
-    emoji: '🌟',
-    title: 'ممتاز',
-    text: 'عمل ممتاز، استمر بنفس المستوى.',
-    ratio: 1.0, // 100%
-  },
-  {
-    emoji: '👍',
-    title: 'جيد',
-    text: 'إجابة جيدة، تحتاج بعض التحسينات البسيطة.',
-    ratio: 0.75, // 75%
-  },
-  {
-    emoji: '🧠',
-    title: 'خطأ في المنطق',
-    text: 'يوجد خطأ في منطق الحل، حاول إعادة التفكير في الخوارزمية.',
-    ratio: 0.50, // 50%
-  },
-  {
-    emoji: '❌',
-    title: 'مخرجات غير صحيحة',
-    text: 'الناتج لا يطابق المطلوب.',
-    ratio: 0.25, // 25%
-  },
-  {
-    emoji: '⚠️',
-    title: 'خطأ أثناء التشغيل',
-    text: 'الكود يتوقف أثناء التنفيذ.',
-    ratio: 0, // 0%
-  },
-  {
-    emoji: '🚫',
-    title: 'خطأ نحوي',
-    text: 'يوجد خطأ في كتابة الكود.',
-    ratio: 0.25, // 25%
-  },
-  {
-    emoji: '📋',
-    title: 'لم يحقق جميع المتطلبات',
-    text: 'لم يتم تنفيذ جميع متطلبات السؤال.',
-    ratio: 0.50, // 50%
-  },
+  { emoji: '🌟', title: 'ممتاز', text: 'عمل ممتاز، استمر بنفس المستوى.', ratio: 1.0 },
+  { emoji: '👍', title: 'جيد', text: 'إجابة جيدة، تحتاج بعض التحسينات البسيطة.', ratio: 0.75 },
+  { emoji: '🧠', title: 'يحتاج تحسين', text: 'يوجد خطأ في منطق الحل، حاول إعادة التفكير في الخوارزمية.', ratio: 0.50 },
+  { emoji: '❌', title: 'الناتج غير صحيح', text: 'الناتج لا يطابق المطلوب.', ratio: 0.25 },
+  { emoji: '⚠️', title: 'خطأ أثناء التشغيل', text: 'الكود يتوقف أثناء التنفيذ.', ratio: 0 },
+  { emoji: '🚫', title: 'خطأ نحوي', text: 'يوجد خطأ في كتابة الكود.', ratio: 0.25 },
+  { emoji: '📋', title: 'لم يحقق جميع المتطلبات', text: 'لم يتم تنفيذ جميع متطلبات السؤال.', ratio: 0.50 },
 ];
 
 export const TwoPanelGradingWorkspace: React.FC = () => {
@@ -129,6 +94,17 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Screen Width Detection
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Active student index
   const [activeStudentIdx, setActiveStudentIdx] = useState<number>(0);
 
@@ -136,12 +112,16 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
   const [gradeInput, setGradeInput] = useState<number>(0);
   const [teacherFeedback, setTeacherFeedback] = useState<string>('');
   const [saving, setSaving] = useState(false);
-  const [showSaveSuccessBanner, setShowSaveSuccessBanner] = useState(false);
+  const [reviewLaterSet, setReviewLaterSet] = useState<{ [subId: string]: boolean }>({});
+
+  // Auto-save timer ref
+  const autoSaveTimerRef = useRef<any>(null);
 
   // Ref for auto-focus on grade input
   const gradeInputRef = useRef<HTMLInputElement>(null);
+  const mobileGradeInputRef = useRef<HTMLInputElement>(null);
 
-  // Left Panel Task Collapse State
+  // Left Panel Task Collapse State (Desktop)
   const [isTaskCollapsed, setIsTaskCollapsed] = useState(false);
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(42);
   const isResizing = useRef(false);
@@ -206,13 +186,15 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
       const initialGrade = subItem.grade !== null && subItem.grade !== undefined ? subItem.grade : defaultMaxGrade;
       setGradeInput(initialGrade);
       setTeacherFeedback(subItem.teacherFeedback || '');
-      setShowSaveSuccessBanner(false);
 
       // Auto-focus grade input
       setTimeout(() => {
-        if (gradeInputRef.current) {
+        if (window.innerWidth >= 768 && gradeInputRef.current) {
           gradeInputRef.current.focus();
           gradeInputRef.current.select();
+        } else if (window.innerWidth < 768 && mobileGradeInputRef.current) {
+          mobileGradeInputRef.current.focus();
+          mobileGradeInputRef.current.select();
         }
       }, 100);
     }
@@ -228,15 +210,69 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
   const hasPreviousStudent = activeStudentIdx > 0;
   const hasNextStudent = data ? activeStudentIdx < data.submissions.length - 1 : false;
 
+  // Auto Save Feedback Drafts every 2 seconds while typing
+  useEffect(() => {
+    if (!currentStudent || !currentStudent.submissionId) return;
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      // Save feedback draft silently locally
+      if (teacherFeedback !== (currentStudent.teacherFeedback || '')) {
+        const updatedSubs = [...(data?.submissions || [])];
+        if (updatedSubs[activeStudentIdx]) {
+          updatedSubs[activeStudentIdx].teacherFeedback = teacherFeedback;
+          setData(prev => (prev ? { ...prev, submissions: updatedSubs } : prev));
+        }
+      }
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [teacherFeedback, activeStudentIdx]);
+
   // Keyboard Shortcuts Handler:
+  // 1 = 0%, 2 = 25%, 3 = 50%, 4 = 75%, 5 = 100%
   // Ctrl + S -> Save Grade
   // Ctrl + RightArrow -> Next Student
   // Ctrl + LeftArrow -> Previous Student
   useEffect(() => {
     const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      // Avoid triggering preset 1-5 shortcuts when user is typing inside text input/textarea
+      const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      const isEditingText = targetTag === 'input' || targetTag === 'textarea';
+
+      if (!isEditingText && data?.maxGrade !== undefined) {
+        const max = data.maxGrade;
+        if (e.key === '1') {
+          e.preventDefault();
+          handleApplyGradePreset(0);
+          return;
+        } else if (e.key === '2') {
+          e.preventDefault();
+          handleApplyGradePreset(Math.round(max * 0.25 * 10) / 10);
+          return;
+        } else if (e.key === '3') {
+          e.preventDefault();
+          handleApplyGradePreset(Math.round(max * 0.5 * 10) / 10);
+          return;
+        } else if (e.key === '4') {
+          e.preventDefault();
+          handleApplyGradePreset(Math.round(max * 0.75 * 10) / 10);
+          return;
+        } else if (e.key === '5') {
+          e.preventDefault();
+          handleApplyGradePreset(max);
+          return;
+        }
+      }
+
       if (e.ctrlKey && (e.key === 's' || e.key === 'S' || e.key === 'س')) {
         e.preventDefault();
-        handleSaveGrade();
+        handleSaveGradeOnly();
       } else if (e.ctrlKey && e.key === 'ArrowRight') {
         e.preventDefault();
         if (hasNextStudent) {
@@ -278,11 +314,11 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     if (!data?.maxGrade) return [];
     const max = data.maxGrade;
     return [
-      { label: 'صفر', value: 0, percentage: '0%' },
-      { label: '25%', value: Math.round(max * 0.25 * 10) / 10, percentage: '25%' },
-      { label: '50%', value: Math.round(max * 0.5 * 10) / 10, percentage: '50%' },
-      { label: '75%', value: Math.round(max * 0.75 * 10) / 10, percentage: '75%' },
-      { label: 'درجة كاملة', value: max, percentage: '100%' },
+      { label: '0%', value: 0, keyboard: '1' },
+      { label: '25%', value: Math.round(max * 0.25 * 10) / 10, keyboard: '2' },
+      { label: '50%', value: Math.round(max * 0.5 * 10) / 10, keyboard: '3' },
+      { label: '75%', value: Math.round(max * 0.75 * 10) / 10, keyboard: '4' },
+      { label: '100%', value: max, keyboard: '5' },
     ];
   }, [data?.maxGrade]);
 
@@ -290,9 +326,6 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
   const handleApplyGradePreset = (val: number) => {
     setGradeInput(val);
     toast.success(`تم تحديد الدرجة: ${val}`);
-    if (gradeInputRef.current) {
-      gradeInputRef.current.focus();
-    }
   };
 
   // Quick Feedback Preset click with Smart Grade Suggestion
@@ -307,16 +340,29 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     }
   };
 
-  // Save Grade Handler (Direct saving without confirmation modal)
-  const handleSaveGrade = async () => {
+  // Toggle Review Later (⭐)
+  const handleToggleReviewLater = () => {
+    if (!currentStudent?.studentId) return;
+    const key = currentStudent.submissionId || currentStudent.studentId;
+    const isMarked = !!reviewLaterSet[key];
+    setReviewLaterSet(prev => ({ ...prev, [key]: !isMarked }));
+    if (!isMarked) {
+      toast.success('تم تحديد هذا التسليم للمراجعة لاحقاً ⭐');
+    } else {
+      toast.info('تم إزالة علامة المراجعة لاحقاً');
+    }
+  };
+
+  // Core Save Action Function
+  const executeSaveSubmission = async (): Promise<boolean> => {
     if (!currentStudent || !currentStudent.submissionId || !data) {
       toast.error('لا يوجد تسليم صالح للتصحيح.');
-      return;
+      return false;
     }
 
     if (gradeInput < 0 || gradeInput > data.maxGrade) {
       toast.error(`الدرجة يجب أن تكون بين 0 و ${data.maxGrade}.`);
-      return;
+      return false;
     }
 
     setSaving(true);
@@ -350,11 +396,25 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
         status: 'Graded',
       };
       setData({ ...data, submissions: updatedSubs });
-      setShowSaveSuccessBanner(true);
+      return true;
     } catch (err: any) {
       toast.error(err.message || 'حدث خطأ أثناء حفظ الدرجة');
+      return false;
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Save Only
+  const handleSaveGradeOnly = async () => {
+    await executeSaveSubmission();
+  };
+
+  // Save & Next (💾 حفظ والانتقال للطالب التالي)
+  const handleSaveAndNext = async () => {
+    const success = await executeSaveSubmission();
+    if (success && hasNextStudent) {
+      handleSelectStudent(activeStudentIdx + 1);
     }
   };
 
@@ -384,21 +444,21 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
   const renderStatusBadge = (statusStr: string) => {
     const s = statusStr.toLowerCase();
     if (s.includes('graded')) {
-      return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">🟢 مكتمل</span>;
+      return <span className="px-2.5 py-0.5 rounded-xl text-[11px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">🟢 مكتمل</span>;
     }
     if (s.includes('runtime')) {
-      return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-500/15 border border-rose-500/30 text-rose-400">🔴 خطأ أثناء التشغيل</span>;
+      return <span className="px-2.5 py-0.5 rounded-xl text-[11px] font-bold bg-rose-500/15 border border-rose-500/30 text-rose-400">🔴 خطأ أثناء التشغيل</span>;
     }
     if (s.includes('compile') || s.includes('syntax')) {
-      return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-[#F59E0B]/15 border border-[#F59E0B]/30 text-[#F59E0B]">🟡 خطأ في الترجمة</span>;
+      return <span className="px-2.5 py-0.5 rounded-xl text-[11px] font-bold bg-[#F59E0B]/15 border border-[#F59E0B]/30 text-[#F59E0B]">🟡 خطأ في الترجمة</span>;
     }
     if (s.includes('wrong')) {
-      return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-red-500/15 border border-red-500/30 text-red-400">❌ إجابة غير صحيحة</span>;
+      return <span className="px-2.5 py-0.5 rounded-xl text-[11px] font-bold bg-red-500/15 border border-red-500/30 text-red-400">❌ إجابة غير صحيحة</span>;
     }
     if (s.includes('pending') || s.includes('manual')) {
-      return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500/15 border border-amber-500/30 text-amber-400">🟡 قيد المراجعة</span>;
+      return <span className="px-2.5 py-0.5 rounded-xl text-[11px] font-bold bg-amber-500/15 border border-amber-500/30 text-amber-400">🟡 قيد المراجعة</span>;
     }
-    return <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-zinc-500/15 border border-zinc-500/30 text-zinc-300">⚪ {statusStr}</span>;
+    return <span className="px-2.5 py-0.5 rounded-xl text-[11px] font-bold bg-zinc-500/15 border border-zinc-500/30 text-zinc-300">⚪ {statusStr}</span>;
   };
 
   // Parse public test cases & attachments
@@ -420,22 +480,21 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     }
   }, [data?.attachmentsJson]);
 
-  // Overall Task Progress & Metrics
+  // Streamlined Progress Summary (Reviewed, Remaining, Average Grade)
   const progressStats = React.useMemo(() => {
-    if (!data || !data.submissions) return { total: 0, graded: 0, pending: 0, percent: 0, avgGrade: 0 };
+    if (!data || !data.submissions) return { total: 0, graded: 0, pending: 0, avgGrade: 0 };
     const total = data.submissions.length;
     const graded = data.submissions.filter(s => s.status === 'Graded').length;
     const pending = total - graded;
-    const percent = total > 0 ? Math.round((graded / total) * 100) : 0;
-    
+
     const gradedList = data.submissions.filter(s => s.grade !== null && s.grade !== undefined);
     const sumGrade = gradedList.reduce((acc, curr) => acc + (curr.grade || 0), 0);
     const avgGrade = gradedList.length > 0 ? Math.round((sumGrade / gradedList.length) * 10) / 10 : 0;
 
-    return { total, graded, pending, percent, avgGrade };
+    return { total, graded, pending, avgGrade };
   }, [data?.submissions]);
 
-  // Resizable panel divider
+  // Resizable panel divider (Desktop)
   const startResizing = () => {
     isResizing.current = true;
     const handleMouseMove = (mouseMoveEvent: MouseEvent) => {
@@ -458,7 +517,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#0B0F19] flex flex-col items-center justify-center text-zinc-400 p-6 dir-rtl" dir="rtl">
         <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
-        <p className="text-sm font-medium">جاري تحميل مساحة التصحيح السريعة...</p>
+        <p className="text-sm font-medium">جاري تحميل مساحة التصحيح...</p>
       </div>
     );
   }
@@ -468,7 +527,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
       <div className="p-8 max-w-4xl mx-auto space-y-4 dir-rtl" dir="rtl">
         <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-center">
           <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
-          <h2 className="text-lg font-bold">حدث خطأ أثناء تحميل بيانات المهمة</h2>
+          <h2 className="text-lg font-bold">حدث خطأ أثناء تحميل البيانات</h2>
           <p className="text-xs mt-1">{error || 'لم يتم العثور على المهمة'}</p>
           <button
             onClick={() => navigate(-1)}
@@ -481,13 +540,16 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     );
   }
 
+  const currentSubKey = currentStudent ? (currentStudent.submissionId || currentStudent.studentId) : '';
+  const isMarkedLater = !!reviewLaterSet[currentSubKey];
+
   return (
-    <div className="min-h-screen bg-[#0B0F19] text-zinc-100 flex flex-col font-sans overflow-hidden dir-rtl" dir="rtl">
+    <div className="min-h-screen bg-[#0B0F19] text-zinc-100 flex flex-col font-sans overflow-x-hidden dir-rtl" dir="rtl">
       
-      {/* 1. PROGRESS & NAVIGATION HEADER (Arabic-First) */}
-      <header className="sticky top-0 z-40 bg-[#111827]/95 backdrop-blur-md border-b border-[#1F2937] px-4 py-3 shadow-xl flex flex-wrap items-center justify-between gap-4">
+      {/* HEADER WITH PROGRESS SUMMARY & NAVIGATION */}
+      <header className="sticky top-0 z-40 bg-[#111827]/95 backdrop-blur-md border-b border-[#1F2937] px-4 py-2.5 shadow-xl flex flex-wrap items-center justify-between gap-3">
         
-        {/* Left/Right RTL: Task Title & Navigation Back */}
+        {/* Task Title & Nav Back */}
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate(-1)}
@@ -513,48 +575,51 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Progress Tracker (المهمة رقم X / N) */}
-        <div className="flex items-center gap-4 bg-[#161E2E] px-4 py-2 rounded-2xl border border-[#1F2937] shrink-0 text-xs">
-          <div>
-            <div className="flex items-center justify-between gap-3 text-zinc-300 font-bold mb-1">
-              <span>التسليم: <strong className="text-blue-400 font-mono">{activeStudentIdx + 1} / {progressStats.total}</strong></span>
-              <span className="text-[10px] text-emerald-400 font-mono">{progressStats.percent}% مكتمل</span>
-            </div>
-            <div className="w-36 h-2 bg-[#0B0F19] rounded-full overflow-hidden border border-[#1F2937]">
-              <div
-                className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 rounded-full transition-all duration-300"
-                style={{ width: `${progressStats.percent}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-3 border-r border-[#1F2937] pr-3 text-[11px]">
+        {/* Progress Summary Only: Reviewed, Remaining, Average Grade */}
+        <div className="flex items-center gap-4 bg-[#161E2E] px-3.5 py-1.5 rounded-2xl border border-[#1F2937] shrink-0 text-xs">
+          <div className="flex items-center gap-3 text-[11px]">
             <div>
               <span className="text-[10px] text-zinc-500 block">تم التصحيح</span>
               <span className="font-bold text-emerald-400 font-mono">{progressStats.graded}</span>
             </div>
+            <div className="w-px h-6 bg-[#1F2937]" />
             <div>
               <span className="text-[10px] text-zinc-500 block">المتبقي</span>
               <span className="font-bold text-amber-400 font-mono">{progressStats.pending}</span>
             </div>
+            <div className="w-px h-6 bg-[#1F2937]" />
             <div>
-              <span className="text-[10px] text-zinc-500 block">المتوسط</span>
+              <span className="text-[10px] text-zinc-500 block">متوسط الدرجات</span>
               <span className="font-bold text-purple-300 font-mono">{progressStats.avgGrade} / {data.maxGrade}</span>
             </div>
           </div>
         </div>
 
-        {/* Action Controls: View Original Task Drawer & Next/Prev */}
+        {/* Action Controls: View Original Task Drawer, Star, Next/Prev */}
         <div className="flex items-center gap-2 shrink-0">
           
+          {/* Review Later ⭐ Button */}
+          <button
+            onClick={handleToggleReviewLater}
+            className={`p-2 rounded-xl border text-xs flex items-center gap-1 transition-all ${
+              isMarkedLater
+                ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-md'
+                : 'bg-[#1F2937] border-[#374151] text-zinc-400 hover:text-white'
+            }`}
+            title={isMarkedLater ? 'تم التحديد للمراجعة لاحقاً' : 'مراجعة لاحقاً ⭐'}
+          >
+            <Star className={`w-4 h-4 ${isMarkedLater ? 'fill-amber-400 text-amber-400' : ''}`} />
+            <span className="hidden md:inline text-xs">{isMarkedLater ? 'مراقب' : 'مراجعة لاحقاً'}</span>
+          </button>
+
           {/* 📄 Open Original Task Button */}
           <button
             onClick={handleOpenDrawer}
-            className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-bold text-xs rounded-xl flex items-center gap-2 transition-all shadow-md"
+            className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-md"
             title="عرض نص السؤال المكتمل"
           >
             <FileCode className="w-4 h-4 text-indigo-400" />
-            <span>عرض نص السؤال</span>
+            <span className="hidden sm:inline">عرض نص السؤال</span>
           </button>
 
           {/* Submission Navigation Buttons */}
@@ -569,7 +634,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
               <span className="hidden md:inline">السابق</span>
             </button>
 
-            <span className="text-[11px] text-zinc-400 font-mono px-2">
+            <span className="text-[11px] text-zinc-400 font-mono px-1.5">
               {activeStudentIdx + 1} / {data.submissions.length}
             </span>
 
@@ -588,318 +653,207 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
 
       </header>
 
-      {/* 2. MAIN WORKSPACE PANELS CONTAINER */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-
-        {/* ========================== LEFT PANEL (Task Information) ========================== */}
-        <div
-          style={{ width: window.innerWidth >= 768 ? `${leftPanelWidth}%` : '100%' }}
-          className="flex-1 md:flex-initial flex flex-col border-b md:border-b-0 md:border-l border-[#1F2937] bg-[#111827]/70 overflow-hidden"
-        >
-          {/* Left Panel Header */}
-          <div className="px-4 py-2.5 border-b border-[#1F2937] bg-[#1A2234] flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2 text-xs font-bold text-blue-400">
-              <BookOpen className="w-4 h-4" />
-              تفاصيل المهمة والسؤال
-            </div>
-            <button
-              onClick={() => setIsTaskCollapsed(!isTaskCollapsed)}
-              className="text-[11px] text-zinc-400 hover:text-white px-2 py-1 bg-[#111827] rounded-lg border border-[#374151]"
-            >
-              {isTaskCollapsed ? 'توسيع' : 'طي'}
-            </button>
-          </div>
-
-          {/* Left Panel Content */}
-          {!isTaskCollapsed && (
-            <div className="flex-1 overflow-y-auto p-4 space-y-5">
-              
-              {/* Task Details Header Metadata */}
-              <div className="bg-[#161E2E] border border-[#1F2937] p-4 rounded-2xl space-y-2">
-                <h2 className="text-base font-bold text-white tracking-tight">{data.taskTitle}</h2>
-                <div className="flex flex-wrap gap-2 text-xs">
-                  <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded-lg font-semibold">
-                    الدرجة القصوى: {data.maxGrade} نقطة
-                  </span>
-                  <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2.5 py-0.5 rounded-lg font-semibold">
-                    المادة: {data.courseName}
-                  </span>
-                </div>
-              </div>
-
-              {/* Formatted Markdown Description */}
-              <div className="space-y-2">
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">الوصف والتعليمات</h3>
-                <div className="bg-[#161E2E] border border-[#1F2937] p-4 rounded-2xl text-zinc-300 text-xs">
-                  <RichTextViewer content={data.description || 'لا يوجد وصف مدخل لهذه المهمة.'} />
-                </div>
-              </div>
-
-              {/* Example Input / Output */}
-              {(data.exampleInput || data.exampleOutput) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {data.exampleInput && (
-                    <div className="space-y-1">
-                      <h4 className="text-xs font-bold text-zinc-400">مثال الإدخال</h4>
-                      <pre className="bg-[#0B0F19] border border-[#1F2937] p-3 rounded-xl font-mono text-xs text-blue-300 overflow-x-auto">
-                        {data.exampleInput}
-                      </pre>
-                    </div>
-                  )}
-                  {data.exampleOutput && (
-                    <div className="space-y-1">
-                      <h4 className="text-xs font-bold text-zinc-400">مثال المخرجات</h4>
-                      <pre className="bg-[#0B0F19] border border-[#1F2937] p-3 rounded-xl font-mono text-xs text-emerald-300 overflow-x-auto">
-                        {data.exampleOutput}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Downloadable Attachments */}
-              {attachments.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                    <Download className="w-3.5 h-3.5 text-blue-400" />
-                    المرفقات ({attachments.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {attachments.map((att) => (
-                      <a
-                        key={att.id}
-                        href={att.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-between p-3 bg-[#161E2E] border border-[#1F2937] hover:border-blue-500/50 rounded-xl text-xs text-zinc-200 transition-all group"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <FileText className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
-                          <span className="font-semibold">{att.fileName}</span>
-                          <span className="text-[10px] text-zinc-500 font-mono">({Math.round(att.fileSize / 1024)} KB)</span>
-                        </div>
-                        <Download className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white" />
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Public Test Cases */}
-              {publicTestCases.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                    <Eye className="w-3.5 h-3.5 text-emerald-400" />
-                    حالات الاختبار العامة ({publicTestCases.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {publicTestCases.map((tc, i) => (
-                      <div key={i} className="bg-[#161E2E] border border-[#1F2937] p-3 rounded-xl space-y-2 text-xs">
-                        <div className="text-amber-400 font-bold text-[11px]">حالة اختبار العامة #{i + 1}</div>
-                        <div className="grid grid-cols-2 gap-2 font-mono">
-                          <div>
-                            <span className="text-[10px] text-zinc-500 block">الإدخال:</span>
-                            <div className="bg-[#0B0F19] p-2 rounded-lg text-zinc-300">{tc.input || '(فارغ)'}</div>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-zinc-500 block">المخرجات المتوقعة:</span>
-                            <div className="bg-[#0B0F19] p-2 rounded-lg text-emerald-400">{tc.expectedOutput || '(فارغ)'}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-            </div>
-          )}
-        </div>
-
-        {/* Resizable Divider (Desktop) */}
-        <div
-          onMouseDown={startResizing}
-          className="hidden md:block w-1.5 hover:w-2 bg-[#1F2937] hover:bg-blue-500 cursor-col-resize transition-all z-20 shrink-0"
-          title="سحب لضبط سعة الشاشة"
-        />
-
-        {/* ========================== RIGHT PANEL (Read-Only Code & Grading Controls) ========================== */}
-        <div className="flex-1 flex flex-col bg-[#0B0F19] overflow-hidden">
+      {/* ================================================================================= */}
+      {/* BRANCH 1: MOBILE DEDICATED LAYOUT (< 768px Screens)                              */}
+      {/* ================================================================================= */}
+      {isMobile ? (
+        <div className="flex-1 flex flex-col p-3 space-y-4 overflow-y-auto pb-24">
           
-          {/* Student Switcher Pills Header */}
-          <div className="bg-[#161E2E] border-b border-[#1F2937] px-4 py-2 flex items-center justify-between overflow-x-auto shrink-0 gap-2">
-            <div className="flex items-center gap-2 overflow-x-auto py-1 max-w-full">
-              {data.submissions.map((sub, idx) => {
-                const isActive = idx === activeStudentIdx;
-                const isGraded = sub.status === 'Graded';
-                const hasSub = sub.submissionId !== null;
-
-                return (
-                  <button
-                    key={sub.studentId}
-                    onClick={() => handleSelectStudent(idx)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 flex items-center gap-2 transition-all ${
-                      isActive
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 border border-blue-400/40'
-                        : 'bg-[#111827] text-zinc-400 hover:text-white border border-[#1F2937]'
-                    }`}
-                  >
-                    <span>{sub.studentName}</span>
-                    {isGraded ? (
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    ) : hasSub ? (
-                      <span className="w-2 h-2 rounded-full bg-amber-400" />
-                    ) : (
-                      <span className="w-2 h-2 rounded-full bg-zinc-600" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Active Student Info Bar */}
-          {currentStudent && (
-            <div className="bg-[#111827] border-b border-[#1F2937] px-5 py-3 flex items-center justify-between gap-4 shrink-0">
+          {/* 1. MOBILE CARD: Student Info, Task Info, Status, Current Grade */}
+          <div className="bg-[#161E2E] border border-[#1F2937] rounded-2xl p-4 space-y-3 shadow-lg">
+            
+            {/* Student Info & Status */}
+            <div className="flex items-center justify-between gap-2 border-b border-[#1F2937] pb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0 shadow-lg">
-                  {currentStudent.studentAvatarUrl ? (
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0 shadow-md">
+                  {currentStudent?.studentAvatarUrl ? (
                     <img src={currentStudent.studentAvatarUrl} alt={currentStudent.studentName} className="w-full h-full object-cover" />
                   ) : (
-                    currentStudent.studentName.substring(0, 2).toUpperCase()
+                    (currentStudent?.studentName || 'ST').substring(0, 2).toUpperCase()
                   )}
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-white text-xs flex items-center gap-2">
-                    {currentStudent.studentName}
-                    {renderStatusBadge(currentStudent.status)}
+                  <h3 className="font-extrabold text-white text-sm">
+                    {currentStudent?.studentName || '-'}
                   </h3>
-                  <p className="text-[11px] text-zinc-400 font-mono">الرقم الجامعي / الهوية: {currentStudent.studentRegisterId}</p>
+                  <p className="text-xs text-zinc-400 font-mono">الرقم: {currentStudent?.studentRegisterId || '-'}</p>
                 </div>
               </div>
 
-              <div className="text-xs text-zinc-400 font-mono">
-                المحاولة #{currentStudent.attempts || 1}
+              <div>
+                {currentStudent ? renderStatusBadge(currentStudent.status) : null}
               </div>
             </div>
-          )}
 
-          {/* 3. CODE EDITOR (Read-Only) */}
-          <div className="flex-1 flex flex-col bg-[#111827] overflow-hidden relative">
-            <div className="bg-[#1A2234] border-b border-[#1F2937] px-4 py-2 flex items-center justify-between shrink-0 text-xs font-bold text-white">
-              <div className="flex items-center gap-2">
+            {/* Task Info & Grade Meta */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-[10px] text-zinc-500 uppercase font-bold block">المهمة</span>
+                <span className="font-bold text-zinc-200 truncate block">{data.taskTitle}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-zinc-500 uppercase font-bold block">الدرجة الحالية</span>
+                <span className="font-extrabold text-amber-400 text-sm block">
+                  {currentStudent?.grade !== null && currentStudent?.grade !== undefined ? currentStudent.grade : gradeInput} / {data.maxGrade}
+                </span>
+              </div>
+            </div>
+
+            {/* Student Switcher Horizontal Scroll Pills */}
+            <div className="pt-2 border-t border-[#1F2937]/80">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+                {data.submissions.map((sub, idx) => {
+                  const isActive = idx === activeStudentIdx;
+                  const isGraded = sub.status === 'Graded';
+                  const hasSub = sub.submissionId !== null;
+
+                  return (
+                    <button
+                      key={sub.studentId}
+                      onClick={() => handleSelectStudent(idx)}
+                      className={`px-3 py-1 rounded-xl text-xs font-semibold shrink-0 flex items-center gap-1.5 transition-all ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-md border border-blue-400/40'
+                          : 'bg-[#111827] text-zinc-400 hover:text-white border border-[#1F2937]'
+                      }`}
+                    >
+                      <span>{sub.studentName}</span>
+                      {isGraded ? (
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      ) : hasSub ? (
+                        <span className="w-2 h-2 rounded-full bg-amber-400" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-zinc-600" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+          </div>
+
+          {/* 2. MOBILE CODE VIEWER (Dedicated 65vh Height, Full Width, Responsive Monaco Editor) */}
+          <div className="bg-[#111827] border border-[#1F2937] rounded-2xl overflow-hidden shadow-xl flex flex-col" style={{ height: '65vh' }}>
+            <div className="bg-[#1A2234] border-b border-[#1F2937] px-4 py-2.5 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2 text-xs font-bold text-white">
                 <Code className="w-4 h-4 text-blue-400" />
-                الكود البرمجي المقدم من الطالب (للقراءة فقط)
+                <span>الكود البرمجي المقدم ({data.language})</span>
               </div>
-              <div className="text-[11px] text-zinc-400 font-mono">
-                {data.language}
-              </div>
+              <span className="text-[10px] text-zinc-400 font-mono bg-[#0B0F19] px-2 py-0.5 rounded-md border border-[#374151]">
+                Read-Only
+              </span>
             </div>
 
-            {/* Monaco Editor Container */}
-            <div className="flex-1 relative overflow-hidden">
+            <div className="flex-1 relative overflow-hidden w-full">
               {currentStudent?.submittedCode ? (
                 <Editor
                   height="100%"
+                  width="100%"
                   language={data.language.toLowerCase() === 'c++' ? 'cpp' : data.language.toLowerCase()}
                   value={currentStudent.submittedCode}
                   theme="vs-dark"
                   options={{
                     readOnly: true,
                     minimap: { enabled: false },
-                    fontSize: 14,
+                    fontSize: 13,
                     lineNumbers: 'on',
                     scrollBeyondLastLine: false,
                     automaticLayout: true,
                     wordWrap: 'on',
+                    folding: false,
+                    lineDecorationsWidth: 0,
+                    lineNumbersMinChars: 3,
                   }}
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-xs p-6">
                   <AlertCircle className="w-8 h-8 mb-2 text-zinc-600" />
-                  <p>لم يقم الطالب برفع أي كود برمجى لهذا التسليم.</p>
+                  <p>لم يقم الطالب برفع كود برمجي.</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* 4. CONSOLE OUTPUT BOX (Only Standard Output shown cleanly) */}
-          {currentStudent && currentStudent.consoleOutput && (
-            <div className="h-28 bg-[#0D111A] border-t border-[#1F2937] flex flex-col shrink-0">
-              <div className="bg-[#161E2E] px-4 py-1.5 border-b border-[#1F2937] text-xs font-bold text-blue-400 flex items-center gap-2">
+          {/* Standard Console Output Box (if present) */}
+          {currentStudent?.consoleOutput && (
+            <div className="bg-[#0D111A] border border-[#1F2937] rounded-2xl p-3 space-y-1 font-mono text-xs">
+              <div className="text-blue-400 font-bold flex items-center gap-1.5 text-xs mb-1">
                 <Terminal className="w-3.5 h-3.5" />
-                <span>مخرجات التنفيذ (Standard Output)</span>
+                <span>مخرجات التنفيذ Standard Output</span>
               </div>
-              <div className="flex-1 p-3 overflow-y-auto font-mono text-xs text-blue-300 leading-relaxed whitespace-pre-wrap">
+              <pre className="text-blue-300 leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">
                 {currentStudent.consoleOutput}
-              </div>
+              </pre>
             </div>
           )}
 
-          {/* 5. FAST ARABIC GRADING WORKSPACE & PRESETS PANEL */}
+          {/* 3. MOBILE GRADING & FEEDBACK FORM */}
           {currentStudent && currentStudent.submissionId && (
-            <div className="bg-[#161E2E] border-t border-[#1F2937] p-4 shrink-0 space-y-4 shadow-2xl">
+            <div className="bg-[#161E2E] border border-[#1F2937] rounded-2xl p-4 space-y-4 shadow-xl">
               
-              {/* Save Success Banner Notification (Save & Next) */}
-              {showSaveSuccessBanner && (
-                <div className="bg-emerald-950/60 border border-emerald-500/40 p-3 rounded-xl flex items-center justify-between text-xs animate-fadeIn">
-                  <div className="flex items-center gap-2 text-emerald-300 font-bold">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>✅ تم حفظ الدرجة بنجاح</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setShowSaveSuccessBanner(false)}
-                      className="px-3 py-1 bg-[#111827] hover:bg-zinc-800 text-zinc-300 font-semibold rounded-lg border border-[#374151]"
-                    >
-                      البقاء هنا
-                    </button>
-                    {hasNextStudent && (
-                      <button
-                        onClick={() => handleSelectStudent(activeStudentIdx + 1)}
-                        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-md flex items-center gap-1"
-                      >
-                        <span>الطالب التالي</span>
-                        <ChevronLeft className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
+              {/* Manual Grade Entry Box */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-zinc-300 block">الدرجة المستحقة:</label>
+                <div className="flex items-center gap-2 bg-[#0B0F19] border border-[#374151] rounded-xl px-3 py-2 focus-within:border-amber-400">
+                  <input
+                    ref={mobileGradeInputRef}
+                    type="number"
+                    min={0}
+                    max={data.maxGrade}
+                    step={0.5}
+                    value={gradeInput}
+                    onChange={(e) => setGradeInput(Number(e.target.value))}
+                    className="w-full bg-transparent font-extrabold text-amber-400 text-lg text-center focus:outline-none"
+                  />
+                  <span className="text-xs text-zinc-400 font-bold shrink-0">/ {data.maxGrade}</span>
                 </div>
-              )}
+              </div>
 
-              {/* 1. SMART GRADE PRESETS (درجة كاملة, 75%, 50%, 25%, صفر) */}
+              {/* Quick Grade Buttons (0%, 25%, 50%, 75%, 100%) */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-zinc-300 block">اختيار سريع للدرجة (Presets):</label>
-                <div className="grid grid-cols-5 gap-2">
+                <label className="text-xs font-bold text-zinc-300 block">أزرار الدرجة السريعة:</label>
+                <div className="grid grid-cols-5 gap-1.5">
                   {gradePresets.map((preset, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => handleApplyGradePreset(preset.value)}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-0.5 ${
+                      className={`py-2 px-1 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center ${
                         gradeInput === preset.value
-                          ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-lg shadow-amber-500/20 scale-105'
-                          : 'bg-[#111827] hover:bg-amber-500/10 text-zinc-200 border-[#374151] hover:border-amber-500/50'
+                          ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-md scale-105'
+                          : 'bg-[#111827] text-zinc-200 border-[#374151]'
                       }`}
                     >
-                      <span className="text-xs">{preset.label}</span>
+                      <span>{preset.label}</span>
                       <span className="text-[10px] opacity-75 font-mono">({preset.value})</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* 2. QUICK FEEDBACK TEMPLATES (Arabic Templates + Smart Grade Suggestion) */}
+              {/* Feedback Textbox */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-zinc-300 block">ملاحظات وتقييم الاستاذ:</label>
+                <textarea
+                  rows={3}
+                  value={teacherFeedback}
+                  onChange={(e) => setTeacherFeedback(e.target.value)}
+                  placeholder="اكتب أي ملاحظات إضافية للطالب هنا..."
+                  className="w-full bg-[#0B0F19] border border-[#1F2937] rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 resize-none"
+                />
+              </div>
+
+              {/* Quick Feedback Templates */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-zinc-300 block">قوالب التقييم السريع (Feedback Presets):</label>
+                <label className="text-xs font-bold text-zinc-300 block">قوالب التقييم السريع:</label>
                 <div className="flex flex-wrap gap-1.5">
                   {ARABIC_FEEDBACK_TEMPLATES.map((tmpl, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => handleSelectFeedbackTemplate(tmpl)}
-                      className="px-2.5 py-1.5 bg-[#111827] hover:bg-blue-600/30 hover:border-blue-500/50 border border-[#374151] rounded-xl text-xs text-zinc-200 font-semibold transition-all flex items-center gap-1.5 shadow-sm"
-                      title={`درجة مقترحة: ${Math.round((data.maxGrade || 0) * tmpl.ratio * 10) / 10}`}
+                      className="px-2.5 py-1.5 bg-[#111827] hover:bg-blue-600/30 border border-[#374151] rounded-xl text-xs text-zinc-200 font-semibold transition-all flex items-center gap-1"
                     >
                       <span>{tmpl.emoji}</span>
                       <span>{tmpl.title}</span>
@@ -908,65 +862,383 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
                 </div>
               </div>
 
-              {/* 3. MANUAL GRADE ENTRY & FEEDBACK TEXTBOX */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-                
-                {/* Grade Input (Auto-Focused) */}
-                <div className="md:col-span-1 space-y-1">
-                  <label className="text-xs font-bold text-zinc-300 block">الدرجة المستحقة:</label>
-                  <div className="flex items-center gap-2 bg-[#0B0F19] border border-[#374151] rounded-xl px-3 py-1.5 focus-within:border-amber-400">
-                    <input
-                      ref={gradeInputRef}
-                      type="number"
-                      min={0}
-                      max={data.maxGrade}
-                      step={0.5}
-                      value={gradeInput}
-                      onChange={(e) => setGradeInput(Number(e.target.value))}
-                      className="w-full bg-transparent font-extrabold text-amber-400 text-base text-center focus:outline-none"
-                    />
-                    <span className="text-xs text-zinc-400 font-bold shrink-0">/ {data.maxGrade}</span>
-                  </div>
-                </div>
+              {/* Mobile Save Action Buttons: Large Primary "Save & Next", Small Secondary "Save Only" */}
+              <div className="space-y-2 pt-2 border-t border-[#1F2937]">
+                <button
+                  onClick={handleSaveAndNext}
+                  disabled={saving}
+                  className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm rounded-xl shadow-lg border border-emerald-400/40 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                >
+                  {saving ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Save className="w-5 h-5" />
+                  )}
+                  <span>💾 حفظ والانتقال للطالب التالي</span>
+                </button>
 
-                {/* Feedback Textbox */}
-                <div className="md:col-span-3 space-y-1">
-                  <label className="text-xs font-bold text-zinc-300 block">ملاحظات وتقييم الاستاذ (التقييم):</label>
-                  <textarea
-                    rows={2}
-                    value={teacherFeedback}
-                    onChange={(e) => setTeacherFeedback(e.target.value)}
-                    placeholder="اكتب أي ملاحظات إضافية للطالب هنا..."
-                    className="w-full bg-[#0B0F19] border border-[#1F2937] rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 resize-none"
-                  />
-                </div>
-
+                <button
+                  onClick={handleSaveGradeOnly}
+                  disabled={saving}
+                  className="w-full py-2 bg-[#111827] hover:bg-zinc-800 text-zinc-300 font-bold text-xs rounded-xl border border-[#374151] transition-all disabled:opacity-50"
+                >
+                  حفظ فقط
+                </button>
               </div>
 
             </div>
           )}
 
         </div>
+      ) : (
 
-      </div>
+        /* ================================================================================= */
+        /* BRANCH 2: DESKTOP TWO-COLUMN WORKSPACE (>= 768px Screens)                         */
+        /* ================================================================================= */
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
 
-      {/* 6. STICKY FLOATING SAVE BUTTON (💾 حفظ الدرجة) */}
-      {currentStudent && currentStudent.submissionId && (
-        <div className="fixed bottom-5 left-6 z-50 animate-bounce-subtle">
-          <button
-            onClick={handleSaveGrade}
-            disabled={saving}
-            className="px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm rounded-2xl shadow-2xl shadow-emerald-950/80 border border-emerald-400/40 flex items-center gap-2.5 transition-all transform hover:scale-105 disabled:opacity-50"
-            title="حفظ الدرجة (Ctrl + S)"
+          {/* LEFT PANEL (Task Information) */}
+          <div
+            style={{ width: `${leftPanelWidth}%` }}
+            className="flex-1 md:flex-initial flex flex-col border-b md:border-b-0 md:border-l border-[#1F2937] bg-[#111827]/70 overflow-hidden"
           >
-            {saving ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Save className="w-5 h-5 text-emerald-200" />
+            <div className="px-4 py-2.5 border-b border-[#1F2937] bg-[#1A2234] flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-400">
+                <BookOpen className="w-4 h-4" />
+                تفاصيل المهمة والسؤال
+              </div>
+              <button
+                onClick={() => setIsTaskCollapsed(!isTaskCollapsed)}
+                className="text-[11px] text-zinc-400 hover:text-white px-2 py-1 bg-[#111827] rounded-lg border border-[#374151]"
+              >
+                {isTaskCollapsed ? 'توسيع' : 'طي'}
+              </button>
+            </div>
+
+            {!isTaskCollapsed && (
+              <div className="flex-1 overflow-y-auto p-4 space-y-5">
+                
+                <div className="bg-[#161E2E] border border-[#1F2937] p-4 rounded-2xl space-y-2">
+                  <h2 className="text-base font-bold text-white tracking-tight">{data.taskTitle}</h2>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded-lg font-semibold">
+                      الدرجة القصوى: {data.maxGrade} نقطة
+                    </span>
+                    <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2.5 py-0.5 rounded-lg font-semibold">
+                      المادة: {data.courseName}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">الوصف والتعليمات</h3>
+                  <div className="bg-[#161E2E] border border-[#1F2937] p-4 rounded-2xl text-zinc-300 text-xs">
+                    <RichTextViewer content={data.description || 'لا يوجد وصف مدخل لهذه المهمة.'} />
+                  </div>
+                </div>
+
+                {(data.exampleInput || data.exampleOutput) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {data.exampleInput && (
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-bold text-zinc-400">مثال الإدخال</h4>
+                        <pre className="bg-[#0B0F19] border border-[#1F2937] p-3 rounded-xl font-mono text-xs text-blue-300 overflow-x-auto">
+                          {data.exampleInput}
+                        </pre>
+                      </div>
+                    )}
+                    {data.exampleOutput && (
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-bold text-zinc-400">مثال المخرجات</h4>
+                        <pre className="bg-[#0B0F19] border border-[#1F2937] p-3 rounded-xl font-mono text-xs text-emerald-300 overflow-x-auto">
+                          {data.exampleOutput}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {attachments.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                      <Download className="w-3.5 h-3.5 text-blue-400" />
+                      المرفقات ({attachments.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {attachments.map((att) => (
+                        <a
+                          key={att.id}
+                          href={att.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between p-3 bg-[#161E2E] border border-[#1F2937] hover:border-blue-500/50 rounded-xl text-xs text-zinc-200 transition-all group"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <FileText className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
+                            <span className="font-semibold">{att.fileName}</span>
+                            <span className="text-[10px] text-zinc-500 font-mono">({Math.round(att.fileSize / 1024)} KB)</span>
+                          </div>
+                          <Download className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {publicTestCases.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                      <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                      حالات الاختبار العامة ({publicTestCases.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {publicTestCases.map((tc, i) => (
+                        <div key={i} className="bg-[#161E2E] border border-[#1F2937] p-3 rounded-xl space-y-2 text-xs">
+                          <div className="text-amber-400 font-bold text-[11px]">حالة اختبار العامة #{i + 1}</div>
+                          <div className="grid grid-cols-2 gap-2 font-mono">
+                            <div>
+                              <span className="text-[10px] text-zinc-500 block">الإدخال:</span>
+                              <div className="bg-[#0B0F19] p-2 rounded-lg text-zinc-300">{tc.input || '(فارغ)'}</div>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-zinc-500 block">المخرجات المتوقعة:</span>
+                              <div className="bg-[#0B0F19] p-2 rounded-lg text-emerald-400">{tc.expectedOutput || '(فارغ)'}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              </div>
             )}
-            <span>💾 حفظ الدرجة</span>
-            <span className="text-[10px] opacity-75 font-mono bg-black/20 px-1.5 py-0.5 rounded ml-1">Ctrl + S</span>
-          </button>
+          </div>
+
+          {/* Resizable Divider */}
+          <div
+            onMouseDown={startResizing}
+            className="hidden md:block w-1.5 hover:w-2 bg-[#1F2937] hover:bg-blue-500 cursor-col-resize transition-all z-20 shrink-0"
+            title="سحب لضبط سعة الشاشة"
+          />
+
+          {/* RIGHT PANEL (Code & Desktop Grading Form) */}
+          <div className="flex-1 flex flex-col bg-[#0B0F19] overflow-hidden">
+            
+            {/* Student Switcher Pills Header */}
+            <div className="bg-[#161E2E] border-b border-[#1F2937] px-4 py-2 flex items-center justify-between overflow-x-auto shrink-0 gap-2">
+              <div className="flex items-center gap-2 overflow-x-auto py-1 max-w-full">
+                {data.submissions.map((sub, idx) => {
+                  const isActive = idx === activeStudentIdx;
+                  const isGraded = sub.status === 'Graded';
+                  const hasSub = sub.submissionId !== null;
+
+                  return (
+                    <button
+                      key={sub.studentId}
+                      onClick={() => handleSelectStudent(idx)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 flex items-center gap-2 transition-all ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 border border-blue-400/40'
+                          : 'bg-[#111827] text-zinc-400 hover:text-white border border-[#1F2937]'
+                      }`}
+                    >
+                      <span>{sub.studentName}</span>
+                      {isGraded ? (
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      ) : hasSub ? (
+                        <span className="w-2 h-2 rounded-full bg-amber-400" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-zinc-600" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Active Student Info Bar */}
+            {currentStudent && (
+              <div className="bg-[#111827] border-b border-[#1F2937] px-5 py-3 flex items-center justify-between gap-4 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0 shadow-lg">
+                    {currentStudent.studentAvatarUrl ? (
+                      <img src={currentStudent.studentAvatarUrl} alt={currentStudent.studentName} className="w-full h-full object-cover" />
+                    ) : (
+                      currentStudent.studentName.substring(0, 2).toUpperCase()
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-white text-xs flex items-center gap-2">
+                      {currentStudent.studentName}
+                      {renderStatusBadge(currentStudent.status)}
+                    </h3>
+                    <p className="text-[11px] text-zinc-400 font-mono">الرقم الجامعي / الهوية: {currentStudent.studentRegisterId}</p>
+                  </div>
+                </div>
+
+                <div className="text-xs text-zinc-400 font-mono">
+                  المحاولة #{currentStudent.attempts || 1}
+                </div>
+              </div>
+            )}
+
+            {/* CODE EDITOR (Desktop Read-Only) */}
+            <div className="flex-1 flex flex-col bg-[#111827] overflow-hidden relative">
+              <div className="bg-[#1A2234] border-b border-[#1F2937] px-4 py-2 flex items-center justify-between shrink-0 text-xs font-bold text-white">
+                <div className="flex items-center gap-2">
+                  <Code className="w-4 h-4 text-blue-400" />
+                  الكود البرمجي المقدم من الطالب (للقراءة فقط)
+                </div>
+                <div className="text-[11px] text-zinc-400 font-mono">
+                  {data.language}
+                </div>
+              </div>
+
+              <div className="flex-1 relative overflow-hidden">
+                {currentStudent?.submittedCode ? (
+                  <Editor
+                    height="100%"
+                    language={data.language.toLowerCase() === 'c++' ? 'cpp' : data.language.toLowerCase()}
+                    value={currentStudent.submittedCode}
+                    theme="vs-dark"
+                    options={{
+                      readOnly: true,
+                      minimap: { enabled: false },
+                      fontSize: 14,
+                      lineNumbers: 'on',
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                      wordWrap: 'on',
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-xs p-6">
+                    <AlertCircle className="w-8 h-8 mb-2 text-zinc-600" />
+                    <p>لم يقم الطالب برفع أي كود برمجى لهذا التسليم.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* CONSOLE OUTPUT BOX */}
+            {currentStudent && currentStudent.consoleOutput && (
+              <div className="h-28 bg-[#0D111A] border-t border-[#1F2937] flex flex-col shrink-0">
+                <div className="bg-[#161E2E] px-4 py-1.5 border-b border-[#1F2937] text-xs font-bold text-blue-400 flex items-center gap-2">
+                  <Terminal className="w-3.5 h-3.5" />
+                  <span>مخرجات التنفيذ (Standard Output)</span>
+                </div>
+                <div className="flex-1 p-3 overflow-y-auto font-mono text-xs text-blue-300 leading-relaxed whitespace-pre-wrap">
+                  {currentStudent.consoleOutput}
+                </div>
+              </div>
+            )}
+
+            {/* DESKTOP GRADING WORKSPACE & PRESETS PANEL */}
+            {currentStudent && currentStudent.submissionId && (
+              <div className="bg-[#161E2E] border-t border-[#1F2937] p-4 shrink-0 space-y-4 shadow-2xl">
+                
+                {/* 1. SMART GRADE PRESETS */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-zinc-300 block">اختيار سريع للدرجة (Presets):</label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {gradePresets.map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleApplyGradePreset(preset.value)}
+                        className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-0.5 ${
+                          gradeInput === preset.value
+                            ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-lg shadow-amber-500/20 scale-105'
+                            : 'bg-[#111827] hover:bg-amber-500/10 text-zinc-200 border-[#374151] hover:border-amber-500/50'
+                        }`}
+                      >
+                        <span className="text-xs">{preset.label}</span>
+                        <span className="text-[10px] opacity-75 font-mono">({preset.value}) [{preset.keyboard}]</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. QUICK FEEDBACK TEMPLATES */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-zinc-300 block">قوالب التقييم السريع (Feedback Presets):</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ARABIC_FEEDBACK_TEMPLATES.map((tmpl, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSelectFeedbackTemplate(tmpl)}
+                        className="px-2.5 py-1.5 bg-[#111827] hover:bg-blue-600/30 hover:border-blue-500/50 border border-[#374151] rounded-xl text-xs text-zinc-200 font-semibold transition-all flex items-center gap-1.5 shadow-sm"
+                        title={`درجة مقترحة: ${Math.round((data.maxGrade || 0) * tmpl.ratio * 10) / 10}`}
+                      >
+                        <span>{tmpl.emoji}</span>
+                        <span>{tmpl.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. MANUAL GRADE ENTRY & FEEDBACK TEXTBOX */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                  
+                  {/* Grade Input */}
+                  <div className="md:col-span-1 space-y-1">
+                    <label className="text-xs font-bold text-zinc-300 block">الدرجة المستحقة:</label>
+                    <div className="flex items-center gap-2 bg-[#0B0F19] border border-[#374151] rounded-xl px-3 py-1.5 focus-within:border-amber-400">
+                      <input
+                        ref={gradeInputRef}
+                        type="number"
+                        min={0}
+                        max={data.maxGrade}
+                        step={0.5}
+                        value={gradeInput}
+                        onChange={(e) => setGradeInput(Number(e.target.value))}
+                        className="w-full bg-transparent font-extrabold text-amber-400 text-base text-center focus:outline-none"
+                      />
+                      <span className="text-xs text-zinc-400 font-bold shrink-0">/ {data.maxGrade}</span>
+                    </div>
+                  </div>
+
+                  {/* Feedback Textbox */}
+                  <div className="md:col-span-3 space-y-1">
+                    <label className="text-xs font-bold text-zinc-300 block">ملاحظات وتقييم الاستاذ (التقييم):</label>
+                    <textarea
+                      rows={2}
+                      value={teacherFeedback}
+                      onChange={(e) => setTeacherFeedback(e.target.value)}
+                      placeholder="اكتب أي ملاحظات إضافية للطالب هنا..."
+                      className="w-full bg-[#0B0F19] border border-[#1F2937] rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 resize-none"
+                    />
+                  </div>
+
+                </div>
+
+                {/* Save Buttons Row */}
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#1F2937]">
+                  <button
+                    onClick={handleSaveGradeOnly}
+                    disabled={saving}
+                    className="px-4 py-2.5 bg-[#111827] hover:bg-zinc-800 text-zinc-300 font-bold text-xs rounded-xl border border-[#374151] transition-all disabled:opacity-50"
+                  >
+                    حفظ فقط
+                  </button>
+
+                  <button
+                    onClick={handleSaveAndNext}
+                    disabled={saving}
+                    className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs rounded-xl shadow-lg border border-emerald-400/40 flex items-center gap-2 transition-all disabled:opacity-50"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    <span>💾 حفظ والانتقال للطالب التالي</span>
+                  </button>
+                </div>
+
+              </div>
+            )}
+
+          </div>
+
         </div>
       )}
 
