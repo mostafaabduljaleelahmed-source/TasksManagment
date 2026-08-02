@@ -25,6 +25,7 @@ const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.S
 const TeacherPendingReviews = lazy(() => import('./pages/TeacherPendingReviews').then(m => ({ default: m.TeacherPendingReviews })));
 const TeacherStudents = lazy(() => import('./pages/TeacherStudents').then(m => ({ default: m.TeacherStudents })));
 const AssignmentReview = lazy(() => import('./pages/AssignmentReview').then(m => ({ default: m.AssignmentReview })));
+const TwoPanelGradingWorkspace = lazy(() => import('./pages/TwoPanelGradingWorkspace').then(m => ({ default: m.TwoPanelGradingWorkspace })));
 const AssignmentsList = lazy(() => import('./pages/AssignmentsList').then(m => ({ default: m.AssignmentsList })));
 const Archive = lazy(() => import('./pages/Archive').then(m => ({ default: m.Archive })));
 const ActivityLogPage = lazy(() => import('./pages/ActivityLog').then(m => ({ default: m.ActivityLogPage })));
@@ -214,6 +215,16 @@ function App() {
                   <TeacherRoute>
                     <ProtectedRoute>
                       <AssignmentReview />
+                    </ProtectedRoute>
+                  </TeacherRoute>
+                }
+              />
+              <Route
+                path="/grading-workspace/:taskId"
+                element={
+                  <TeacherRoute>
+                    <ProtectedRoute>
+                      <TwoPanelGradingWorkspace />
                     </ProtectedRoute>
                   </TeacherRoute>
                 }

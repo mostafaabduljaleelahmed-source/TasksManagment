@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { StudentDetailsModal } from './StudentDetailsModal';
@@ -152,16 +152,25 @@ export const AssignmentReview: React.FC = () => {
           </p>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder={t('search')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="saas-input pl-9 w-48 sm:w-64"
-          />
+        {/* Search & Workspace Launch */}
+        <div className="flex items-center gap-3">
+          <Link
+            to={`/grading-workspace/${taskId}`}
+            className="saas-button-primary bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-xs"
+          >
+            <Code className="w-4 h-4" />
+            Open 2-Panel Grading Workspace
+          </Link>
+          <div className="relative">
+            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder={t('search')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="saas-input pl-9 w-48 sm:w-64"
+            />
+          </div>
         </div>
       </div>
 

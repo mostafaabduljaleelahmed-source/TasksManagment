@@ -417,8 +417,43 @@ public class DashboardController : ControllerBase
             .Take(pageSize)
             .ToList();
 
+        // Calculate hidden test case count safely without revealing test cases
+        int hiddenTestCaseCount = 0;
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(task.HiddenTestCasesJson))
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(task.HiddenTestCasesJson);
+                if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    hiddenTestCaseCount = doc.RootElement.GetArrayLength();
+                }
+            }
+        }
+        catch
+        {
+            hiddenTestCaseCount = 0;
+        }
+
         return Ok(new
         {
+            TaskId = task.Id,
+            TaskTitle = task.Title,
+            Description = task.Description,
+            ExampleInput = task.ExampleInput,
+            ExampleOutput = task.ExampleOutput,
+            PublicTestCasesJson = task.PublicTestCasesJson,
+            HiddenTestCaseCount = hiddenTestCaseCount,
+            Deadline = task.Deadline,
+            MaxGrade = task.MaxGrade,
+            Mode = task.Mode.ToString(),
+            GradingStrategy = task.GradingStrategy.ToString(),
+            EvaluationMode = task.EvaluationMode.ToString(),
+            Language = task.Language,
+            AttachmentsJson = task.AttachmentsJson,
+            SessionName = task.Session?.Title ?? "Session",
+            CourseName = task.Session?.Course?.Name ?? "Course",
+            CourseId = task.Session?.CourseId,
             Submissions = paginatedRows,
             TotalCount = totalCount,
             Page = page,
