@@ -4,7 +4,8 @@ import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Editor from '@monaco-editor/react';
 import {
-  AlertCircle, ArrowLeft, ArrowRight, Save, Loader2, Code, Zap, Sparkles
+  AlertCircle, ArrowLeft, ArrowRight, Save, Loader2, Code, Zap, Sparkles,
+  FileText, MessageSquare, History, BarChart3, RotateCcw
 } from 'lucide-react';
 
 interface PendingSubmissionQueueItem {
@@ -43,7 +44,7 @@ const ARABIC_FEEDBACK_TEMPLATES: FeedbackTemplate[] = [
   { emoji: '👍', title: 'جيد', text: 'إجابة جيدة، تحتاج بعض التحسينات البسيطة.', ratio: 0.75 },
   { emoji: '🧠', title: 'يحتاج تحسين', text: 'يوجد خطأ في منطق الحل، حاول إعادة التفكير في الخوارزمية.', ratio: 0.50 },
   { emoji: '❌', title: 'الناتج غير صحيح', text: 'الناتج لا يطابق المطلوب.', ratio: 0.25 },
-  { emoji: '⚠️', title: 'خطأ أثناء التشغيل', text: 'الكود يتوقف أثناء التنفيذ.', ratio: 0 },
+  { emoji: '⚠️', title: 'خطأ أثناء التنفيذ', text: 'الكود يتوقف أثناء التنفيذ.', ratio: 0 },
   { emoji: '🚫', title: 'خطأ نحوي', text: 'يوجد خطأ في كتابة الكود.', ratio: 0.25 },
 ];
 
@@ -58,6 +59,9 @@ export const GlobalReviewWorkspace: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Tab State for Right Panel: 'feedback' | 'task' | 'attempts' | 'stats'
+  const [activeTab, setActiveTab] = useState<'feedback' | 'task' | 'attempts' | 'stats'>('feedback');
 
   // Form inputs
   const [gradeInput, setGradeInput] = useState<number>(0);
@@ -90,11 +94,13 @@ export const GlobalReviewWorkspace: React.FC = () => {
     toast.success(`Preset Applied: ${template.title} (${suggestedGrade}/${maxGrade})`);
   };
 
-  // Global Keyboard Shortcuts
-  // 1-5 = Grade Presets
-  // Ctrl + S = Save Review
-  // Ctrl + RightArrow = Next Queue Item
-  // Ctrl + LeftArrow = Previous Queue Item
+  const handleResetReviewForm = () => {
+    setGradeInput(currentSubmission?.grade ?? maxGrade);
+    setTeacherFeedback(currentSubmission?.teacherFeedback ?? '');
+    toast.success('Reset evaluation form to initial state');
+  };
+
+  // Keyboard Shortcuts Handler
   useEffect(() => {
     const handleGlobalShortcuts = (e: KeyboardEvent) => {
       const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
@@ -198,7 +204,6 @@ export const GlobalReviewWorkspace: React.FC = () => {
     }
   };
 
-  // Execute Save Review
   const executeSaveReview = async (): Promise<boolean> => {
     if (!currentSubmission) return false;
     setSaving(true);
@@ -298,11 +303,10 @@ export const GlobalReviewWorkspace: React.FC = () => {
   }
 
   return (
-    <div className="h-screen bg-[#0B0F19] text-zinc-100 flex flex-col font-sans overflow-hidden">
+    <div className="h-screen w-screen overflow-hidden bg-[#0B0F19] text-zinc-100 flex flex-col font-sans">
       
-      {/* HEADER BAR */}
-      <header className="shrink-0 bg-[#111827] border-b border-[#1F2937] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 z-30">
-        
+      {/* TOPBAR (FIXED 100vh DESKTOP SHELL) */}
+      <header className="shrink-0 bg-[#111827] border-b border-[#1F2937] px-4 py-2 flex flex-wrap items-center justify-between gap-2 z-30">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate('/teacher/pending-reviews')}
@@ -314,7 +318,7 @@ export const GlobalReviewWorkspace: React.FC = () => {
 
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-base font-extrabold text-white truncate">{currentSubmission.taskTitle}</h1>
+              <h1 className="text-sm sm:text-base font-extrabold text-white truncate">{currentSubmission.taskTitle}</h1>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 border border-amber-500/30 text-amber-400 font-mono">
                 Queue [{activeQueueIdx + 1} / {queue.length}]
               </span>
@@ -325,13 +329,13 @@ export const GlobalReviewWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Global Queue Pills */}
-        <div className="flex items-center gap-2 bg-[#161E2E] px-3 py-1.5 rounded-2xl border border-[#1F2937] overflow-x-auto max-w-md">
+        {/* Global Queue Selector Pill Stack */}
+        <div className="flex items-center gap-1.5 bg-[#161E2E] px-2.5 py-1 rounded-2xl border border-[#1F2937] overflow-x-auto max-w-sm sm:max-w-md">
           {queue.map((item, idx) => (
             <button
               key={item.submissionId}
               onClick={() => handleSelectQueueItem(idx)}
-              className={`px-2.5 py-1 rounded-xl text-2xs font-mono font-bold whitespace-nowrap transition-all ${
+              className={`px-2 py-0.5 rounded-lg text-2xs font-mono font-bold whitespace-nowrap transition-all ${
                 idx === activeQueueIdx
                   ? 'bg-amber-500 text-black shadow-md'
                   : 'bg-[#111827] text-zinc-400 hover:text-white border border-[#1F2937]'
@@ -342,12 +346,12 @@ export const GlobalReviewWorkspace: React.FC = () => {
           ))}
         </div>
 
-        {/* Controls */}
+        {/* Action Controls */}
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => handleSelectQueueItem(activeQueueIdx - 1)}
             disabled={activeQueueIdx === 0}
-            className="p-2 bg-[#1F2937] hover:bg-zinc-700 disabled:opacity-30 text-zinc-300 rounded-xl transition-colors"
+            className="p-1.5 bg-[#1F2937] hover:bg-zinc-700 disabled:opacity-30 text-zinc-300 rounded-xl transition-colors"
             title="Previous (Ctrl + ←)"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -355,7 +359,7 @@ export const GlobalReviewWorkspace: React.FC = () => {
           <button
             onClick={() => handleSelectQueueItem(activeQueueIdx + 1)}
             disabled={activeQueueIdx === queue.length - 1}
-            className="p-2 bg-[#1F2937] hover:bg-zinc-700 disabled:opacity-30 text-zinc-300 rounded-xl transition-colors"
+            className="p-1.5 bg-[#1F2937] hover:bg-zinc-700 disabled:opacity-30 text-zinc-300 rounded-xl transition-colors"
             title="Next (Ctrl + →)"
           >
             <ArrowRight className="w-4 h-4" />
@@ -363,15 +367,63 @@ export const GlobalReviewWorkspace: React.FC = () => {
         </div>
       </header>
 
-      {/* WORKSPACE BODY - EXACT FLEX FILL */}
+      {/* TOOLBAR BAR (FIXED) */}
+      <div className="shrink-0 bg-[#161E2E] border-b border-[#1F2937] px-4 py-1.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSaveAndNext}
+            disabled={saving}
+            className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white font-extrabold text-xs rounded-xl shadow transition-all flex items-center gap-1.5 disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            Save & Next (Ctrl+S)
+          </button>
+
+          <button
+            onClick={executeSaveReview}
+            disabled={saving}
+            className="px-3 py-1.5 bg-[#1F2937] hover:bg-zinc-700 text-zinc-200 font-bold text-xs rounded-xl border border-[#374151] transition-colors"
+          >
+            Save Grade
+          </button>
+
+          <button
+            onClick={handleResetReviewForm}
+            className="p-1.5 bg-[#1F2937] hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-xl border border-[#374151] transition-colors"
+            title="Reset Form Input"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Quick Presets Inline */}
+        <div className="hidden sm:flex items-center gap-1">
+          <span className="text-[10px] text-zinc-500 font-bold mr-1">Presets [1-5]:</span>
+          {gradePresets.map((preset) => (
+            <button
+              key={preset.label}
+              onClick={() => handleApplyGradePreset(preset.value)}
+              className={`px-2 py-0.5 rounded-lg text-2xs font-mono font-bold transition-all ${
+                gradeInput === preset.value
+                  ? 'bg-amber-500 text-black'
+                  : 'bg-[#111827] text-zinc-400 hover:text-white border border-[#1F2937]'
+              }`}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* MAIN CONTENT (EXACT 65% / 35% SPLIT FILLING REMAINING HEIGHT) */}
       <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
         
-        {/* Left: Code Viewer Panel (VS Code Fill) */}
-        <div className="flex-1 flex flex-col bg-[#111827] border-r border-[#1F2937] min-h-0 overflow-hidden">
-          <div className="bg-[#1A2234] border-b border-[#1F2937] px-4 py-2 flex items-center justify-between shrink-0 text-xs font-bold text-white">
+        {/* LEFT: MONACO EDITOR (65% WIDTH, NO PAGE SCROLL, SCROLLS INTERNALLY ONLY) */}
+        <div className="w-full md:w-[65%] flex flex-col bg-[#111827] border-r border-[#1F2937] min-h-0 overflow-hidden">
+          <div className="bg-[#1A2234] border-b border-[#1F2937] px-4 py-1.5 flex items-center justify-between shrink-0 text-xs font-bold text-white">
             <div className="flex items-center gap-2">
               <Code className="w-4 h-4 text-blue-400" />
-              Student Code Submission (Attempt #{currentSubmission.attemptNumber})
+              <span>Student Submission (Attempt #{currentSubmission.attemptNumber})</span>
             </div>
             <div className="text-[11px] text-zinc-400 font-mono">
               Submitted: {new Date(currentSubmission.submittedAt).toLocaleString()}
@@ -395,104 +447,166 @@ export const GlobalReviewWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Grading Form & Shortcuts Panel */}
-        <div className="w-full md:w-96 bg-[#111827] flex flex-col p-5 space-y-4 shrink-0 border-l border-[#1F2937] overflow-y-auto">
+        {/* RIGHT: TABBED EVALUATION PANEL (35% WIDTH, INTERNAL SCROLL ONLY) */}
+        <div className="w-full md:w-[35%] bg-[#111827] flex flex-col shrink-0 border-l border-[#1F2937] min-h-0 overflow-hidden">
           
-          <div>
-            <h3 className="text-sm font-black text-white uppercase tracking-wider mb-1 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-amber-400" />
-              Evaluation & Shortcuts
-            </h3>
-            <p className="text-[11px] text-zinc-400">Keyboard: [1-5] presets, [Ctrl+S] Save & Next</p>
+          {/* TAB HEADER BAR */}
+          <div className="bg-[#161E2E] border-b border-[#1F2937] px-2 py-1.5 flex items-center justify-around shrink-0 text-xs">
+            <button
+              onClick={() => setActiveTab('feedback')}
+              className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all ${
+                activeTab === 'feedback' ? 'bg-amber-500 text-black shadow' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Feedback</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('task')}
+              className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all ${
+                activeTab === 'task' ? 'bg-amber-500 text-black shadow' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Task</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('attempts')}
+              className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all ${
+                activeTab === 'attempts' ? 'bg-amber-500 text-black shadow' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>Attempts</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all ${
+                activeTab === 'stats' ? 'bg-amber-500 text-black shadow' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Stats</span>
+            </button>
           </div>
 
-          {/* Preset Grade Buttons */}
-          <div className="space-y-1.5">
-            <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
-              Quick Grade Presets (Key 1 - 5)
-            </label>
-            <div className="grid grid-cols-5 gap-1.5">
-              {gradePresets.map((preset) => (
-                <button
-                  key={preset.label}
-                  type="button"
-                  onClick={() => handleApplyGradePreset(preset.value)}
-                  className={`py-1.5 rounded-xl border text-xs font-mono font-bold transition-all flex flex-col items-center ${
-                    gradeInput === preset.value
-                      ? 'bg-amber-500 text-black border-amber-400 shadow-md'
-                      : 'bg-[#161E2E] text-zinc-300 border-[#1F2937] hover:border-zinc-500'
-                  }`}
-                >
-                  <span>{preset.label}</span>
-                  <span className="text-[9px] opacity-70">[{preset.keyboard}]</span>
-                </button>
-              ))}
-            </div>
+          {/* TAB CONTENT (INTERNALLY SCROLLABLE ONLY) */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {activeTab === 'feedback' && (
+              <>
+                <div>
+                  <h3 className="text-xs font-black text-white uppercase tracking-wider mb-1 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-amber-400" />
+                    Evaluation & Grade
+                  </h3>
+                  <p className="text-[11px] text-zinc-400">Assign grade score and feedback comments.</p>
+                </div>
+
+                {/* Score Input */}
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider">
+                    Grade Score (Max {maxGrade} pts)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      ref={gradeInputRef}
+                      type="number"
+                      min={0}
+                      max={maxGrade}
+                      value={gradeInput}
+                      onChange={(e) => setGradeInput(Number(e.target.value))}
+                      className="w-full bg-[#0B0F19] border border-[#1F2937] text-white font-mono text-base font-black rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500"
+                    />
+                    <span className="text-xs font-bold text-zinc-500 font-mono shrink-0">/ {maxGrade}</span>
+                  </div>
+                </div>
+
+                {/* Quick Comment Preset Buttons */}
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>Quick Comments</span>
+                    <Sparkles className="w-3 h-3 text-amber-400" />
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ARABIC_FEEDBACK_TEMPLATES.map((tmpl) => (
+                      <button
+                        key={tmpl.title}
+                        type="button"
+                        onClick={() => handleSelectFeedbackTemplate(tmpl)}
+                        className="px-2.5 py-1 rounded-xl bg-[#161E2E] hover:bg-zinc-800 border border-[#1F2937] text-zinc-200 text-xs font-medium transition-all flex items-center gap-1.5"
+                      >
+                        <span>{tmpl.emoji}</span>
+                        <span>{tmpl.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Feedback Textarea */}
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider">
+                    Teacher Feedback Comments
+                  </label>
+                  <textarea
+                    rows={5}
+                    placeholder="Write feedback comments..."
+                    value={teacherFeedback}
+                    onChange={(e) => setTeacherFeedback(e.target.value)}
+                    className="w-full bg-[#0B0F19] border border-[#1F2937] text-white text-xs rounded-xl p-3 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {activeTab === 'task' && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Task Description</h3>
+                <div className="bg-[#161E2E] border border-[#1F2937] p-3.5 rounded-2xl text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                  {currentSubmission.description || 'No description provided for this task.'}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'attempts' && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Attempt History</h3>
+                <div className="bg-[#161E2E] border border-[#1F2937] p-4 rounded-2xl text-xs text-zinc-300 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span>Active Attempt:</span>
+                    <span className="font-mono font-bold text-amber-400">Attempt #{currentSubmission.attemptNumber}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Submitted At:</span>
+                    <span className="font-mono text-zinc-400">{new Date(currentSubmission.submittedAt).toLocaleString()}</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 pt-2 border-t border-[#1F2937]">
+                    Older historical attempts remain preserved in database as read-only.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'stats' && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Submission Statistics</h3>
+                <div className="bg-[#161E2E] border border-[#1F2937] p-4 rounded-2xl text-xs text-zinc-300 space-y-3">
+                  <div className="flex justify-between">
+                    <span>Queue Length:</span>
+                    <span className="font-mono font-bold text-white">{queue.length} Submissions</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Current Position:</span>
+                    <span className="font-mono font-bold text-amber-400">#{activeQueueIdx + 1}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Max Task Score:</span>
+                    <span className="font-mono font-bold text-purple-400">{maxGrade} pts</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Quick Feedback Preset Templates */}
-          <div className="space-y-1.5">
-            <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
-              <span>Quick Comments Template</span>
-              <Sparkles className="w-3 h-3 text-amber-400" />
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {ARABIC_FEEDBACK_TEMPLATES.map((tmpl) => (
-                <button
-                  key={tmpl.title}
-                  type="button"
-                  onClick={() => handleSelectFeedbackTemplate(tmpl)}
-                  className="px-2.5 py-1 rounded-xl bg-[#161E2E] hover:bg-zinc-800 border border-[#1F2937] text-zinc-200 text-xs font-medium transition-all flex items-center gap-1.5"
-                >
-                  <span>{tmpl.emoji}</span>
-                  <span>{tmpl.title}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Grade Score Input */}
-          <div className="space-y-1.5">
-            <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider">
-              Grade Score (Max {maxGrade} pts)
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                ref={gradeInputRef}
-                type="number"
-                min={0}
-                max={maxGrade}
-                value={gradeInput}
-                onChange={(e) => setGradeInput(Number(e.target.value))}
-                className="w-full bg-[#0B0F19] border border-[#1F2937] text-white font-mono text-base font-black rounded-xl px-3.5 py-2 focus:outline-none focus:border-amber-500"
-              />
-              <span className="text-xs font-bold text-zinc-500 font-mono shrink-0">/ {maxGrade}</span>
-            </div>
-          </div>
-
-          {/* Feedback Textarea */}
-          <div className="space-y-1.5 flex-1 flex flex-col min-h-[100px]">
-            <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider">
-              Teacher Feedback Comments
-            </label>
-            <textarea
-              rows={4}
-              placeholder="Write feedback comments for the student..."
-              value={teacherFeedback}
-              onChange={(e) => setTeacherFeedback(e.target.value)}
-              className="w-full flex-1 bg-[#0B0F19] border border-[#1F2937] text-white text-xs rounded-xl p-3 focus:outline-none focus:border-amber-500"
-            />
-          </div>
-
-          {/* Save & Auto-Advance Button */}
-          <button
-            onClick={handleSaveAndNext}
-            disabled={saving}
-            className="w-full py-3 bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white font-extrabold text-xs rounded-xl shadow-xl shadow-amber-950/40 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save & Next Submission (Ctrl + S) ➔
-          </button>
         </div>
 
       </div>

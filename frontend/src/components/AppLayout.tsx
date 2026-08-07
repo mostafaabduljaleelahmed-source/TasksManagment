@@ -32,7 +32,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   }
 
   return (
-    <div className="flex min-h-screen bg-[#0B0F19] text-[#F9FAFB]">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#0B0F19] text-[#F9FAFB]">
       <Sidebar
         isOpen={isMobileOpen}
         onClose={() => setIsMobileOpen(false)}
@@ -40,10 +40,10 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         onToggleCollapse={handleToggleCollapse}
       />
 
-      <div className="flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-250 ease-in-out">
+      <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden transition-all duration-250 ease-in-out">
         <Navbar onOpenMobileDrawer={() => setIsMobileOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
+        <main className="flex-1 min-h-0 overflow-y-auto w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
           {children}
         </main>
       </div>
