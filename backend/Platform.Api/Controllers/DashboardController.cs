@@ -1276,6 +1276,8 @@ public class DashboardController : ControllerBase
             StudentAvatarUrl = s.Student.AvatarUrl,
             TaskId = s.TaskId,
             TaskTitle = s.Task.Title,
+            Language = s.Task.Language ?? "c++",
+            Description = s.Task.Description ?? "",
             MaxGrade = s.Task.MaxGrade,
             Deadline = s.Task.Deadline,
             GroupName = s.Task.Session.Course.Name,

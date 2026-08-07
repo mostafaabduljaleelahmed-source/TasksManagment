@@ -292,8 +292,8 @@ export const GlobalReviewWorkspace: React.FC = () => {
           <div className="flex-1 relative overflow-hidden">
             <Editor
               height="100%"
-              language={currentSubmission.language.toLowerCase() === 'c++' ? 'cpp' : currentSubmission.language.toLowerCase()}
-              value={currentSubmission.code}
+              language={(currentSubmission.language || 'cpp').toLowerCase() === 'c++' ? 'cpp' : (currentSubmission.language || 'cpp').toLowerCase()}
+              value={currentSubmission.code || ''}
               theme="vs-dark"
               options={{
                 readOnly: true,
