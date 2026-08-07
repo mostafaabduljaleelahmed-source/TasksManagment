@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Platform.Application.Common.Interfaces;
 using Platform.Application.Features.Auth.Dtos;
+using Platform.Infrastructure.Persistence;
 
 namespace Platform.Api.Controllers;
 
@@ -72,5 +73,25 @@ public class AdminController : ControllerBase
         await _context.SaveChangesAsync(cancellationToken);
 
         return Ok(new { success = true, message = "Administrator password updated successfully. All previous sessions have been invalidated." });
+    }
+
+    [HttpGet("database-health")]
+    public async Task<IActionResult> GetDatabaseHealth([FromServices] DatabaseHealthService healthService, CancellationToken cancellationToken)
+    {
+        var report = await healthService.PerformFullAuditAsync(cancellationToken);
+        return Ok(report);
+    }
+
+    [HttpPost("run-integrity-repair")]
+    public async Task<IActionResult> RunIntegrityRepair([FromServices] DatabaseHealthService healthService, CancellationToken cancellationToken)
+    {
+        var repairedCount = await healthService.RunIntegrityRepairAsync(cancellationToken);
+        var updatedReport = await healthService.PerformFullAuditAsync(cancellationToken);
+        return Ok(new
+        {
+            message = $"Database integrity repair completed successfully. Repaired {repairedCount} records.",
+            repairedCount,
+            report = updatedReport
+        });
     }
 }

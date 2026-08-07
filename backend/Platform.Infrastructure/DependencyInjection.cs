@@ -33,6 +33,8 @@ public static class DependencyInjection
         services.AddSingleton(new HttpClient());
         services.AddScoped<IExecutionService, Judge0ExecutionService>();
 
+        services.AddScoped<DatabaseHealthService>();
+
         return services;
     }
 }

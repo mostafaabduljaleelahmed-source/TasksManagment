@@ -32,6 +32,7 @@ const AdminTeachers = lazy(() => import('./pages/AdminTeachers').then(m => ({ de
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const UserManagement = lazy(() => import('./pages/UserManagement').then(m => ({ default: m.UserManagement })));
 const SystemSettings = lazy(() => import('./pages/SystemSettings').then(m => ({ default: m.SystemSettings })));
+const AdminDatabaseHealth = lazy(() => import('./pages/AdminDatabaseHealth').then(m => ({ default: m.AdminDatabaseHealth })));
 const CalendarPage = lazy(() => import('./pages/CalendarPage').then(m => ({ default: m.CalendarPage })));
 
 const PageLoader = () => (
@@ -312,6 +313,16 @@ function App() {
                   <AdminRoute>
                     <ProtectedRoute>
                       <SystemSettings />
+                    </ProtectedRoute>
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/database-health"
+                element={
+                  <AdminRoute>
+                    <ProtectedRoute>
+                      <AdminDatabaseHealth />
                     </ProtectedRoute>
                   </AdminRoute>
                 }
