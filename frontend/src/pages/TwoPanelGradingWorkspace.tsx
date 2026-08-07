@@ -1116,8 +1116,15 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="text-xs text-zinc-400 font-mono">
-                  المحاولة #{currentStudent.attempts || 1}
+                <div className="flex items-center gap-3 font-mono text-xs">
+                  <span className="px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-blue-500/20 text-blue-300 border border-blue-500/40">
+                    Attempt #{currentStudent.attempts || 1} (CURRENT SUBMISSION)
+                  </span>
+                  {currentStudent.submissionTime && (
+                    <span className="text-[11px] text-zinc-400">
+                      Submitted: {new Date(currentStudent.submissionTime).toLocaleDateString()} {new Date(currentStudent.submissionTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
