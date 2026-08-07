@@ -58,6 +58,9 @@ public class SubmissionDto
     public int TotalHiddenCases { get; set; }
     public int ExecutionTimeMs { get; set; }
     public string ExecutionStatus { get; set; } = "PendingEvaluation";
+    public string Status { get; set; } = "Pending";
+    public bool IsReviewed { get; set; } = false;
+    public DateTime? ReviewedAt { get; set; }
     public string TestCaseResultsJson { get; set; } = "[]";
     public int AttemptNumber { get; set; }
     public DateTime SubmittedAt { get; set; }

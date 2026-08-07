@@ -21,10 +21,12 @@ namespace Platform.Api.Controllers;
 public class DashboardController : ControllerBase
 {
     private readonly IApplicationDbContext _context;
+    private readonly IGradingCalculator _gradingCalculator;
 
-    public DashboardController(IApplicationDbContext context)
+    public DashboardController(IApplicationDbContext context, IGradingCalculator gradingCalculator)
     {
         _context = context;
+        _gradingCalculator = gradingCalculator;
     }
 
     [HttpGet("teacher/course/{courseId}")]
@@ -505,10 +507,10 @@ public class DashboardController : ControllerBase
         foreach (var task in tasks)
         {
             var taskSubs = submissions.Where(s => s.TaskId == task.Id).ToList();
-            bool hasSubmitted = taskSubs.Any();
+            var highestGradedSub = _gradingCalculator.GetHighestGradedSubmission(taskSubs);
             bool isOverdue = DateTime.UtcNow > task.Deadline;
 
-            if (!hasSubmitted)
+            if (highestGradedSub == null)
             {
                 pending++;
                 int attemptsUsed = taskSubs.Count;
@@ -528,9 +530,7 @@ public class DashboardController : ControllerBase
             else
             {
                 completed++;
-                var latestSub = taskSubs.OrderByDescending(s => s.SubmittedAt).First();
-                var best = taskSubs.Max(s => s.Grade);
-                bestGrades.Add(new { TaskTitle = task.Title, BestGrade = best, MaxGrade = task.MaxGrade });
+                bestGrades.Add(new { TaskTitle = task.Title, BestGrade = highestGradedSub.Grade, MaxGrade = task.MaxGrade });
                 
                 completedAssignmentsList.Add(new
                 {
@@ -538,10 +538,10 @@ public class DashboardController : ControllerBase
                     TaskTitle = task.Title,
                     CourseName = task.Session?.Course?.Name ?? "Course",
                     SessionName = task.Session?.Title ?? "Session",
-                    Grade = latestSub.Grade,
+                    Grade = highestGradedSub.Grade,
                     MaxGrade = task.MaxGrade,
-                    TeacherFeedback = !string.IsNullOrWhiteSpace(latestSub.TeacherFeedback) ? latestSub.TeacherFeedback : "No feedback written yet.",
-                    SubmittedAt = latestSub.SubmittedAt
+                    TeacherFeedback = !string.IsNullOrWhiteSpace(highestGradedSub.TeacherFeedback) ? highestGradedSub.TeacherFeedback : "No feedback written yet.",
+                    SubmittedAt = highestGradedSub.SubmittedAt
                 });
 
                 if (taskSubs.Any(s => s.SubmittedAt > task.Deadline))
@@ -751,9 +751,7 @@ public class DashboardController : ControllerBase
             .ToList();
 
         // Pending review list
-        var pendingReviews = submissions
-            .Where(s => string.IsNullOrEmpty(s.TeacherFeedback) && s.Grade == 0)
-            .OrderByDescending(s => s.SubmittedAt)
+        var pendingReviews = _gradingCalculator.GetPendingReviews(submissions)
             .Take(10)
             .Select(s => new
             {
@@ -814,18 +812,13 @@ public class DashboardController : ControllerBase
             .SelectMany(s => s.Tasks)
             .CountAsync(cancellationToken);
 
-        var completedTaskIds = submissions.Select(s => s.TaskId).Distinct().ToList();
-        int completedCount = completedTaskIds.Count;
+        var assignedTasks = await _context.Sessions
+            .Where(s => courseIds.Contains(s.CourseId) && s.IsUnlocked)
+            .SelectMany(s => s.Tasks)
+            .ToListAsync(cancellationToken);
 
-        var bestGradesPcts = submissions
-            .GroupBy(s => s.TaskId)
-            .Select(g => {
-                var bestSub = g.OrderByDescending(s => s.Grade).First();
-                return GradeCalculator.CalculatePercentage(bestSub.Grade, bestSub.Task?.MaxGrade ?? 100);
-            })
-            .ToList();
-
-        double averageGrade = bestGradesPcts.Any() ? Math.Round(bestGradesPcts.Average(), 1) : 0;
+        int completedCount = assignedTasks.Count(t => _gradingCalculator.GetHighestGradedSubmission(submissions.Where(s => s.TaskId == t.Id)) != null);
+        double averageGrade = _gradingCalculator.CalculateStudentAverageGrade(assignedTasks, submissions);
         double completionRate = totalTasksAssigned > 0 ? Math.Round(((double)completedCount / totalTasksAssigned) * 100, 1) : 0;
 
         var historyList = submissions.Select(s => new
@@ -887,6 +880,15 @@ public class DashboardController : ControllerBase
             .Where(s => studentIds.Contains(s.StudentId))
             .ToListAsync(cancellationToken);
 
+        var targetCourseIds = courseId.HasValue
+            ? new List<Guid> { courseId.Value }
+            : enrollments.Select(e => e.CourseId).Distinct().ToList();
+
+        var assignedTasks = await _context.Sessions
+            .Where(s => targetCourseIds.Contains(s.CourseId) && s.IsUnlocked)
+            .SelectMany(s => s.Tasks)
+            .ToListAsync(cancellationToken);
+
         var leaderboard = new List<object>();
 
         foreach (var studentId in studentIds)
@@ -895,16 +897,15 @@ public class DashboardController : ControllerBase
             if (studentObj == null) continue;
 
             var studentSubs = submissions.Where(s => s.StudentId == studentId).ToList();
-            var bestPerTaskPcts = studentSubs
-                .GroupBy(s => s.TaskId)
-                .Select(g => {
-                    var bestSub = g.OrderByDescending(s => s.Grade).First();
-                    return GradeCalculator.CalculatePercentage(bestSub.Grade, bestSub.Task?.MaxGrade ?? 100);
-                })
-                .ToList();
+            
+            // Filter assigned tasks for this student's specific enrolled course
+            var studentEnrolledCourseIds = enrollments.Where(e => e.StudentId == studentId).Select(e => e.CourseId).ToList();
+            var studentTasks = assignedTasks.Where(t => t.Session != null && studentEnrolledCourseIds.Contains(t.Session.CourseId)).ToList();
+            if (!studentTasks.Any()) studentTasks = assignedTasks;
 
-            double avgGrade = bestPerTaskPcts.Any() ? Math.Round(bestPerTaskPcts.Average(), 1) : 0;
-            int completedTasks = bestPerTaskPcts.Count;
+            double avgGrade = _gradingCalculator.CalculateStudentAverageGrade(studentTasks, studentSubs);
+
+            int completedTasks = studentTasks.Count(t => _gradingCalculator.GetHighestGradedSubmission(studentSubs.Where(s => s.TaskId == t.Id)) != null);
             int totalSubmissions = studentSubs.Count;
 
             leaderboard.Add(new
@@ -977,8 +978,7 @@ public class DashboardController : ControllerBase
         int submittedToday = submissions.Count(s => s.SubmittedAt >= today);
 
         // Ungraded submissions count (distinct per student/task)
-        int pendingReviews = submissions
-            .Where(s => s.Grade == 0 && string.IsNullOrWhiteSpace(s.TeacherFeedback))
+        int pendingReviews = _gradingCalculator.GetPendingReviews(submissions)
             .Select(s => new { s.StudentId, s.TaskId })
             .Distinct()
             .Count();
@@ -1245,17 +1245,16 @@ public class DashboardController : ControllerBase
 
         var taskIds = tasks.Select(t => t.Id).ToList();
 
-        // Get submissions that are ungraded (grade == 0 and teacherFeedback is empty)
+        // Get submissions that are pending manual teacher review (Status == Pending and !IsReviewed)
         var pendingSubsRaw = await _context.Submissions
             .Include(s => s.Student)
             .Include(s => s.Task)
             .ThenInclude(t => t.Session)
             .ThenInclude(sess => sess.Course)
-            .Where(s => taskIds.Contains(s.TaskId) && s.Grade == 0 && string.IsNullOrEmpty(s.TeacherFeedback))
+            .Where(s => taskIds.Contains(s.TaskId) && (s.Status == SubmissionStatus.Pending || !s.IsReviewed))
             .ToListAsync(cancellationToken);
 
-        // Group by (StudentId, TaskId) and pick ONLY the latest attempt
-        var pendingSubs = pendingSubsRaw
+        var pendingSubs = _gradingCalculator.GetPendingReviews(pendingSubsRaw)
             .GroupBy(s => new { s.StudentId, s.TaskId })
             .Select(g => g.OrderByDescending(s => s.SubmittedAt).First())
             .ToList();
@@ -1476,15 +1475,16 @@ public class DashboardController : ControllerBase
             int submitted = submittedStudentIds.Count;
             int missing = Math.Max(0, totalStudents - submitted);
 
-            int pendingReview = taskSubs
-                .Where(s => s.Grade == 0 && string.IsNullOrWhiteSpace(s.TeacherFeedback))
+            int pendingReview = _gradingCalculator.GetPendingReviews(taskSubs)
                 .Select(s => s.StudentId)
                 .Distinct()
                 .Count();
 
             var bestGrades = taskSubs
                 .GroupBy(s => s.StudentId)
-                .Select(g => g.Max(s => s.Grade))
+                .Select(g => _gradingCalculator.GetHighestGradedSubmission(g)?.Grade)
+                .Where(g => g.HasValue)
+                .Select(g => g!.Value)
                 .ToList();
 
             double averageGrade = bestGrades.Any() ? Math.Round(bestGrades.Average(), 1) : 0;

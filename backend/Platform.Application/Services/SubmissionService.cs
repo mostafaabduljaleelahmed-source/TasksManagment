@@ -186,7 +186,10 @@ public class SubmissionService : ISubmissionService
             ComparisonReport = null,
             ConsoleOutput = gradingResult.ConsoleOutput,
             ExpectedOutput = gradingResult.ExpectedOutput,
-            TeacherNotes = string.Empty
+            TeacherNotes = string.Empty,
+            Status = SubmissionStatus.Pending,
+            IsReviewed = false,
+            ReviewedAt = null
         };
 
         _context.Submissions.Add(submission);
@@ -348,7 +351,10 @@ public class SubmissionService : ISubmissionService
                 ComparisonReport = s.ComparisonReport,
                 ConsoleOutput = s.ConsoleOutput,
                 ExpectedOutput = s.ExpectedOutput,
-                TeacherNotes = s.TeacherNotes
+                TeacherNotes = s.TeacherNotes,
+                Status = s.Status.ToString(),
+                IsReviewed = s.IsReviewed,
+                ReviewedAt = s.ReviewedAt
             })
             .ToListAsync(cancellationToken);
     }
@@ -430,6 +436,9 @@ public class SubmissionService : ISubmissionService
         submission.Grade = dto.Grade;
         submission.TeacherFeedback = dto.TeacherFeedback;
         submission.TeacherNotes = dto.TeacherNotes;
+        submission.Status = SubmissionStatus.Graded;
+        submission.IsReviewed = true;
+        submission.ReviewedAt = DateTime.UtcNow;
 
         // Send notification to student
         _context.Notifications.Add(new Notification

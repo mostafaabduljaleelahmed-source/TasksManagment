@@ -14,10 +14,12 @@ namespace Platform.Application.Services;
 public class SessionService : ISessionService
 {
     private readonly IApplicationDbContext _context;
+    private readonly IGradingCalculator _gradingCalculator;
 
-    public SessionService(IApplicationDbContext context)
+    public SessionService(IApplicationDbContext context, IGradingCalculator gradingCalculator)
     {
         _context = context;
+        _gradingCalculator = gradingCalculator;
     }
 
     public async Task<SessionDto> CreateSessionAsync(Guid courseId, CreateSessionDto dto, CancellationToken cancellationToken = default)
@@ -100,6 +102,7 @@ public class SessionService : ISessionService
                 dto.Tasks = s.Tasks.Where(t => !t.IsArchived).Select(t =>
                 {
                     var taskSubs = userSubmissions.Where(sub => sub.TaskId == t.Id).ToList();
+                    var highestGradedSub = _gradingCalculator.GetHighestGradedSubmission(taskSubs);
                     var latestSub = taskSubs.OrderByDescending(sub => sub.SubmittedAt).FirstOrDefault();
                     int attemptsCount = taskSubs.Count;
                     int remainingAttempts = Math.Max(0, t.MaxAttempts - attemptsCount);
@@ -108,17 +111,16 @@ public class SessionService : ISessionService
                     int? myGrade = null;
                     DateTime? submittedAt = null;
 
-                    if (latestSub != null)
+                    if (highestGradedSub != null)
+                    {
+                        submittedAt = highestGradedSub.SubmittedAt;
+                        taskStatus = "Graded";
+                        myGrade = highestGradedSub.Grade;
+                    }
+                    else if (latestSub != null)
                     {
                         submittedAt = latestSub.SubmittedAt;
-                        bool isGraded = latestSub.Grade > 0 || !string.IsNullOrWhiteSpace(latestSub.TeacherFeedback);
-
-                        if (isGraded)
-                        {
-                            taskStatus = "Graded";
-                            myGrade = taskSubs.Max(sub => sub.Grade);
-                        }
-                        else if (latestSub.SubmittedAt > t.Deadline)
+                        if (latestSub.SubmittedAt > t.Deadline)
                         {
                             taskStatus = "Late Submission";
                         }
@@ -142,11 +144,10 @@ public class SessionService : ISessionService
                         var studentSubMap = subsForTask.GroupBy(sub => sub.StudentId);
                         submittedCount = studentSubMap.Count();
                         missingCount = Math.Max(0, totalEnrolled - submittedCount);
-                        pendingReviewsCount = studentSubMap.Count(g =>
-                        {
-                            var latest = g.OrderByDescending(sub => sub.SubmittedAt).First();
-                            return latest.Grade == 0 && string.IsNullOrWhiteSpace(latest.TeacherFeedback);
-                        });
+                        pendingReviewsCount = _gradingCalculator.GetPendingReviews(subsForTask)
+                            .Select(s => s.StudentId)
+                            .Distinct()
+                            .Count();
                     }
 
                     return new ProgrammingTaskDto

@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, EmailService>();
 
         // Version 2.0 Intelligent Education & Grading Services
+        services.AddSingleton<IGradingCalculator, GradingCalculator>();
         services.AddSingleton<ILanguageRegistry, LanguageRegistry>();
         services.AddScoped<IGradingModule, ManualReviewModule>();
         services.AddScoped<IGradingModule, Judge0AutoGradingModule>();

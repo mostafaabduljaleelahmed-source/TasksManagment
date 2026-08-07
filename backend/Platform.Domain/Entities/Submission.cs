@@ -1,4 +1,5 @@
 using System;
+using Platform.Domain.Enums;
 
 namespace Platform.Domain.Entities;
 
@@ -25,6 +26,9 @@ public class Submission
     public int ExecutionTimeMs { get; set; }
     public string ExecutionStatus { get; set; } = "PendingEvaluation";
     public string TestCaseResultsJson { get; set; } = "[]";
+    public SubmissionStatus Status { get; set; } = SubmissionStatus.Pending;
+    public bool IsReviewed { get; set; } = false;
+    public DateTime? ReviewedAt { get; set; }
     public int AttemptNumber { get; set; }
     public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
 }
