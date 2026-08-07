@@ -16,10 +16,57 @@ public static class DatabaseMigrationHelper
 
             // Seed permanent single Admin account if not already present
             SeedAdminUser(context, logger);
+
+            // Repair legacy submission data consistency
+            RepairSubmissionData(context, logger);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred while applying database migrations.");
+        }
+    }
+
+    private static void RepairSubmissionData(ApplicationDbContext context, ILogger logger)
+    {
+        try
+        {
+            var submissions = context.Submissions.ToList();
+            if (!submissions.Any()) return;
+
+            int repairedCount = 0;
+            var groups = submissions.GroupBy(s => new { s.StudentId, s.TaskId });
+
+            foreach (var g in groups)
+            {
+                var sorted = g.OrderBy(s => s.SubmittedAt).ThenBy(s => s.AttemptNumber).ToList();
+                for (int i = 0; i < sorted.Count; i++)
+                {
+                    var sub = sorted[i];
+                    sub.AttemptNumber = i + 1;
+                    bool isLatest = (i == sorted.Count - 1);
+
+                    if (sub.IsReviewed || sub.Grade > 0 || !string.IsNullOrWhiteSpace(sub.TeacherFeedback))
+                    {
+                        sub.Status = Domain.Enums.SubmissionStatus.Graded;
+                        sub.IsReviewed = true;
+                        repairedCount++;
+                    }
+                    else if (!isLatest)
+                    {
+                        // Older unreviewed attempt: close/mark as Graded with grade 0 so it never shows in pending queue
+                        sub.Status = Domain.Enums.SubmissionStatus.Graded;
+                        sub.IsReviewed = true;
+                        repairedCount++;
+                    }
+                }
+            }
+
+            context.SaveChanges();
+            logger.LogInformation("Repaired {Count} submission records for data consistency.", repairedCount);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred during legacy submission data repair.");
         }
     }
 

@@ -15,4 +15,6 @@ public interface ISubmissionService
     Task<object> GetTaskSubmissionsStatsAsync(Guid taskId, CancellationToken cancellationToken = default);
     Task<object> GetStudentTaskStatsAsync(Guid studentId, Guid taskId, CancellationToken cancellationToken = default);
     Task<SubmissionDto> ReviewSubmissionAsync(Guid submissionId, ReviewSubmissionDto dto, CancellationToken cancellationToken = default);
+    Task<SubmissionDto> EditSubmissionReviewAsync(Guid submissionId, ReviewSubmissionDto dto, CancellationToken cancellationToken = default);
+    Task<SubmissionDto> ResetSubmissionReviewAsync(Guid submissionId, CancellationToken cancellationToken = default);
 }

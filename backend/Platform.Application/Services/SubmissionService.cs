@@ -433,6 +433,15 @@ public class SubmissionService : ISubmissionService
             throw new InvalidOperationException("Submission not found.");
         }
 
+        // Enforce Latest Attempt Only Rule
+        var isLatest = !await _context.Submissions
+            .AnyAsync(s => s.StudentId == submission.StudentId && s.TaskId == submission.TaskId && s.SubmittedAt > submission.SubmittedAt, cancellationToken);
+
+        if (!isLatest)
+        {
+            throw new InvalidOperationException("Only the latest submission attempt for a student can be reviewed or graded. Older attempts are read-only history.");
+        }
+
         submission.Grade = dto.Grade;
         submission.TeacherFeedback = dto.TeacherFeedback;
         submission.TeacherNotes = dto.TeacherNotes;
@@ -479,8 +488,8 @@ public class SubmissionService : ISubmissionService
         {
             await _activityLogger.LogAsync(
                 course?.TeacherId ?? Guid.Empty,
-                "Teacher Feedback",
-                $"Teacher feedback provided for {submission.Student.Name}: \"{dto.TeacherFeedback}\"",
+                "Feedback Provided",
+                $"Teacher left feedback on '{submission.Task.Title}' for {submission.Student.Name}",
                 course?.Id,
                 course?.Name,
                 submission.TaskId,
@@ -494,6 +503,66 @@ public class SubmissionService : ISubmissionService
                 dto.TeacherFeedback,
                 cancellationToken);
         }
+
+        return new SubmissionDto
+        {
+            Id = submission.Id,
+            TaskId = submission.TaskId,
+            TaskTitle = submission.Task.Title,
+            StudentId = submission.StudentId,
+            StudentName = submission.Student.Name,
+            Code = submission.Code,
+            Grade = submission.Grade,
+            Feedback = submission.Feedback,
+            TeacherFeedback = submission.TeacherFeedback,
+            PassedPublicCases = submission.PassedPublicCases,
+            TotalPublicCases = submission.TotalPublicCases,
+            PassedHiddenCases = submission.PassedHiddenCases,
+            TotalHiddenCases = submission.TotalHiddenCases,
+            ExecutionTimeMs = submission.ExecutionTimeMs,
+            AttemptNumber = submission.AttemptNumber,
+            SubmittedAt = submission.SubmittedAt,
+            SimilarityScore = submission.SimilarityScore,
+            ComparisonReport = submission.ComparisonReport,
+            ConsoleOutput = submission.ConsoleOutput,
+            ExpectedOutput = submission.ExpectedOutput,
+            TeacherNotes = submission.TeacherNotes
+        };
+    }
+
+    public async Task<SubmissionDto> EditSubmissionReviewAsync(Guid submissionId, ReviewSubmissionDto dto, CancellationToken cancellationToken = default)
+    {
+        return await ReviewSubmissionAsync(submissionId, dto, cancellationToken);
+    }
+
+    public async Task<SubmissionDto> ResetSubmissionReviewAsync(Guid submissionId, CancellationToken cancellationToken = default)
+    {
+        var submission = await _context.Submissions
+            .Include(s => s.Task)
+            .Include(s => s.Student)
+            .FirstOrDefaultAsync(s => s.Id == submissionId, cancellationToken);
+
+        if (submission == null)
+        {
+            throw new InvalidOperationException("Submission not found.");
+        }
+
+        var isLatest = !await _context.Submissions
+            .AnyAsync(s => s.StudentId == submission.StudentId && s.TaskId == submission.TaskId && s.SubmittedAt > submission.SubmittedAt, cancellationToken);
+
+        if (!isLatest)
+        {
+            throw new InvalidOperationException("Only the latest submission attempt can be reset. Older attempts are read-only history.");
+        }
+
+        submission.Status = SubmissionStatus.Pending;
+        submission.IsReviewed = false;
+        submission.ReviewedAt = null;
+        submission.Grade = 0;
+        submission.TeacherFeedback = string.Empty;
+        submission.TeacherNotes = string.Empty;
+
+        await _context.SaveChangesAsync(cancellationToken);
 
         return new SubmissionDto
         {

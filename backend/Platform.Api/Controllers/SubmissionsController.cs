@@ -168,4 +168,44 @@ public class SubmissionsController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpPost("{submissionId}/edit-review")]
+    public async Task<IActionResult> EditReview(Guid submissionId, [FromBody] ReviewSubmissionDto dto, CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (role != "Teacher" && role != "Admin")
+        {
+            return Forbid("Only teachers and admins can edit submission reviews.");
+        }
+
+        try
+        {
+            var result = await _submissionService.EditSubmissionReviewAsync(submissionId, dto, cancellationToken);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("{submissionId}/reset-review")]
+    public async Task<IActionResult> ResetReview(Guid submissionId, CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (role != "Teacher" && role != "Admin")
+        {
+            return Forbid("Only teachers and admins can reset submission reviews.");
+        }
+
+        try
+        {
+            var result = await _submissionService.ResetSubmissionReviewAsync(submissionId, cancellationToken);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

@@ -410,6 +410,45 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     await executeSaveSubmission();
   };
 
+  // Reset Review (إعادة تعيين التقييم)
+  const handleResetReview = async () => {
+    if (!currentStudent || !currentStudent.submissionId || !data) return;
+    if (!window.confirm('هل أنت تأكد من إعادة تعيين هذا التقييم وإعادته لقائمة المراجعات المعلقة؟')) return;
+
+    setSaving(true);
+    try {
+      const response = await fetch(`${API_URL}/submissions/${currentStudent.submissionId}/reset-review`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || 'فشل إعادة تعيين التقييم');
+      }
+
+      toast.success('تم إعادة تعيين التقييم وإعادته للمراجعات المعلقة.');
+      setGradeInput(0);
+      setTeacherFeedback('');
+
+      const updatedSubs = [...data.submissions];
+      updatedSubs[activeStudentIdx] = {
+        ...currentStudent,
+        grade: 0,
+        teacherFeedback: '',
+        status: 'Pending',
+      };
+      setData({ ...data, submissions: updatedSubs });
+    } catch (err: any) {
+      toast.error(err.message || 'حدث خطأ أثناء إعادة تعيين التقييم');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Save & Next (💾 حفظ والانتقال للطالب التالي)
   const handleSaveAndNext = async () => {
     const success = await executeSaveSubmission();
@@ -1216,6 +1255,14 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
 
                 {/* Save Buttons Row */}
                 <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#1F2937]">
+                  <button
+                    onClick={handleResetReview}
+                    disabled={saving}
+                    className="px-4 py-2.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 font-bold text-xs rounded-xl border border-rose-500/30 transition-all disabled:opacity-50"
+                  >
+                    🔄 إعادة تعيين التقييم
+                  </button>
+
                   <button
                     onClick={handleSaveGradeOnly}
                     disabled={saving}

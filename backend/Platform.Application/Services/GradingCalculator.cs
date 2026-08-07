@@ -54,8 +54,11 @@ public class GradingCalculator : IGradingCalculator
     {
         if (submissions == null) return Enumerable.Empty<Submission>();
 
+        // Group by StudentId & TaskId, get latest submission per group
         return submissions
-            .Where(s => s.Status == SubmissionStatus.Pending && !s.IsReviewed)
+            .GroupBy(s => new { s.StudentId, s.TaskId })
+            .Select(g => g.OrderByDescending(s => s.SubmittedAt).ThenByDescending(s => s.AttemptNumber).First())
+            .Where(latest => latest.Status == SubmissionStatus.Pending && !latest.IsReviewed)
             .OrderByDescending(s => s.SubmittedAt);
     }
 }
