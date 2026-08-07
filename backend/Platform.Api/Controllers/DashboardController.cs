@@ -943,6 +943,81 @@ public class DashboardController : ControllerBase
         });
     }
 
+    [HttpGet("student/{studentId}/breakdown")]
+    public async Task<IActionResult> GetStudentBreakdown(Guid studentId, [FromQuery] Guid? courseId, CancellationToken cancellationToken)
+    {
+        var student = await _context.Users.FirstOrDefaultAsync(u => u.Id == studentId, cancellationToken);
+        if (student == null) return NotFound("Student not found.");
+
+        IQueryable<Enrollment> enrollmentsQuery = _context.Enrollments.Where(e => e.StudentId == studentId);
+        if (courseId.HasValue)
+        {
+            enrollmentsQuery = enrollmentsQuery.Where(e => e.CourseId == courseId.Value);
+        }
+        var enrollments = await enrollmentsQuery.ToListAsync(cancellationToken);
+        var targetCourseIds = enrollments.Select(e => e.CourseId).ToList();
+
+        var assignedTasks = await _context.Sessions
+            .Include(s => s.Course)
+            .Where(s => targetCourseIds.Contains(s.CourseId) && s.IsUnlocked)
+            .SelectMany(s => s.Tasks)
+            .ToListAsync(cancellationToken);
+
+        var submissions = await _context.Submissions
+            .Where(s => s.StudentId == studentId)
+            .ToListAsync(cancellationToken);
+
+        double overallAverage = _gradingCalculator.CalculateStudentAverageGrade(assignedTasks, submissions);
+
+        var taskBreakdowns = new List<object>();
+        foreach (var task in assignedTasks)
+        {
+            var taskSubs = submissions.Where(s => s.TaskId == task.Id).ToList();
+            var highestSub = _gradingCalculator.GetHighestGradedSubmission(taskSubs);
+
+            double score = highestSub?.Grade ?? 0;
+            double maxScore = task.MaxGrade;
+            double percentage = maxScore > 0 ? Math.Round((score / maxScore) * 100, 1) : 0;
+            int totalAttempts = taskSubs.Count;
+            int highestAttemptNumber = highestSub?.AttemptNumber ?? (totalAttempts > 0 ? taskSubs.Max(s => s.AttemptNumber) : 0);
+
+            taskBreakdowns.Add(new
+            {
+                TaskId = task.Id,
+                TaskName = task.Title,
+                Score = score,
+                MaxScore = maxScore,
+                Percentage = percentage,
+                SubmissionDate = highestSub?.SubmittedAt ?? (taskSubs.OrderByDescending(s => s.SubmittedAt).FirstOrDefault()?.SubmittedAt),
+                Attempts = totalAttempts,
+                HighestAttempt = highestAttemptNumber,
+                IsCompleted = highestSub != null,
+                Status = highestSub != null ? "Graded" : (taskSubs.Any() ? "Pending Review" : "Not Submitted")
+            });
+        }
+
+        var completedList = taskBreakdowns.Where(t => ((dynamic)t).IsCompleted).ToList();
+        double highestScore = completedList.Any() ? completedList.Max(t => (double)((dynamic)t).Score) : 0;
+        double lowestScore = completedList.Any() ? completedList.Min(t => (double)((dynamic)t).Score) : 0;
+        int completedCount = completedList.Count;
+        int pendingCount = assignedTasks.Count - completedCount;
+        double taskCompletionPercentage = assignedTasks.Count > 0 ? Math.Round(((double)completedCount / assignedTasks.Count) * 100, 1) : 0;
+
+        return Ok(new
+        {
+            StudentId = student.Id,
+            StudentName = student.Name,
+            StudentRegisterId = student.StudentId ?? "-",
+            AverageGradePercentage = Math.Round(overallAverage, 1),
+            HighestScore = highestScore,
+            LowestScore = lowestScore,
+            CompletedTasksCount = completedCount,
+            PendingTasksCount = pendingCount,
+            TaskCompletionPercentage = taskCompletionPercentage,
+            Tasks = taskBreakdowns
+        });
+    }
+
     [HttpGet("teacher/summary")]
     public async Task<IActionResult> GetTeacherSummary(CancellationToken cancellationToken)
     {

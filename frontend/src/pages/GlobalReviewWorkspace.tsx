@@ -4,7 +4,7 @@ import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Editor from '@monaco-editor/react';
 import {
-  AlertCircle, ArrowLeft, ArrowRight, Save, Loader2, Code
+  AlertCircle, ArrowLeft, ArrowRight, Save, Loader2, Code, Zap, Sparkles
 } from 'lucide-react';
 
 interface PendingSubmissionQueueItem {
@@ -31,6 +31,22 @@ interface PendingSubmissionQueueItem {
   attachmentsJson?: string | null;
 }
 
+interface FeedbackTemplate {
+  emoji: string;
+  title: string;
+  text: string;
+  ratio: number;
+}
+
+const ARABIC_FEEDBACK_TEMPLATES: FeedbackTemplate[] = [
+  { emoji: '🌟', title: 'ممتاز', text: 'عمل ممتاز، استمر بنفس المستوى.', ratio: 1.0 },
+  { emoji: '👍', title: 'جيد', text: 'إجابة جيدة، تحتاج بعض التحسينات البسيطة.', ratio: 0.75 },
+  { emoji: '🧠', title: 'يحتاج تحسين', text: 'يوجد خطأ في منطق الحل، حاول إعادة التفكير في الخوارزمية.', ratio: 0.50 },
+  { emoji: '❌', title: 'الناتج غير صحيح', text: 'الناتج لا يطابق المطلوب.', ratio: 0.25 },
+  { emoji: '⚠️', title: 'خطأ أثناء التشغيل', text: 'الكود يتوقف أثناء التنفيذ.', ratio: 0 },
+  { emoji: '🚫', title: 'خطأ نحوي', text: 'يوجد خطأ في كتابة الكود.', ratio: 0.25 },
+];
+
 export const GlobalReviewWorkspace: React.FC = () => {
   const { submissionId } = useParams<{ submissionId: string }>();
   const { user } = useAuth();
@@ -48,6 +64,86 @@ export const GlobalReviewWorkspace: React.FC = () => {
   const [teacherFeedback, setTeacherFeedback] = useState<string>('');
   const gradeInputRef = useRef<HTMLInputElement>(null);
 
+  const currentSubmission = queue[activeQueueIdx] || null;
+  const maxGrade = currentSubmission?.maxGrade || 10;
+
+  // Grade percentage presets (0%, 25%, 50%, 75%, 100%)
+  const gradePresets = React.useMemo(() => {
+    return [
+      { label: '0%', value: 0, keyboard: '1' },
+      { label: '25%', value: Math.round(maxGrade * 0.25 * 10) / 10, keyboard: '2' },
+      { label: '50%', value: Math.round(maxGrade * 0.5 * 10) / 10, keyboard: '3' },
+      { label: '75%', value: Math.round(maxGrade * 0.75 * 10) / 10, keyboard: '4' },
+      { label: '100%', value: maxGrade, keyboard: '5' },
+    ];
+  }, [maxGrade]);
+
+  const handleApplyGradePreset = (val: number) => {
+    setGradeInput(val);
+    toast.success(`Set Grade: ${val}/${maxGrade}`);
+  };
+
+  const handleSelectFeedbackTemplate = (template: FeedbackTemplate) => {
+    setTeacherFeedback((prev) => (prev ? `${prev}\n- ${template.text}` : template.text));
+    const suggestedGrade = Math.round(maxGrade * template.ratio * 10) / 10;
+    setGradeInput(suggestedGrade);
+    toast.success(`Preset Applied: ${template.title} (${suggestedGrade}/${maxGrade})`);
+  };
+
+  // Global Keyboard Shortcuts
+  // 1-5 = Grade Presets
+  // Ctrl + S = Save Review
+  // Ctrl + RightArrow = Next Queue Item
+  // Ctrl + LeftArrow = Previous Queue Item
+  useEffect(() => {
+    const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      const isEditingText = targetTag === 'input' || targetTag === 'textarea';
+
+      if (!isEditingText && currentSubmission) {
+        if (e.key === '1') {
+          e.preventDefault();
+          handleApplyGradePreset(0);
+          return;
+        } else if (e.key === '2') {
+          e.preventDefault();
+          handleApplyGradePreset(Math.round(maxGrade * 0.25 * 10) / 10);
+          return;
+        } else if (e.key === '3') {
+          e.preventDefault();
+          handleApplyGradePreset(Math.round(maxGrade * 0.5 * 10) / 10);
+          return;
+        } else if (e.key === '4') {
+          e.preventDefault();
+          handleApplyGradePreset(Math.round(maxGrade * 0.75 * 10) / 10);
+          return;
+        } else if (e.key === '5') {
+          e.preventDefault();
+          handleApplyGradePreset(maxGrade);
+          return;
+        }
+      }
+
+      if (e.ctrlKey && (e.key === 's' || e.key === 'S' || e.key === 'س')) {
+        e.preventDefault();
+        handleSaveAndNext();
+      } else if (e.ctrlKey && e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (activeQueueIdx < queue.length - 1) {
+          handleSelectQueueItem(activeQueueIdx + 1);
+        }
+      } else if (e.ctrlKey && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (activeQueueIdx > 0) {
+          handleSelectQueueItem(activeQueueIdx - 1);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalShortcuts);
+    return () => window.removeEventListener('keydown', handleGlobalShortcuts);
+  }, [activeQueueIdx, queue, currentSubmission, maxGrade, gradeInput, teacherFeedback]);
+
   // Fetch Global Pending Queue from Backend
   const fetchGlobalPendingQueue = async (targetSubId?: string, preferredIndex?: number) => {
     if (!user) return;
@@ -64,13 +160,11 @@ export const GlobalReviewWorkspace: React.FC = () => {
       if (items.length > 0) {
         let selectedIdx = 0;
 
-        // If target submission ID is specified, locate it in the fresh queue
         if (targetSubId) {
           const matchIdx = items.findIndex((s) => s.submissionId === targetSubId);
           if (matchIdx !== -1) {
             selectedIdx = matchIdx;
           } else if (preferredIndex !== undefined) {
-            // Target submission was graded and removed; open item at previous index or clamp to last
             selectedIdx = Math.min(preferredIndex, items.length - 1);
           }
         }
@@ -103,8 +197,6 @@ export const GlobalReviewWorkspace: React.FC = () => {
       }, 100);
     }
   };
-
-  const currentSubmission = queue[activeQueueIdx] || null;
 
   // Execute Save Review
   const executeSaveReview = async (): Promise<boolean> => {
@@ -139,7 +231,6 @@ export const GlobalReviewWorkspace: React.FC = () => {
     }
   };
 
-  // Canvas LMS Workflow: Save & Automatically Advance to Next Submission in Queue
   const handleSaveAndNext = async () => {
     if (!currentSubmission) return;
     const currentSubId = currentSubmission.submissionId;
@@ -147,7 +238,6 @@ export const GlobalReviewWorkspace: React.FC = () => {
 
     const success = await executeSaveReview();
     if (success) {
-      // Refresh pending queue from backend and auto-open next queue item
       await fetchGlobalPendingQueue(currentSubId, currentIdx);
     }
   };
@@ -160,7 +250,7 @@ export const GlobalReviewWorkspace: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0B0F19] flex flex-col items-center justify-center text-zinc-400 p-6">
+      <div className="h-screen bg-[#0B0F19] flex flex-col items-center justify-center text-zinc-400 p-6">
         <Loader2 className="w-10 h-10 animate-spin text-amber-500 mb-4" />
         <p className="text-sm font-medium">Loading Canvas LMS Pending Queue...</p>
       </div>
@@ -185,10 +275,9 @@ export const GlobalReviewWorkspace: React.FC = () => {
     );
   }
 
-  // Queue Empty State (Canvas LMS "All Caught Up!")
   if (queue.length === 0 || !currentSubmission) {
     return (
-      <div className="min-h-screen bg-[#0B0F19] flex flex-col items-center justify-center p-6 text-center">
+      <div className="h-screen bg-[#0B0F19] flex flex-col items-center justify-center p-6 text-center">
         <div className="bg-[#111827] border border-[#1F2937] p-10 rounded-3xl max-w-md shadow-2xl space-y-4">
           <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-2xl">
             🎉
@@ -209,16 +298,16 @@ export const GlobalReviewWorkspace: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0B0F19] text-zinc-100 flex flex-col font-sans overflow-x-hidden">
+    <div className="h-screen bg-[#0B0F19] text-zinc-100 flex flex-col font-sans overflow-hidden">
       
-      {/* HEADER: Canvas LMS Queue Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-[#111827]/95 backdrop-blur-md border-b border-[#1F2937] px-4 py-2.5 shadow-xl flex flex-wrap items-center justify-between gap-3">
+      {/* HEADER BAR */}
+      <header className="shrink-0 bg-[#111827] border-b border-[#1F2937] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 z-30">
         
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate('/teacher/pending-reviews')}
             className="p-2 bg-[#1F2937] hover:bg-zinc-700 text-zinc-300 rounded-xl transition-colors shrink-0"
-            title="Back to Pending Reviews Queue"
+            title="Back to Pending Queue"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -226,7 +315,7 @@ export const GlobalReviewWorkspace: React.FC = () => {
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-base font-extrabold text-white truncate">{currentSubmission.taskTitle}</h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 border border-amber-500/30 text-amber-400 font-mono">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 border border-amber-500/30 text-amber-400 font-mono">
                 Queue [{activeQueueIdx + 1} / {queue.length}]
               </span>
             </div>
@@ -236,7 +325,7 @@ export const GlobalReviewWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Global Queue Selector Pill */}
+        {/* Global Queue Pills */}
         <div className="flex items-center gap-2 bg-[#161E2E] px-3 py-1.5 rounded-2xl border border-[#1F2937] overflow-x-auto max-w-md">
           {queue.map((item, idx) => (
             <button
@@ -253,13 +342,13 @@ export const GlobalReviewWorkspace: React.FC = () => {
           ))}
         </div>
 
-        {/* Nav Prev / Next Controls */}
+        {/* Controls */}
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => handleSelectQueueItem(activeQueueIdx - 1)}
             disabled={activeQueueIdx === 0}
             className="p-2 bg-[#1F2937] hover:bg-zinc-700 disabled:opacity-30 text-zinc-300 rounded-xl transition-colors"
-            title="Previous Queue Submission"
+            title="Previous (Ctrl + ←)"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -267,18 +356,18 @@ export const GlobalReviewWorkspace: React.FC = () => {
             onClick={() => handleSelectQueueItem(activeQueueIdx + 1)}
             disabled={activeQueueIdx === queue.length - 1}
             className="p-2 bg-[#1F2937] hover:bg-zinc-700 disabled:opacity-30 text-zinc-300 rounded-xl transition-colors"
-            title="Next Queue Submission"
+            title="Next (Ctrl + →)"
           >
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </header>
 
-      {/* WORKSPACE BODY */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+      {/* WORKSPACE BODY - EXACT FLEX FILL */}
+      <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
         
-        {/* Left: Code Viewer Panel */}
-        <div className="flex-1 flex flex-col bg-[#111827] border-r border-[#1F2937] overflow-hidden">
+        {/* Left: Code Viewer Panel (VS Code Fill) */}
+        <div className="flex-1 flex flex-col bg-[#111827] border-r border-[#1F2937] min-h-0 overflow-hidden">
           <div className="bg-[#1A2234] border-b border-[#1F2937] px-4 py-2 flex items-center justify-between shrink-0 text-xs font-bold text-white">
             <div className="flex items-center gap-2">
               <Code className="w-4 h-4 text-blue-400" />
@@ -289,7 +378,7 @@ export const GlobalReviewWorkspace: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex-1 relative overflow-hidden">
+          <div className="flex-1 min-h-0 relative">
             <Editor
               height="100%"
               language={(currentSubmission.language || 'cpp').toLowerCase() === 'c++' ? 'cpp' : (currentSubmission.language || 'cpp').toLowerCase()}
@@ -306,39 +395,88 @@ export const GlobalReviewWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Grading Form Panel */}
-        <div className="w-full md:w-96 bg-[#111827] flex flex-col p-6 space-y-6 shrink-0 border-l border-[#1F2937]">
+        {/* Right: Grading Form & Shortcuts Panel */}
+        <div className="w-full md:w-96 bg-[#111827] flex flex-col p-5 space-y-4 shrink-0 border-l border-[#1F2937] overflow-y-auto">
+          
           <div>
-            <h3 className="text-sm font-extrabold text-white uppercase tracking-wider mb-1">Evaluate Submission</h3>
-            <p className="text-xs text-zinc-400">Assign grade score and provide feedback for student review.</p>
+            <h3 className="text-sm font-black text-white uppercase tracking-wider mb-1 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-400" />
+              Evaluation & Shortcuts
+            </h3>
+            <p className="text-[11px] text-zinc-400">Keyboard: [1-5] presets, [Ctrl+S] Save & Next</p>
+          </div>
+
+          {/* Preset Grade Buttons */}
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
+              Quick Grade Presets (Key 1 - 5)
+            </label>
+            <div className="grid grid-cols-5 gap-1.5">
+              {gradePresets.map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => handleApplyGradePreset(preset.value)}
+                  className={`py-1.5 rounded-xl border text-xs font-mono font-bold transition-all flex flex-col items-center ${
+                    gradeInput === preset.value
+                      ? 'bg-amber-500 text-black border-amber-400 shadow-md'
+                      : 'bg-[#161E2E] text-zinc-300 border-[#1F2937] hover:border-zinc-500'
+                  }`}
+                >
+                  <span>{preset.label}</span>
+                  <span className="text-[9px] opacity-70">[{preset.keyboard}]</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Feedback Preset Templates */}
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
+              <span>Quick Comments Template</span>
+              <Sparkles className="w-3 h-3 text-amber-400" />
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {ARABIC_FEEDBACK_TEMPLATES.map((tmpl) => (
+                <button
+                  key={tmpl.title}
+                  type="button"
+                  onClick={() => handleSelectFeedbackTemplate(tmpl)}
+                  className="px-2.5 py-1 rounded-xl bg-[#161E2E] hover:bg-zinc-800 border border-[#1F2937] text-zinc-200 text-xs font-medium transition-all flex items-center gap-1.5"
+                >
+                  <span>{tmpl.emoji}</span>
+                  <span>{tmpl.title}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Grade Score Input */}
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider">
-              Grade Score (Max {currentSubmission.maxGrade} pts)
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider">
+              Grade Score (Max {maxGrade} pts)
             </label>
             <div className="flex items-center gap-3">
               <input
                 ref={gradeInputRef}
                 type="number"
                 min={0}
-                max={currentSubmission.maxGrade}
+                max={maxGrade}
                 value={gradeInput}
                 onChange={(e) => setGradeInput(Number(e.target.value))}
-                className="w-full bg-[#0B0F19] border border-[#1F2937] text-white font-mono text-lg font-black rounded-xl px-4 py-2.5 focus:outline-none focus:border-amber-500"
+                className="w-full bg-[#0B0F19] border border-[#1F2937] text-white font-mono text-base font-black rounded-xl px-3.5 py-2 focus:outline-none focus:border-amber-500"
               />
-              <span className="text-xs font-bold text-zinc-500 font-mono shrink-0">/ {currentSubmission.maxGrade}</span>
+              <span className="text-xs font-bold text-zinc-500 font-mono shrink-0">/ {maxGrade}</span>
             </div>
           </div>
 
           {/* Feedback Textarea */}
-          <div className="space-y-2 flex-1 flex flex-col">
-            <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider">
-              Teacher Feedback
+          <div className="space-y-1.5 flex-1 flex flex-col min-h-[100px]">
+            <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider">
+              Teacher Feedback Comments
             </label>
             <textarea
-              rows={5}
+              rows={4}
               placeholder="Write feedback comments for the student..."
               value={teacherFeedback}
               onChange={(e) => setTeacherFeedback(e.target.value)}
@@ -346,14 +484,14 @@ export const GlobalReviewWorkspace: React.FC = () => {
             />
           </div>
 
-          {/* Canvas LMS Save & Auto-Advance Button */}
+          {/* Save & Auto-Advance Button */}
           <button
             onClick={handleSaveAndNext}
             disabled={saving}
-            className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white font-extrabold text-xs rounded-xl shadow-xl shadow-amber-950/40 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3 bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white font-extrabold text-xs rounded-xl shadow-xl shadow-amber-950/40 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save & Next Submission ➔
+            Save & Next Submission (Ctrl + S) ➔
           </button>
         </div>
 

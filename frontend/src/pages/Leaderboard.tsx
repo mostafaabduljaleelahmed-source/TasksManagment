@@ -3,6 +3,7 @@ import { useAuth, API_URL } from '../context/AuthContext';
 import { getScoreColorStyle } from '../utils/scoreColor';
 import { LeaderboardSkeleton } from '../components/SkeletonLoaders';
 import { EmptyState } from '../components/EmptyState';
+import { StudentGradeBreakdownModal } from '../components/StudentGradeBreakdownModal';
 import {
   Trophy, Medal, Filter, Crown
 } from 'lucide-react';
@@ -29,6 +30,7 @@ export const Leaderboard: React.FC = () => {
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [rankingMode, setRankingMode] = useState<'grade' | 'completed'>('grade');
+  const [selectedStudentForModal, setSelectedStudentForModal] = useState<{ id: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -287,9 +289,15 @@ export const Leaderboard: React.FC = () => {
                         </td>
                         <td className="p-3.5 font-mono text-zinc-400">{item.studentRegisterId}</td>
                         <td className="p-3.5 font-extrabold text-white">
-                          <span className={`px-2.5 py-1 rounded-md font-mono text-xs font-bold ${getScoreColorStyle(item.averageGrade).badgeStyle}`}>
-                            {item.averageGrade}%
-                          </span>
+                          <button
+                            onClick={() => setSelectedStudentForModal({ id: item.studentId, name: item.studentName })}
+                            className="hover:scale-105 transition-transform focus:outline-none"
+                            title="Click to view detailed task grade breakdown"
+                          >
+                            <span className={`px-2.5 py-1 rounded-md font-mono text-xs font-bold ${getScoreColorStyle(item.averageGrade).badgeStyle}`}>
+                              {item.averageGrade}% 📊
+                            </span>
+                          </button>
                         </td>
                         <td className="p-3.5 font-semibold text-zinc-300">
                           {item.completedTasks} Tasks
@@ -343,6 +351,16 @@ export const Leaderboard: React.FC = () => {
             </div>
           </>
         )}
+
+      {/* STUDENT GRADE BREAKDOWN MODAL */}
+      {selectedStudentForModal && (
+        <StudentGradeBreakdownModal
+          studentId={selectedStudentForModal.id}
+          studentName={selectedStudentForModal.name}
+          courseId={selectedCourseId || undefined}
+          onClose={() => setSelectedStudentForModal(null)}
+        />
+      )}
     </div>
   );
 };
