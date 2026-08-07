@@ -6,7 +6,8 @@ import { useToast } from '../context/ToastContext';
 import { useTranslation } from '../utils/i18n';
 import { TableRowSkeleton } from '../components/SkeletonLoaders';
 import { EmptyState } from '../components/EmptyState';
-import { Search, Filter, Loader2, KeyRound } from 'lucide-react';
+import { StudentDetailsView } from './StudentDetailsView';
+import { Search, Filter, Loader2, KeyRound, Eye } from 'lucide-react';
 
 interface StudentRosterItem {
   studentId: string;
@@ -35,6 +36,7 @@ export const TeacherStudents: React.FC = () => {
 
   // Reset password state
   const [resetStudent, setResetStudent] = useState<StudentRosterItem | null>(null);
+  const [selectedStudentView, setSelectedStudentView] = useState<StudentRosterItem | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
 
@@ -231,6 +233,14 @@ export const TeacherStudents: React.FC = () => {
                       <td className="px-4 py-3.5 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
+                            onClick={() => setSelectedStudentView(s)}
+                            className="px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
+                            title="View Submissions & Profile"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View Tasks</span>
+                          </button>
+                          <button
                             onClick={() => setResetStudent(s)}
                             className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1"
                             title="Reset Password"
@@ -328,6 +338,33 @@ export const TeacherStudents: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Student Details Inspection Modal */}
+      {selectedStudentView && (
+        <StudentDetailsView
+          courseId={selectedStudentView.courseId}
+          courseName={selectedStudentView.groupName}
+          student={{
+            studentId: selectedStudentView.studentId,
+            name: selectedStudentView.name,
+            email: selectedStudentView.email,
+            studentRegisterId: selectedStudentView.studentRegisterId,
+            avatarUrl: selectedStudentView.avatarUrl,
+            averageGrade: selectedStudentView.averageGrade,
+            completedTasks: selectedStudentView.completedAssignments,
+            pendingTasks: selectedStudentView.pendingAssignments,
+            missingTasks: 0,
+            totalTasks: selectedStudentView.completedAssignments + selectedStudentView.pendingAssignments,
+            progressPercentage: 100,
+            status: 'Active',
+          }}
+          onClose={() => setSelectedStudentView(null)}
+          onStudentRemoved={() => {
+            setSelectedStudentView(null);
+            fetchStudents();
+          }}
+        />
       )}
     </div>
   );
