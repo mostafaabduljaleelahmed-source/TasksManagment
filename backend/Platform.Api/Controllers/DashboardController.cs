@@ -1252,18 +1252,19 @@ public class DashboardController : ControllerBase
 
         var taskIds = tasks.Select(t => t.Id).ToList();
 
-        // Get submissions that are pending manual teacher review (Status == Pending and !IsReviewed)
-        var pendingSubsRaw = await _context.Submissions
+        // Fetch all submissions for these tasks to evaluate latest attempt status per student/task
+        var allTaskSubs = await _context.Submissions
             .Include(s => s.Student)
             .Include(s => s.Task)
             .ThenInclude(t => t.Session)
             .ThenInclude(sess => sess.Course)
-            .Where(s => taskIds.Contains(s.TaskId) && s.Status == SubmissionStatus.Pending && !s.IsReviewed)
+            .Where(s => taskIds.Contains(s.TaskId))
             .ToListAsync(cancellationToken);
 
-        var pendingSubs = _gradingCalculator.GetPendingReviews(pendingSubsRaw)
+        var pendingSubs = allTaskSubs
             .GroupBy(s => new { s.StudentId, s.TaskId })
-            .Select(g => g.OrderByDescending(s => s.SubmittedAt).First())
+            .Select(g => g.OrderByDescending(s => s.SubmittedAt).ThenByDescending(s => s.AttemptNumber).First())
+            .Where(latest => latest.Status == SubmissionStatus.Pending && !latest.IsReviewed)
             .ToList();
 
         var items = pendingSubs.Select(s => new
