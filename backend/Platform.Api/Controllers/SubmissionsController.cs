@@ -125,7 +125,19 @@ public class SubmissionsController : ControllerBase
             .ThenInclude(sess => sess.Course)
             .FirstOrDefaultAsync(s => s.Id == submissionId, cancellationToken);
 
-        if (submission == null) return NotFound(new { message = "Submission not found." });
+        var allAttempts = await context.Submissions
+            .Where(s => s.StudentId == submission.StudentId && s.TaskId == submission.TaskId)
+            .OrderByDescending(s => s.AttemptNumber)
+            .Select(s => new
+            {
+                submissionId = s.Id,
+                attemptNumber = s.AttemptNumber,
+                submittedAt = s.SubmittedAt,
+                grade = s.Grade,
+                isReviewed = s.IsReviewed,
+                status = s.Status.ToString()
+            })
+            .ToListAsync(cancellationToken);
 
         return Ok(new
         {
@@ -149,7 +161,8 @@ public class SubmissionsController : ControllerBase
             status = submission.Status.ToString(),
             isReviewed = submission.IsReviewed,
             publicTestCasesJson = submission.Task.PublicTestCasesJson,
-            attachmentsJson = submission.Task.AttachmentsJson
+            attachmentsJson = submission.Task.AttachmentsJson,
+            attempts = allAttempts
         });
     }
 

@@ -981,14 +981,17 @@ public class DashboardController : ControllerBase
             int totalAttempts = taskSubs.Count;
             int highestAttemptNumber = highestSub?.AttemptNumber ?? (totalAttempts > 0 ? taskSubs.Max(s => s.AttemptNumber) : 0);
 
+            var latestSub = highestSub ?? taskSubs.OrderByDescending(s => s.SubmittedAt).FirstOrDefault();
+
             taskBreakdowns.Add(new
             {
                 TaskId = task.Id,
                 TaskName = task.Title,
+                SubmissionId = latestSub?.Id,
                 Score = score,
                 MaxScore = maxScore,
                 Percentage = percentage,
-                SubmissionDate = highestSub?.SubmittedAt ?? (taskSubs.OrderByDescending(s => s.SubmittedAt).FirstOrDefault()?.SubmittedAt),
+                SubmissionDate = latestSub?.SubmittedAt,
                 Attempts = totalAttempts,
                 HighestAttempt = highestAttemptNumber,
                 IsCompleted = highestSub != null,

@@ -1,12 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Editor from '@monaco-editor/react';
 import {
   AlertCircle, ArrowLeft, ArrowRight, Save, Loader2, Code, Sparkles,
-  RotateCcw, FileText
+  RotateCcw, FileText, ChevronDown, Lock, Edit3
 } from 'lucide-react';
+
+interface AttemptHistoryItem {
+  submissionId: string;
+  attemptNumber: number;
+  submittedAt: string;
+  grade?: number | null;
+  isReviewed: boolean;
+  status: string;
+}
 
 interface PendingSubmissionQueueItem {
   submissionId: string;
@@ -30,6 +39,7 @@ interface PendingSubmissionQueueItem {
   isReviewed: boolean;
   publicTestCasesJson?: string | null;
   attachmentsJson?: string | null;
+  attempts?: AttemptHistoryItem[];
 }
 
 interface FeedbackTemplate {
@@ -50,6 +60,9 @@ const ARABIC_FEEDBACK_TEMPLATES: FeedbackTemplate[] = [
 
 export const GlobalReviewWorkspace: React.FC = () => {
   const { submissionId } = useParams<{ submissionId: string }>();
+  const [searchParams] = useSearchParams();
+  const isExplicitReviewMode = searchParams.get('mode') === 'review';
+
   const { user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
@@ -60,6 +73,9 @@ export const GlobalReviewWorkspace: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Single submission review mode state when loaded directly or from breakdown
+  const [singleSubmission, setSingleSubmission] = useState<PendingSubmissionQueueItem | null>(null);
+
   // Form inputs & feedback state (presetFeedback vs manualFeedback)
   const [gradeInput, setGradeInput] = useState<number>(0);
   const [selectedPresetTitle, setSelectedPresetTitle] = useState<string | null>(null);
@@ -67,8 +83,18 @@ export const GlobalReviewWorkspace: React.FC = () => {
   const [manualFeedback, setManualFeedback] = useState<string>('');
   const gradeInputRef = useRef<HTMLInputElement>(null);
 
-  const currentSubmission = queue[activeQueueIdx] || null;
+  const isReviewMode = isExplicitReviewMode || singleSubmission !== null;
+  const currentSubmission = isReviewMode ? singleSubmission : (queue[activeQueueIdx] || null);
   const maxGrade = currentSubmission?.maxGrade || 10;
+
+  // Determine if active displayed attempt is the latest attempt (editable) or an older attempt (read-only)
+  const isLatestAttempt = React.useMemo(() => {
+    if (!currentSubmission || !currentSubmission.attempts || currentSubmission.attempts.length === 0) return true;
+    const highestAttemptNum = Math.max(...currentSubmission.attempts.map((a) => a.attemptNumber));
+    return currentSubmission.attemptNumber >= highestAttemptNum;
+  }, [currentSubmission]);
+
+  const isFormReadOnly = isReviewMode && !isLatestAttempt;
 
   // Derived full feedback text displayed in textarea and sent to API
   const teacherFeedback = React.useMemo(() => {
@@ -219,9 +245,33 @@ export const GlobalReviewWorkspace: React.FC = () => {
     }
   };
 
+  // Fetch single submission details when in Review Mode
+  const fetchSingleSubmission = async (subId: string) => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/submissions/${subId}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (!res.ok) throw new Error('Failed to load submission for Review Mode');
+      const item: PendingSubmissionQueueItem = await res.json();
+      setSingleSubmission(item);
+      populateGradingForm(item);
+    } catch (err: any) {
+      setError(err.message || 'Error loading submission');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchGlobalPendingQueue(submissionId);
-  }, [user, submissionId]);
+    if (isExplicitReviewMode && submissionId) {
+      fetchSingleSubmission(submissionId);
+    } else {
+      fetchGlobalPendingQueue(submissionId);
+    }
+  }, [user, submissionId, isExplicitReviewMode]);
 
   const populateGradingForm = (item: PendingSubmissionQueueItem) => {
     if (item) {
@@ -289,11 +339,18 @@ export const GlobalReviewWorkspace: React.FC = () => {
     populateGradingForm(queue[idx]);
   };
 
+  // Switch active attempt view for multi-attempt tasks
+  const handleSelectAttempt = (attSubId: string) => {
+    fetchSingleSubmission(attSubId);
+  };
+
   if (loading) {
     return (
       <div className="h-screen bg-[#0B0F19] flex flex-col items-center justify-center text-zinc-400 p-6">
         <Loader2 className="w-10 h-10 animate-spin text-amber-500 mb-4" />
-        <p className="text-sm font-medium">Loading Canvas LMS Pending Queue...</p>
+        <p className="text-sm font-medium">
+          {isReviewMode ? 'Loading Submission for Review Mode...' : 'Loading Canvas LMS Pending Queue...'}
+        </p>
       </div>
     );
   }
@@ -303,7 +360,7 @@ export const GlobalReviewWorkspace: React.FC = () => {
       <div className="p-8 max-w-4xl mx-auto space-y-4">
         <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-center">
           <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
-          <h2 className="text-lg font-bold">Failed to load Pending Queue</h2>
+          <h2 className="text-lg font-bold">Failed to load Submission</h2>
           <p className="text-xs mt-1">{error}</p>
           <button
             onClick={() => navigate('/teacher/pending-reviews')}
@@ -316,7 +373,7 @@ export const GlobalReviewWorkspace: React.FC = () => {
     );
   }
 
-  if (queue.length === 0 || !currentSubmission) {
+  if (!isReviewMode && (queue.length === 0 || !currentSubmission)) {
     return (
       <div className="h-screen bg-[#0B0F19] flex flex-col items-center justify-center p-6 text-center">
         <div className="bg-[#111827] border border-[#1F2937] p-10 rounded-3xl max-w-md shadow-2xl space-y-4">
@@ -338,19 +395,21 @@ export const GlobalReviewWorkspace: React.FC = () => {
     );
   }
 
+  if (!currentSubmission) return null;
+
   const remainingCount = queue.length;
 
   return (
     <div className="h-full w-full overflow-hidden bg-[#0B0F19] text-zinc-100 flex flex-col font-sans">
       
-      {/* 1. TOP HEADER (Student Name, Task Name, Attempt, Queue Position, Remaining Reviews) */}
+      {/* 1. TOP HEADER (Student Name, Task Name, Attempt, Queue Position / Mode Badge) */}
       <header className="shrink-0 bg-[#111827] border-b border-[#1F2937] px-4 py-2.5 flex items-center justify-between gap-3 z-30">
         
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate('/teacher/pending-reviews')}
+            onClick={() => navigate(-1)}
             className="p-2 bg-[#1F2937] hover:bg-zinc-700 text-zinc-300 rounded-xl transition-colors shrink-0"
-            title="Back to Pending Queue"
+            title="Back"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -362,6 +421,12 @@ export const GlobalReviewWorkspace: React.FC = () => {
               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/15 border border-blue-500/30 text-blue-400 font-mono shrink-0">
                 {currentSubmission.groupName}
               </span>
+              {isReviewMode && (
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/20 border border-purple-500/30 text-purple-300 font-mono shrink-0 flex items-center gap-1">
+                  <Edit3 className="w-3 h-3" />
+                  Review Mode
+                </span>
+              )}
             </div>
             <p className="text-xs text-zinc-400 flex items-center gap-2 truncate">
               Task: <strong className="text-zinc-200 truncate">{currentSubmission.taskTitle}</strong>
@@ -369,42 +434,71 @@ export const GlobalReviewWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Queue Metadata Pill Badges (Attempt X, Position, Remaining) */}
+        {/* Attempt Selector Dropdown & Queue Position Pills */}
         <div className="hidden sm:flex items-center gap-2.5 bg-[#161E2E] px-3 py-1.5 rounded-2xl border border-[#1F2937] text-xs font-mono font-bold shrink-0">
-          <span className="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
-            Attempt #{currentSubmission.attemptNumber}
-          </span>
-          <span className="text-zinc-500">•</span>
-          <span className="text-purple-400">
-            Queue: #{activeQueueIdx + 1} / {queue.length}
-          </span>
-          <span className="text-zinc-500">•</span>
-          <span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
-            {remainingCount} Remaining
-          </span>
+          
+          {/* Attempt Selector Dropdown if multiple attempts exist */}
+          {currentSubmission.attempts && currentSubmission.attempts.length > 1 ? (
+            <div className="relative flex items-center">
+              <select
+                value={currentSubmission.submissionId}
+                onChange={(e) => handleSelectAttempt(e.target.value)}
+                className="bg-[#0B0F19] text-amber-400 font-mono text-xs font-bold px-3 py-1 rounded-xl border border-amber-500/30 focus:outline-none focus:border-amber-400 cursor-pointer appearance-none pr-7"
+              >
+                {currentSubmission.attempts.map((att) => {
+                  const isLatest = att.attemptNumber === Math.max(...currentSubmission.attempts!.map(a => a.attemptNumber));
+                  return (
+                    <option key={att.submissionId} value={att.submissionId} className="bg-[#111827] text-white">
+                      Attempt #{att.attemptNumber} {isLatest ? '(Reviewed) ⭐' : '(Read Only)'}
+                    </option>
+                  );
+                })}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-amber-400 absolute right-2 pointer-events-none" />
+            </div>
+          ) : (
+            <span className="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+              Attempt #{currentSubmission.attemptNumber}
+            </span>
+          )}
+
+          {!isReviewMode && (
+            <>
+              <span className="text-zinc-500">•</span>
+              <span className="text-purple-400">
+                Queue: #{activeQueueIdx + 1} / {queue.length}
+              </span>
+              <span className="text-zinc-500">•</span>
+              <span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
+                {remainingCount} Remaining
+              </span>
+            </>
+          )}
         </div>
 
-        {/* Prev / Next Nav Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => handleSelectQueueItem(activeQueueIdx - 1)}
-            disabled={activeQueueIdx === 0}
-            className="px-3 py-1.5 bg-[#1F2937] hover:bg-zinc-700 disabled:opacity-30 text-zinc-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
-            title="Previous (Ctrl + ←)"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Previous</span>
-          </button>
-          <button
-            onClick={() => handleSelectQueueItem(activeQueueIdx + 1)}
-            disabled={activeQueueIdx === queue.length - 1}
-            className="px-3 py-1.5 bg-[#1F2937] hover:bg-zinc-700 disabled:opacity-30 text-zinc-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
-            title="Next (Ctrl + →)"
-          >
-            <span>Next</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        {/* Prev / Next Nav Buttons (Active in Pending Mode) */}
+        {!isReviewMode && (
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => handleSelectQueueItem(activeQueueIdx - 1)}
+              disabled={activeQueueIdx === 0}
+              className="px-3 py-1.5 bg-[#1F2937] hover:bg-zinc-700 disabled:opacity-30 text-zinc-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+              title="Previous (Ctrl + ←)"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Previous</span>
+            </button>
+            <button
+              onClick={() => handleSelectQueueItem(activeQueueIdx + 1)}
+              disabled={activeQueueIdx === queue.length - 1}
+              className="px-3 py-1.5 bg-[#1F2937] hover:bg-zinc-700 disabled:opacity-30 text-zinc-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+              title="Next (Ctrl + →)"
+            >
+              <span>Next</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </header>
 
       {/* 2. FIXED ACTION TOOLBAR (Save, Save & Next, Reset Review, Quick Presets) */}
@@ -496,10 +590,17 @@ export const GlobalReviewWorkspace: React.FC = () => {
         <div className="w-full md:w-[390px] lg:w-[410px] shrink-0 bg-[#111827] flex flex-col p-4 space-y-4 border-l border-[#1F2937] overflow-y-auto">
           
           {/* Grade Score Section */}
-          <div className="space-y-1.5 bg-[#161E2E] p-3.5 rounded-2xl border border-[#1F2937]">
-            <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider">
-              Grade Score (Max {maxGrade} pts)
-            </label>
+          <div className={`space-y-1.5 p-3.5 rounded-2xl border ${isFormReadOnly ? 'bg-zinc-900/50 border-zinc-800 opacity-60' : 'bg-[#161E2E] border-[#1F2937]'}`}>
+            <div className="flex justify-between items-center">
+              <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                Grade Score (Max {maxGrade} pts)
+              </label>
+              {isFormReadOnly && (
+                <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
+                  <Lock className="w-3 h-3" /> Read Only (Older Attempt)
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-3">
               <input
                 ref={gradeInputRef}
@@ -507,8 +608,9 @@ export const GlobalReviewWorkspace: React.FC = () => {
                 min={0}
                 max={maxGrade}
                 value={gradeInput}
+                disabled={isFormReadOnly}
                 onChange={(e) => setGradeInput(Number(e.target.value))}
-                className="w-full bg-[#0B0F19] border border-[#1F2937] text-white font-mono text-lg font-black rounded-xl px-3.5 py-2 focus:outline-none focus:border-amber-500"
+                className="w-full bg-[#0B0F19] border border-[#1F2937] text-white font-mono text-lg font-black rounded-xl px-3.5 py-2 focus:outline-none focus:border-amber-500 disabled:opacity-50"
               />
               <span className="text-xs font-bold text-zinc-500 font-mono shrink-0">/ {maxGrade}</span>
             </div>
@@ -527,8 +629,9 @@ export const GlobalReviewWorkspace: React.FC = () => {
                   <button
                     key={tmpl.title}
                     type="button"
+                    disabled={isFormReadOnly}
                     onClick={() => handleSelectFeedbackTemplate(tmpl)}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border ${
+                    className={`px-2.5 py-1 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border disabled:opacity-30 ${
                       isActive
                         ? 'bg-amber-500 text-black border-amber-400 font-bold shadow-md'
                         : 'bg-[#161E2E] hover:bg-zinc-800 border-[#1F2937] text-zinc-200'
@@ -549,10 +652,11 @@ export const GlobalReviewWorkspace: React.FC = () => {
             </label>
             <textarea
               rows={4}
-              placeholder="Write feedback comments for the student..."
+              disabled={isFormReadOnly}
+              placeholder={isFormReadOnly ? "Older attempt feedback is read-only..." : "Write feedback comments for the student..."}
               value={teacherFeedback}
               onChange={(e) => handleTextareaChange(e.target.value)}
-              className="w-full flex-1 bg-[#0B0F19] border border-[#1F2937] text-white text-xs rounded-xl p-3 focus:outline-none focus:border-amber-500"
+              className="w-full flex-1 bg-[#0B0F19] border border-[#1F2937] text-white text-xs rounded-xl p-3 focus:outline-none focus:border-amber-500 disabled:opacity-50"
             />
           </div>
 

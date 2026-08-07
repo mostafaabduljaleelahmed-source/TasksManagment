@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
-import { X, Award, CheckCircle2, Clock, TrendingUp, Loader2, Sparkles, BarChart2 } from 'lucide-react';
+import { X, Award, CheckCircle2, Clock, TrendingUp, Loader2, Sparkles, BarChart2, FileCode } from 'lucide-react';
 
 interface TaskItemBreakdown {
   taskId: string;
   taskName: string;
+  submissionId?: string | null;
   score: number;
   maxScore: number;
   percentage: number;
@@ -37,6 +39,7 @@ interface Props {
 
 export const StudentGradeBreakdownModal: React.FC<Props> = ({ studentId, studentName, courseId, onClose }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState<StudentBreakdownData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -207,6 +210,7 @@ export const StudentGradeBreakdownModal: React.FC<Props> = ({ studentId, student
                           <th className="py-3 px-4 font-mono">%</th>
                           <th className="py-3 px-4">Attempts</th>
                           <th className="py-3 px-4">Submission Date</th>
+                          <th className="py-3 px-4 text-right">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#1F2937]">
@@ -233,6 +237,22 @@ export const StudentGradeBreakdownModal: React.FC<Props> = ({ studentId, student
                             </td>
                             <td className="py-3 px-4 text-zinc-400 text-[11px]">
                               {t.submissionDate ? new Date(t.submissionDate).toLocaleDateString() : '-'}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              {t.submissionId ? (
+                                <button
+                                  onClick={() => {
+                                    onClose();
+                                    navigate(`/review-submission/${t.submissionId}?mode=review`);
+                                  }}
+                                  className="px-3 py-1 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 hover:text-amber-300 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 ml-auto"
+                                >
+                                  <FileCode className="w-3.5 h-3.5" />
+                                  <span>Review</span>
+                                </button>
+                              ) : (
+                                <span className="text-[10px] text-zinc-500 italic">No Submission</span>
+                              )}
                             </td>
                           </tr>
                         ))}
