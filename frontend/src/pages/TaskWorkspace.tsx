@@ -631,8 +631,8 @@ export const TaskWorkspace: React.FC = () => {
                   <p className="text-zinc-500 text-xs py-4">No submissions made yet.</p>
                 ) : (
                   <div className="space-y-2.5">
-                    {submissions.map((sub) => {
-                      const isGraded = !!(sub.teacherFeedback || sub.grade > 0);
+                    {submissions.map((sub: any) => {
+                      const isGraded = sub.isReviewed || sub.status === 'Graded' || (sub.grade > 0 && sub.teacherFeedback);
                       return (
                         <div
                           key={sub.id}

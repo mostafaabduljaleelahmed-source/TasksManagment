@@ -83,14 +83,15 @@ public class DashboardController : ControllerBase
                     .Where(s => s.StudentId == studentId && s.TaskId == task.Id)
                     .ToList();
 
-                if (!studentSubmissions.Any())
+                var bestSubmission = _gradingCalculator.GetHighestGradedSubmission(studentSubmissions);
+
+                if (bestSubmission == null)
                 {
                     pendingSubmissions++;
                 }
                 else
                 {
                     completedTasksCount++;
-                    var bestSubmission = studentSubmissions.OrderByDescending(s => s.Grade).First();
                     totalGradesSum += GradeCalculator.CalculatePercentage(bestSubmission.Grade, task.MaxGrade);
                     gradesCount++;
 
@@ -723,7 +724,12 @@ public class DashboardController : ControllerBase
         var taskPerformance = tasks.Select(task =>
         {
             var taskSubs = submissions.Where(s => s.TaskId == task.Id).ToList();
-            var studentBestPcts = taskSubs.GroupBy(s => s.StudentId).Select(g => GradeCalculator.CalculatePercentage(g.Max(s => s.Grade), task.MaxGrade)).ToList();
+            var studentBestPcts = taskSubs
+                .GroupBy(s => s.StudentId)
+                .Select(g => _gradingCalculator.GetHighestGradedSubmission(g))
+                .Where(sub => sub != null)
+                .Select(sub => GradeCalculator.CalculatePercentage(sub!.Grade, task.MaxGrade))
+                .ToList();
             double avgPct = studentBestPcts.Any() ? studentBestPcts.Average() : 0;
             return new
             {
@@ -744,7 +750,7 @@ public class DashboardController : ControllerBase
                 StudentName = g.Key.StudentName,
                 RegisterId = g.Key.RegisterId ?? "-",
                 SubmissionsCount = g.Count(),
-                AverageGrade = Math.Round(g.Average(s => GradeCalculator.CalculatePercentage(s.Grade, s.Task?.MaxGrade ?? 100)), 1)
+                AverageGrade = _gradingCalculator.CalculateStudentAverageGrade(tasks, g.ToList())
             })
             .OrderByDescending(s => s.SubmissionsCount)
             .Take(5)
@@ -767,7 +773,8 @@ public class DashboardController : ControllerBase
             })
             .ToList();
 
-        double overallAvg = submissions.Any() ? Math.Round(submissions.Average(s => s.Grade), 1) : 0;
+        var reviewedSubs = submissions.Where(s => s.IsReviewed || s.Status == SubmissionStatus.Graded).ToList();
+        double overallAvg = reviewedSubs.Any() ? Math.Round(reviewedSubs.Average(s => s.Grade), 1) : 0;
 
         return Ok(new
         {
