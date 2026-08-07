@@ -60,15 +60,25 @@ export const GlobalReviewWorkspace: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form inputs
+  // Form inputs & feedback state (presetFeedback vs manualFeedback)
   const [gradeInput, setGradeInput] = useState<number>(0);
-  const [teacherFeedback, setTeacherFeedback] = useState<string>('');
+  const [selectedPresetTitle, setSelectedPresetTitle] = useState<string | null>(null);
+  const [presetFeedback, setPresetFeedback] = useState<string>('');
+  const [manualFeedback, setManualFeedback] = useState<string>('');
   const gradeInputRef = useRef<HTMLInputElement>(null);
 
   const currentSubmission = queue[activeQueueIdx] || null;
   const maxGrade = currentSubmission?.maxGrade || 10;
 
-  // Quick Grade percentage presets (100%, 75%, 50%, 25%, 0%)
+  // Derived full feedback text displayed in textarea and sent to API
+  const teacherFeedback = React.useMemo(() => {
+    if (presetFeedback && manualFeedback) {
+      return `${presetFeedback}\n${manualFeedback}`;
+    }
+    return presetFeedback || manualFeedback;
+  }, [presetFeedback, manualFeedback]);
+
+  // Grade percentage presets (100%, 75%, 50%, 25%, 0%)
   const gradePresets = React.useMemo(() => {
     return [
       { label: '100%', value: maxGrade, keyboard: '5' },
@@ -85,15 +95,42 @@ export const GlobalReviewWorkspace: React.FC = () => {
   };
 
   const handleSelectFeedbackTemplate = (template: FeedbackTemplate) => {
-    setTeacherFeedback((prev) => (prev ? `${prev}\n- ${template.text}` : template.text));
+    // If clicking the currently selected active preset, ignore
+    if (selectedPresetTitle === template.title) {
+      return;
+    }
+
+    // Mutually exclusive replace of preset feedback while preserving manual notes
+    setSelectedPresetTitle(template.title);
+    setPresetFeedback(template.text);
+
+    // Apply suggested grade score based on template ratio
     const suggestedGrade = Math.round(maxGrade * template.ratio * 10) / 10;
     setGradeInput(suggestedGrade);
     toast.success(`Preset Applied: ${template.title} (${suggestedGrade}/${maxGrade})`);
   };
 
+  const handleTextareaChange = (value: string) => {
+    // When editing textarea manually, preserve preset prefix if present
+    if (presetFeedback && value.startsWith(presetFeedback)) {
+      let suffix = value.slice(presetFeedback.length);
+      if (suffix.startsWith('\n')) {
+        suffix = suffix.slice(1);
+      }
+      setManualFeedback(suffix);
+    } else {
+      // If teacher edited or deleted the preset prefix, clear active preset selection
+      setSelectedPresetTitle(null);
+      setPresetFeedback('');
+      setManualFeedback(value);
+    }
+  };
+
   const handleResetReviewForm = () => {
     setGradeInput(currentSubmission?.grade ?? maxGrade);
-    setTeacherFeedback(currentSubmission?.teacherFeedback ?? '');
+    setSelectedPresetTitle(null);
+    setPresetFeedback('');
+    setManualFeedback(currentSubmission?.teacherFeedback ?? '');
     toast.success('Reset evaluation form to initial state');
   };
 
@@ -190,7 +227,9 @@ export const GlobalReviewWorkspace: React.FC = () => {
     if (item) {
       const initialGrade = item.grade !== null && item.grade !== undefined ? item.grade : item.maxGrade;
       setGradeInput(initialGrade);
-      setTeacherFeedback(item.teacherFeedback || '');
+      setSelectedPresetTitle(null);
+      setPresetFeedback('');
+      setManualFeedback(item.teacherFeedback || '');
 
       setTimeout(() => {
         if (gradeInputRef.current) {
@@ -482,17 +521,24 @@ export const GlobalReviewWorkspace: React.FC = () => {
               <Sparkles className="w-3 h-3 text-amber-400" />
             </label>
             <div className="flex flex-wrap gap-1.5">
-              {ARABIC_FEEDBACK_TEMPLATES.map((tmpl) => (
-                <button
-                  key={tmpl.title}
-                  type="button"
-                  onClick={() => handleSelectFeedbackTemplate(tmpl)}
-                  className="px-2.5 py-1 rounded-xl bg-[#161E2E] hover:bg-zinc-800 border border-[#1F2937] text-zinc-200 text-xs font-medium transition-all flex items-center gap-1.5"
-                >
-                  <span>{tmpl.emoji}</span>
-                  <span>{tmpl.title}</span>
-                </button>
-              ))}
+              {ARABIC_FEEDBACK_TEMPLATES.map((tmpl) => {
+                const isActive = selectedPresetTitle === tmpl.title;
+                return (
+                  <button
+                    key={tmpl.title}
+                    type="button"
+                    onClick={() => handleSelectFeedbackTemplate(tmpl)}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border ${
+                      isActive
+                        ? 'bg-amber-500 text-black border-amber-400 font-bold shadow-md'
+                        : 'bg-[#161E2E] hover:bg-zinc-800 border-[#1F2937] text-zinc-200'
+                    }`}
+                  >
+                    <span>{tmpl.emoji}</span>
+                    <span>{tmpl.title}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -505,7 +551,7 @@ export const GlobalReviewWorkspace: React.FC = () => {
               rows={4}
               placeholder="Write feedback comments for the student..."
               value={teacherFeedback}
-              onChange={(e) => setTeacherFeedback(e.target.value)}
+              onChange={(e) => handleTextareaChange(e.target.value)}
               className="w-full flex-1 bg-[#0B0F19] border border-[#1F2937] text-white text-xs rounded-xl p-3 focus:outline-none focus:border-amber-500"
             />
           </div>
