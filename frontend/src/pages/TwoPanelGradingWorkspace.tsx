@@ -449,21 +449,13 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     }
   };
 
-  // Save & Next (💾 حفظ والانتقال للتسليم التالي في القائمة)
+  // Save & Next (💾 حفظ وإعادة التحميل من السيرفر كمرجع أصلي)
   const handleSaveAndNext = async () => {
     const success = await executeSaveSubmission();
-    if (success && data) {
-      // Remove graded submission from active list and immediately load next submission
-      const remainingSubs = data.submissions.filter((_, idx) => idx !== activeStudentIdx);
-      if (remainingSubs.length > 0) {
-        const nextIdx = activeStudentIdx < remainingSubs.length ? activeStudentIdx : 0;
-        setData({ ...data, submissions: remainingSubs });
-        setActiveStudentIdx(nextIdx);
-        populateGradingForm(remainingSubs[nextIdx], data.maxGrade);
-      } else {
-        toast.success('🎉 تم تقييم جميع التسليمات المعلقة بنجاح!');
-        navigate('/teacher/pending-reviews');
-      }
+    if (success) {
+      // Re-fetch backend data to guarantee server is single source of truth
+      await fetchData();
+      toast.success('تم التحديث تلقائياً من السيرفر!');
     }
   };
 
