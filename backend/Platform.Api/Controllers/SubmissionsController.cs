@@ -109,6 +109,50 @@ public class SubmissionsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("{submissionId}")]
+    public async Task<IActionResult> GetSubmissionById(Guid submissionId, [FromServices] IApplicationDbContext context, CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (role != "Teacher" && role != "Admin")
+        {
+            return Forbid("Only teachers and admins can view submission details.");
+        }
+
+        var submission = await context.Submissions
+            .Include(s => s.Student)
+            .Include(s => s.Task)
+            .ThenInclude(t => t.Session)
+            .ThenInclude(sess => sess.Course)
+            .FirstOrDefaultAsync(s => s.Id == submissionId, cancellationToken);
+
+        if (submission == null) return NotFound(new { message = "Submission not found." });
+
+        return Ok(new
+        {
+            submissionId = submission.Id,
+            studentId = submission.StudentId,
+            studentName = submission.Student.Name,
+            studentRegisterId = submission.Student.StudentId ?? "-",
+            studentAvatarUrl = submission.Student.AvatarUrl,
+            taskId = submission.TaskId,
+            taskTitle = submission.Task.Title,
+            language = submission.Task.Language,
+            description = submission.Task.Description,
+            maxGrade = submission.Task.MaxGrade,
+            deadline = submission.Task.Deadline,
+            groupName = submission.Task.Session.Course.Name,
+            submittedAt = submission.SubmittedAt,
+            attemptNumber = submission.AttemptNumber,
+            code = submission.Code,
+            grade = submission.Grade,
+            teacherFeedback = submission.TeacherFeedback,
+            status = submission.Status.ToString(),
+            isReviewed = submission.IsReviewed,
+            publicTestCasesJson = submission.Task.PublicTestCasesJson,
+            attachmentsJson = submission.Task.AttachmentsJson
+        });
+    }
+
     [HttpGet("task/{taskId}/stats")]
     public async Task<IActionResult> GetTaskStats(Guid taskId, CancellationToken cancellationToken)
     {

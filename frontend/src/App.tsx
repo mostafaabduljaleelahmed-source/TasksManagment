@@ -25,6 +25,7 @@ const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.S
 const TeacherPendingReviews = lazy(() => import('./pages/TeacherPendingReviews').then(m => ({ default: m.TeacherPendingReviews })));
 const TeacherStudents = lazy(() => import('./pages/TeacherStudents').then(m => ({ default: m.TeacherStudents })));
 const TwoPanelGradingWorkspace = lazy(() => import('./pages/TwoPanelGradingWorkspace').then(m => ({ default: m.TwoPanelGradingWorkspace })));
+const GlobalReviewWorkspace = lazy(() => import('./pages/GlobalReviewWorkspace').then(m => ({ default: m.GlobalReviewWorkspace })));
 const AssignmentsList = lazy(() => import('./pages/AssignmentsList').then(m => ({ default: m.AssignmentsList })));
 const Archive = lazy(() => import('./pages/Archive').then(m => ({ default: m.Archive })));
 const ActivityLogPage = lazy(() => import('./pages/ActivityLog').then(m => ({ default: m.ActivityLogPage })));
@@ -225,6 +226,26 @@ function App() {
                   <TeacherRoute>
                     <ProtectedRoute>
                       <TwoPanelGradingWorkspace />
+                    </ProtectedRoute>
+                  </TeacherRoute>
+                }
+              />
+              <Route
+                path="/review-submission"
+                element={
+                  <TeacherRoute>
+                    <ProtectedRoute>
+                      <GlobalReviewWorkspace />
+                    </ProtectedRoute>
+                  </TeacherRoute>
+                }
+              />
+              <Route
+                path="/review-submission/:submissionId"
+                element={
+                  <TeacherRoute>
+                    <ProtectedRoute>
+                      <GlobalReviewWorkspace />
                     </ProtectedRoute>
                   </TeacherRoute>
                 }

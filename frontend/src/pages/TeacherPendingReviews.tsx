@@ -208,7 +208,7 @@ export const TeacherPendingReviews: React.FC = () => {
 
                 {/* Review Action */}
                 <button
-                  onClick={() => navigate(`/grading-workspace/${sub.taskId}`)}
+                  onClick={() => navigate(`/review-submission/${sub.submissionId}`)}
                   className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-950/30 transition-all flex items-center justify-center gap-2"
                 >
                   <FileCode className="w-4 h-4" />
