@@ -632,6 +632,73 @@ public class SubmissionService : ISubmissionService
         return resetCount;
     }
 
+    public async Task<int> ResetStudentSubmissionsAsync(Guid studentId, CancellationToken cancellationToken = default)
+    {
+        var submissions = await _context.Submissions.Where(s => s.StudentId == studentId).ToListAsync(cancellationToken);
+        return await ResetSubmissionGroupListAsync(submissions, cancellationToken);
+    }
+
+    public async Task<int> ResetTaskSubmissionsAsync(Guid taskId, CancellationToken cancellationToken = default)
+    {
+        var submissions = await _context.Submissions.Where(s => s.TaskId == taskId).ToListAsync(cancellationToken);
+        return await ResetSubmissionGroupListAsync(submissions, cancellationToken);
+    }
+
+    public async Task<int> ResetCourseSubmissionsAsync(Guid courseId, CancellationToken cancellationToken = default)
+    {
+        var taskIds = await _context.Sessions
+            .Where(s => s.CourseId == courseId)
+            .SelectMany(s => s.Tasks)
+            .Select(t => t.Id)
+            .ToListAsync(cancellationToken);
+
+        var submissions = await _context.Submissions.Where(s => taskIds.Contains(s.TaskId)).ToListAsync(cancellationToken);
+        return await ResetSubmissionGroupListAsync(submissions, cancellationToken);
+    }
+
+    public async Task<int> ResetPlatformSubmissionsAsync(CancellationToken cancellationToken = default)
+    {
+        return await ResetAllSubmissionsAsync(cancellationToken);
+    }
+
+    private async Task<int> ResetSubmissionGroupListAsync(List<Submission> submissions, CancellationToken cancellationToken)
+    {
+        if (!submissions.Any()) return 0;
+        int resetCount = 0;
+        var groups = submissions.GroupBy(s => new { s.StudentId, s.TaskId });
+
+        foreach (var g in groups)
+        {
+            var sorted = g.OrderBy(s => s.SubmittedAt).ThenBy(s => s.AttemptNumber).ToList();
+            for (int i = 0; i < sorted.Count; i++)
+            {
+                var sub = sorted[i];
+                sub.AttemptNumber = i + 1;
+                bool isLatest = (i == sorted.Count - 1);
+
+                if (isLatest)
+                {
+                    sub.Status = SubmissionStatus.Pending;
+                    sub.IsReviewed = false;
+                    sub.ReviewedAt = null;
+                    sub.Grade = 0;
+                    sub.TeacherFeedback = string.Empty;
+                    sub.TeacherNotes = string.Empty;
+                    resetCount++;
+                }
+                else
+                {
+                    sub.Status = SubmissionStatus.Graded;
+                    sub.IsReviewed = true;
+                    sub.Grade = 0;
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return resetCount;
+    }
+
     private static SubmissionDto MapSubmissionToDto(Submission submission, string taskTitle, string studentName)
     {
         return new SubmissionDto

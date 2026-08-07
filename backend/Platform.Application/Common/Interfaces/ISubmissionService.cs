@@ -18,4 +18,8 @@ public interface ISubmissionService
     Task<SubmissionDto> EditSubmissionReviewAsync(Guid submissionId, ReviewSubmissionDto dto, CancellationToken cancellationToken = default);
     Task<SubmissionDto> ResetSubmissionReviewAsync(Guid submissionId, CancellationToken cancellationToken = default);
     Task<int> ResetAllSubmissionsAsync(CancellationToken cancellationToken = default);
+    Task<int> ResetStudentSubmissionsAsync(Guid studentId, CancellationToken cancellationToken = default);
+    Task<int> ResetTaskSubmissionsAsync(Guid taskId, CancellationToken cancellationToken = default);
+    Task<int> ResetCourseSubmissionsAsync(Guid courseId, CancellationToken cancellationToken = default);
+    Task<int> ResetPlatformSubmissionsAsync(CancellationToken cancellationToken = default);
 }

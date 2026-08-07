@@ -624,6 +624,29 @@ export const CourseDetails: React.FC = () => {
             >
               Export
             </button>
+
+            <button
+              onClick={async () => {
+                if (!window.confirm(`Are you sure you want to reset ALL task reviews for course '${courseInfo?.name}'? Latest submissions will become Pending again.`)) return;
+                try {
+                  const res = await fetch(`${API_URL}/submissions/reset-course/${courseId}`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${user?.token}` },
+                  });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.message || 'Failed to reset course reviews');
+                  toast.success(data.message || 'Course reviews reset successfully.');
+                  fetchSessions();
+                } catch (err: any) {
+                  toast.error(err.message || 'Failed to reset course reviews');
+                }
+              }}
+              className="px-3 py-2 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 font-bold rounded-lg text-xs transition-all whitespace-nowrap flex items-center gap-1.5 ml-auto"
+              title="Reset Reviews For This Course"
+            >
+              <span>🔄</span>
+              <span>Reset Course Reviews</span>
+            </button>
           </div>
         </div>
       )}
@@ -928,12 +951,35 @@ export const CourseDetails: React.FC = () => {
                             <h3 className="font-bold text-white text-lg">{selectedTask.title}</h3>
                             <span className="text-2xs text-zinc-500">Task Management</span>
                           </div>
-                          <button
-                            onClick={() => setSelectedTask(null)}
-                            className="p-1 hover:bg-[#2F2F37] rounded-lg text-zinc-400 hover:text-white"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm(`Are you sure you want to reset ALL student reviews for task '${selectedTask.title}'?`)) return;
+                                try {
+                                  const res = await fetch(`${API_URL}/submissions/reset-task/${selectedTask.id}`, {
+                                    method: 'POST',
+                                    headers: { Authorization: `Bearer ${user?.token}` },
+                                  });
+                                  const data = await res.json();
+                                  if (!res.ok) throw new Error(data.message || 'Failed to reset task reviews');
+                                  toast.success(data.message || 'Task reviews reset successfully.');
+                                  fetchTaskStatsAndSubmissions(selectedTask.id);
+                                } catch (err: any) {
+                                  toast.error(err.message || 'Failed to reset task reviews');
+                                }
+                              }}
+                              className="px-2 py-1 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 rounded-lg text-2xs font-bold transition-all flex items-center gap-1"
+                              title="Reset All Student Reviews For This Task"
+                            >
+                              <span>🔄 Reset Task</span>
+                            </button>
+                            <button
+                              onClick={() => setSelectedTask(null)}
+                              className="p-1 hover:bg-[#2F2F37] rounded-lg text-zinc-400 hover:text-white"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
 
                         {/* Task Tabs */}

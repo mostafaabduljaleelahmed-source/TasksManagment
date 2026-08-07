@@ -228,4 +228,40 @@ public class SubmissionsController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpPost("reset-student/{studentId}")]
+    public async Task<IActionResult> ResetStudentSubmissions(Guid studentId, CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (role != "Teacher" && role != "Admin") return Forbid();
+        var count = await _submissionService.ResetStudentSubmissionsAsync(studentId, cancellationToken);
+        return Ok(new { message = $"Successfully reset {count} task reviews for this student.", count });
+    }
+
+    [HttpPost("reset-task/{taskId}")]
+    public async Task<IActionResult> ResetTaskSubmissions(Guid taskId, CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (role != "Teacher" && role != "Admin") return Forbid();
+        var count = await _submissionService.ResetTaskSubmissionsAsync(taskId, cancellationToken);
+        return Ok(new { message = $"Successfully reset {count} student reviews for this task.", count });
+    }
+
+    [HttpPost("reset-course/{courseId}")]
+    public async Task<IActionResult> ResetCourseSubmissions(Guid courseId, CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (role != "Teacher" && role != "Admin") return Forbid();
+        var count = await _submissionService.ResetCourseSubmissionsAsync(courseId, cancellationToken);
+        return Ok(new { message = $"Successfully reset {count} submission reviews for this course.", count });
+    }
+
+    [HttpPost("reset-platform")]
+    public async Task<IActionResult> ResetPlatformSubmissions(CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (role != "Admin") return Forbid("Only system administrator can perform full platform reset.");
+        var count = await _submissionService.ResetPlatformSubmissionsAsync(cancellationToken);
+        return Ok(new { message = $"Successfully reset all {count} platform submissions to pending status.", count });
+    }
 }

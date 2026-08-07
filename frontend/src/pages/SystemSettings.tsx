@@ -225,6 +225,51 @@ export const SystemSettings: React.FC = () => {
             </div>
           </section>
 
+          {/* Danger Zone: Reset Entire Platform Submissions */}
+          <section className="bg-rose-950/20 border border-rose-500/30 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center gap-3 border-b border-rose-500/20 pb-4">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <h2 className="text-base font-extrabold text-rose-400">Danger Zone — Reset Entire Platform</h2>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Reset ALL submissions across all courses and students back to Pending state. Old attempts remain stored as read-only history.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div className="text-xs text-zinc-400">
+                Requires typing <span className="font-mono text-rose-400 font-bold">RESET</span> to confirm platform-wide action.
+              </div>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  const input = window.prompt("DANGER: Type 'RESET' to confirm resetting ALL platform submission reviews back to Pending state:");
+                  if (input !== 'RESET') {
+                    toast.error("Action cancelled. You must type 'RESET' exactly.");
+                    return;
+                  }
+                  try {
+                    const res = await fetch(`${API_URL}/submissions/reset-platform`, {
+                      method: 'POST',
+                      headers: { Authorization: `Bearer ${user?.token}` },
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || 'Failed to reset platform submissions');
+                    toast.success(data.message || 'Platform submissions reset successfully!');
+                  } catch (err: any) {
+                    toast.error(err.message || 'Failed to reset platform submissions');
+                  }
+                }}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-extrabold rounded-xl text-xs shadow-lg transition-all flex items-center gap-2 shrink-0"
+              >
+                <span>🔥</span>
+                <span>Reset Entire Platform</span>
+              </button>
+            </div>
+          </section>
+
           <div className="flex justify-end pt-4">
             <button
               type="submit"

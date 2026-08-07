@@ -65,7 +65,27 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
   const [notifyMsg, setNotifyMsg] = useState('');
   const [sendingNotify, setSendingNotify] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [resettingStudentReviews, setResettingStudentReviews] = useState(false);
   const [removingStudent, setRemovingStudent] = useState(false);
+
+  const handleResetStudentReviews = async () => {
+    if (!window.confirm(`Are you sure you want to reset ALL task reviews for student '${student.name}'? Latest submissions will become Pending again.`)) return;
+    setResettingStudentReviews(true);
+    try {
+      const res = await fetch(`${API_URL}/submissions/reset-student/${student.studentId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${user?.token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to reset student reviews');
+      toast.success(data.message || `Reset all task reviews for ${student.name}`);
+      fetchStudentSubmissions();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to reset student reviews');
+    } finally {
+      setResettingStudentReviews(false);
+    }
+  };
 
   const fetchStudentSubmissions = async () => {
     if (!user) return;
@@ -202,6 +222,15 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
             {/* Teacher Action Controls */}
             {user?.role === 'Teacher' && (
               <>
+                <button
+                  onClick={handleResetStudentReviews}
+                  disabled={resettingStudentReviews}
+                  className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  title="Reset All Tasks For This Student"
+                >
+                  {resettingStudentReviews ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span>🔄</span>}
+                  Reset Student Reviews
+                </button>
                 <button
                   onClick={() => setShowNotifyModal(true)}
                   className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
