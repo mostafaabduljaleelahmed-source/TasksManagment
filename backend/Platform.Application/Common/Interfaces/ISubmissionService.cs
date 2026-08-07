@@ -17,4 +17,5 @@ public interface ISubmissionService
     Task<SubmissionDto> ReviewSubmissionAsync(Guid submissionId, ReviewSubmissionDto dto, CancellationToken cancellationToken = default);
     Task<SubmissionDto> EditSubmissionReviewAsync(Guid submissionId, ReviewSubmissionDto dto, CancellationToken cancellationToken = default);
     Task<SubmissionDto> ResetSubmissionReviewAsync(Guid submissionId, CancellationToken cancellationToken = default);
+    Task<int> ResetAllSubmissionsAsync(CancellationToken cancellationToken = default);
 }

@@ -94,6 +94,32 @@ export const TeacherPendingReviews: React.FC = () => {
             />
           </div>
 
+          {/* Reset All Submissions Button */}
+          {(user?.role === 'Teacher' || user?.role === 'Admin') && (
+            <button
+              onClick={async () => {
+                if (!window.confirm('هل أنت متاكد من إعادة تعيين جميع تسليمات الطلاب وتعيينها كمراجعات معلقة؟ (لن يتم حذف كود أي طالب)')) return;
+                try {
+                  const res = await fetch(`${API_URL}/submissions/reset-all`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${user.token}` },
+                  });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.message || 'فشل إعادة التعين');
+                  alert(data.message || 'تم إعادة تعيين جميع التسليمات إلى المراجعات المعلقة.');
+                  fetchPendingSubmissions();
+                } catch (err: any) {
+                  alert(err.message || 'حدث خطأ أثناء إعادة التعيين');
+                }
+              }}
+              className="px-3.5 py-2 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5"
+              title="إعادة تعيين كافة التسليمات لـ Pending"
+            >
+              <span>🔄</span>
+              <span>إعادة تعيين كافة التسليمات</span>
+            </button>
+          )}
+
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2 bg-[#111827] border border-[#1F2937] px-3 py-2 rounded-xl text-xs">
             <SortAsc className="w-3.5 h-3.5 text-zinc-400" />

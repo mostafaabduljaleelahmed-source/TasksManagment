@@ -590,6 +590,48 @@ public class SubmissionService : ISubmissionService
         };
     }
 
+    public async Task<int> ResetAllSubmissionsAsync(CancellationToken cancellationToken = default)
+    {
+        var submissions = await _context.Submissions.ToListAsync(cancellationToken);
+        if (!submissions.Any()) return 0;
+
+        int resetCount = 0;
+        var groups = submissions.GroupBy(s => new { s.StudentId, s.TaskId });
+
+        foreach (var g in groups)
+        {
+            var sorted = g.OrderBy(s => s.SubmittedAt).ThenBy(s => s.AttemptNumber).ToList();
+            for (int i = 0; i < sorted.Count; i++)
+            {
+                var sub = sorted[i];
+                sub.AttemptNumber = i + 1;
+                bool isLatest = (i == sorted.Count - 1);
+
+                if (isLatest)
+                {
+                    // Latest attempt becomes Pending so teacher can review it
+                    sub.Status = SubmissionStatus.Pending;
+                    sub.IsReviewed = false;
+                    sub.ReviewedAt = null;
+                    sub.Grade = 0;
+                    sub.TeacherFeedback = string.Empty;
+                    sub.TeacherNotes = string.Empty;
+                    resetCount++;
+                }
+                else
+                {
+                    // Older attempt stays Graded (0 grade) as read-only history
+                    sub.Status = SubmissionStatus.Graded;
+                    sub.IsReviewed = true;
+                    sub.Grade = 0;
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return resetCount;
+    }
+
     private static SubmissionDto MapSubmissionToDto(Submission submission, string taskTitle, string studentName)
     {
         return new SubmissionDto

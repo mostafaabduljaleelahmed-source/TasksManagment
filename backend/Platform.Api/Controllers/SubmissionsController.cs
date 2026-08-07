@@ -208,4 +208,24 @@ public class SubmissionsController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpPost("reset-all")]
+    public async Task<IActionResult> ResetAllSubmissions(CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (role != "Teacher" && role != "Admin")
+        {
+            return Forbid("Only teachers and admins can perform bulk submission reset.");
+        }
+
+        try
+        {
+            var count = await _submissionService.ResetAllSubmissionsAsync(cancellationToken);
+            return Ok(new { message = $"Successfully reset {count} submissions to pending state.", count });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }
