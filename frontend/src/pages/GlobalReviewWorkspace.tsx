@@ -302,10 +302,10 @@ export const GlobalReviewWorkspace: React.FC = () => {
   const remainingCount = queue.length;
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#0B0F19] text-zinc-100 flex flex-col font-sans">
+    <div className="h-full w-full overflow-hidden bg-[#0B0F19] text-zinc-100 flex flex-col font-sans">
       
       {/* 1. TOP HEADER (Student Name, Task Name, Attempt, Queue Position, Remaining Reviews) */}
-      <header className="shrink-0 bg-[#111827] border-b border-[#1F2937] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 z-30">
+      <header className="shrink-0 bg-[#111827] border-b border-[#1F2937] px-4 py-2.5 flex items-center justify-between gap-3 z-30">
         
         <div className="flex items-center gap-3 min-w-0">
           <button
@@ -317,21 +317,21 @@ export const GlobalReviewWorkspace: React.FC = () => {
           </button>
 
           <div className="min-w-0 space-y-0.5">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 min-w-0">
               <h1 className="text-base font-extrabold text-white truncate">{currentSubmission.studentName}</h1>
-              <span className="text-xs text-zinc-400 font-mono">({currentSubmission.studentRegisterId})</span>
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/15 border border-blue-500/30 text-blue-400 font-mono">
+              <span className="text-xs text-zinc-400 font-mono shrink-0">({currentSubmission.studentRegisterId})</span>
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/15 border border-blue-500/30 text-blue-400 font-mono shrink-0">
                 {currentSubmission.groupName}
               </span>
             </div>
             <p className="text-xs text-zinc-400 flex items-center gap-2 truncate">
-              Task: <strong className="text-zinc-200">{currentSubmission.taskTitle}</strong>
+              Task: <strong className="text-zinc-200 truncate">{currentSubmission.taskTitle}</strong>
             </p>
           </div>
         </div>
 
         {/* Queue Metadata Pill Badges (Attempt X, Position, Remaining) */}
-        <div className="flex items-center gap-2.5 bg-[#161E2E] px-3 py-1.5 rounded-2xl border border-[#1F2937] text-xs font-mono font-bold shrink-0">
+        <div className="hidden sm:flex items-center gap-2.5 bg-[#161E2E] px-3 py-1.5 rounded-2xl border border-[#1F2937] text-xs font-mono font-bold shrink-0">
           <span className="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
             Attempt #{currentSubmission.attemptNumber}
           </span>
@@ -369,10 +369,10 @@ export const GlobalReviewWorkspace: React.FC = () => {
       </header>
 
       {/* 2. FIXED ACTION TOOLBAR (Save, Save & Next, Reset Review, Quick Presets) */}
-      <div className="shrink-0 bg-[#161E2E] border-b border-[#1F2937] px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs z-20">
+      <div className="shrink-0 bg-[#161E2E] border-b border-[#1F2937] px-4 py-2 flex items-center justify-between gap-3 text-xs z-20">
         
         {/* Left Action Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleSaveAndNext}
             disabled={saving}
@@ -401,7 +401,7 @@ export const GlobalReviewWorkspace: React.FC = () => {
         </div>
 
         {/* Right Quick Presets Bar (100%, 75%, 50%, 25%, 0%) */}
-        <div className="flex items-center gap-1.5">
+        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
           <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mr-1">Quick Presets:</span>
           {gradePresets.map((preset) => (
             <button
@@ -420,11 +420,11 @@ export const GlobalReviewWorkspace: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. MAIN WORKSPACE (MONACO 65% LEFT / EVALUATION 35% RIGHT) */}
-      <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+      {/* 3. MAIN WORKSPACE (FLEX-1 MONACO / FIXED 390PX RIGHT PANEL) */}
+      <div className="flex-1 flex flex-col md:flex-row min-h-0 min-w-0 overflow-hidden">
         
-        {/* LEFT: MONACO EDITOR (65-70% WIDTH, FILLS ALL REMAINING HEIGHT) */}
-        <div className="w-full md:w-[67%] flex flex-col bg-[#111827] border-r border-[#1F2937] min-h-0 overflow-hidden">
+        {/* LEFT: MONACO EDITOR (FLEX-1 AUTO CONSUME REMAINING WIDTH, NO PAGE OVERFLOW) */}
+        <div className="flex-1 min-w-0 flex flex-col bg-[#111827] border-r border-[#1F2937] min-h-0 overflow-hidden">
           <div className="bg-[#1A2234] border-b border-[#1F2937] px-4 py-2 flex items-center justify-between shrink-0 text-xs font-bold text-white">
             <div className="flex items-center gap-2">
               <Code className="w-4 h-4 text-blue-400" />
@@ -435,9 +435,10 @@ export const GlobalReviewWorkspace: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex-1 min-h-0 relative">
+          <div className="flex-1 min-h-0 min-w-0 relative">
             <Editor
               height="100%"
+              width="100%"
               language={(currentSubmission.language || 'cpp').toLowerCase() === 'c++' ? 'cpp' : (currentSubmission.language || 'cpp').toLowerCase()}
               value={currentSubmission.code || ''}
               theme="vs-dark"
@@ -452,8 +453,8 @@ export const GlobalReviewWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* RIGHT: ALL-IN-ONE EVALUATION & METADATA PANEL (30-33% WIDTH, SINGLE STREAMLINED PANEL) */}
-        <div className="w-full md:w-[33%] bg-[#111827] flex flex-col p-5 space-y-4 shrink-0 border-l border-[#1F2937] overflow-y-auto">
+        {/* RIGHT: EVALUATION PANEL (FIXED WIDTH 390PX, INTERNAL SCROLL ONLY) */}
+        <div className="w-full md:w-[390px] lg:w-[410px] shrink-0 bg-[#111827] flex flex-col p-4 space-y-4 border-l border-[#1F2937] overflow-y-auto">
           
           {/* Grade Score Section */}
           <div className="space-y-1.5 bg-[#161E2E] p-3.5 rounded-2xl border border-[#1F2937]">
