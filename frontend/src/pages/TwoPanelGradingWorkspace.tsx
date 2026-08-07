@@ -141,7 +141,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
   const drawerScrollRef = useRef<HTMLDivElement>(null);
   const savedDrawerScrollPos = useRef<number>(0);
 
-  const fetchData = async () => {
+  const fetchData = async (targetSubmissionId?: string, previousIndex?: number) => {
     if (!user || !taskId) return;
     setLoading(true);
     setError(null);
@@ -154,10 +154,23 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
       setData(resData);
 
       if (resData.submissions && resData.submissions.length > 0) {
-        const firstSubmittedIndex = resData.submissions.findIndex(s => s.submissionId !== null);
-        const initialIdx = firstSubmittedIndex !== -1 ? firstSubmittedIndex : 0;
-        setActiveStudentIdx(initialIdx);
-        populateGradingForm(resData.submissions[initialIdx], resData.maxGrade);
+        let selectedIdx = 0;
+
+        if (targetSubmissionId) {
+          const matchIdx = resData.submissions.findIndex(s => s.submissionId === targetSubmissionId);
+          if (matchIdx !== -1) {
+            selectedIdx = matchIdx;
+          } else if (previousIndex !== undefined) {
+            // Target item was removed (graded). Open item that now occupies previousIndex, or last item
+            selectedIdx = Math.min(previousIndex, resData.submissions.length - 1);
+          }
+        } else {
+          const firstSubmittedIndex = resData.submissions.findIndex(s => s.submissionId !== null);
+          selectedIdx = firstSubmittedIndex !== -1 ? firstSubmittedIndex : 0;
+        }
+
+        setActiveStudentIdx(selectedIdx);
+        populateGradingForm(resData.submissions[selectedIdx], resData.maxGrade);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load task bundle');
@@ -449,13 +462,16 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
     }
   };
 
-  // Save & Next (💾 حفظ وإعادة التحميل من السيرفر كمرجع أصلي)
+  // Save & Next (💾 Canvas LMS / Moodle Auto-Advance Workflow)
   const handleSaveAndNext = async () => {
+    const currentSubId = currentStudent?.submissionId || undefined;
+    const currentIdx = activeStudentIdx;
+
     const success = await executeSaveSubmission();
     if (success) {
-      // Re-fetch backend data to guarantee server is single source of truth
-      await fetchData();
-      toast.success('تم التحديث تلقائياً من السيرفر!');
+      // Re-fetch backend data and pass previous ID and index to auto-advance to next submission
+      await fetchData(currentSubId, currentIdx);
+      toast.success('تم الانتقال للتسليم التالي في القائمة تلقائياً!');
     }
   };
 
