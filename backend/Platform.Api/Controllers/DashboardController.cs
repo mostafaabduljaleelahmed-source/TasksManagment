@@ -1258,7 +1258,7 @@ public class DashboardController : ControllerBase
             .Include(s => s.Task)
             .ThenInclude(t => t.Session)
             .ThenInclude(sess => sess.Course)
-            .Where(s => taskIds.Contains(s.TaskId) && (s.Status == SubmissionStatus.Pending || !s.IsReviewed))
+            .Where(s => taskIds.Contains(s.TaskId) && s.Status == SubmissionStatus.Pending && !s.IsReviewed)
             .ToListAsync(cancellationToken);
 
         var pendingSubs = _gradingCalculator.GetPendingReviews(pendingSubsRaw)
