@@ -362,7 +362,7 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
                   <button
                     onClick={() => {
                       onClose();
-                      navigate(`/review-submission/${selectedSub.submissionId}?mode=review`);
+                      navigate(`/review-submission/${selectedSub.id}?mode=review`);
                     }}
                     className="px-3 py-1 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-lg text-xs transition-all flex items-center gap-1 shadow-md"
                   >
