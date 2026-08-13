@@ -227,7 +227,7 @@ export const ActivityLogPage: React.FC = () => {
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       {item.taskId && item.taskTitle ? (
                         <Link
-                          to={user?.role === 'Teacher' ? `/assignment/${item.taskId}/review` : `/task/${item.taskId}`}
+                          to={user?.role === 'Teacher' ? '/teacher/pending-reviews' : `/task/${item.taskId}`}
                           className="font-bold text-amber-400 hover:text-amber-300 hover:underline transition-colors flex items-center gap-1"
                         >
                           <FileCode className="w-3.5 h-3.5 shrink-0" />

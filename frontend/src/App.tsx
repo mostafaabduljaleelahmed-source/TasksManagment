@@ -212,23 +212,11 @@ function App() {
               />
               <Route
                 path="/assignment/:taskId/review"
-                element={
-                  <TeacherRoute>
-                    <ProtectedRoute>
-                      <TwoPanelGradingWorkspace />
-                    </ProtectedRoute>
-                  </TeacherRoute>
-                }
+                element={<Navigate to="/teacher/pending-reviews" replace />}
               />
               <Route
                 path="/grading-workspace/:taskId"
-                element={
-                  <TeacherRoute>
-                    <ProtectedRoute>
-                      <TwoPanelGradingWorkspace />
-                    </ProtectedRoute>
-                  </TeacherRoute>
-                }
+                element={<Navigate to="/teacher/pending-reviews" replace />}
               />
               <Route
                 path="/review-submission"

@@ -4,7 +4,7 @@ import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import {
-  Clock, CheckCircle2, FileCode, Search, SortAsc, Loader2
+  Clock, CheckCircle2, FileCode, Search, SortAsc, Loader2, Star
 } from 'lucide-react';
 
 interface PendingSubmission {
@@ -33,6 +33,34 @@ export const TeacherPendingReviews: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('newest');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [showSavedOnly, setShowSavedOnly] = useState<boolean>(false);
+
+  // Review Later Set persisted in localStorage per teacher
+  const [reviewLaterSet, setReviewLaterSet] = useState<{ [subId: string]: boolean }>(() => {
+    try {
+      const saved = localStorage.getItem('teacher_review_later_submissions');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('teacher_review_later_submissions', JSON.stringify(reviewLaterSet));
+    } catch (e) {
+      console.error('Failed to save bookmarks', e);
+    }
+  }, [reviewLaterSet]);
+
+  const toggleBookmark = (sub: PendingSubmission, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const key = sub.submissionId || sub.studentId;
+    setReviewLaterSet((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
 
   const fetchPendingSubmissions = async () => {
     if (!user) return;
@@ -57,6 +85,9 @@ export const TeacherPendingReviews: React.FC = () => {
   }, [user, sortBy]);
 
   const filteredSubmissions = submissions.filter((sub) => {
+    const key = sub.submissionId || sub.studentId;
+    if (showSavedOnly && !reviewLaterSet[key]) return false;
+
     const term = searchTerm.toLowerCase();
     return (
       sub.studentName.toLowerCase().includes(term) ||
@@ -120,6 +151,19 @@ export const TeacherPendingReviews: React.FC = () => {
             </button>
           )}
 
+          {/* Filter Saved Only Toggle Button */}
+          <button
+            onClick={() => setShowSavedOnly(!showSavedOnly)}
+            className={`px-3 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all ${
+              showSavedOnly
+                ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-md'
+                : 'bg-[#111827] border-[#1F2937] text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Star className={`w-3.5 h-3.5 ${showSavedOnly ? 'fill-amber-400 text-amber-400' : ''}`} />
+            <span>{showSavedOnly ? 'Bookmarked Only (⭐)' : 'Show Bookmarked'}</span>
+          </button>
+
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2 bg-[#111827] border border-[#1F2937] px-3 py-2 rounded-xl text-xs">
             <SortAsc className="w-3.5 h-3.5 text-zinc-400" />
@@ -154,27 +198,48 @@ export const TeacherPendingReviews: React.FC = () => {
             <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
             <h3 className="text-lg font-bold text-white">All Caught Up!</h3>
             <p className="text-xs text-zinc-400 max-w-md mx-auto">
-              There are no pending student submissions waiting for manual review right now.
+              {showSavedOnly
+                ? 'No student submissions are currently bookmarked for review.'
+                : 'There are no pending student submissions waiting for manual review right now.'}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSubmissions.map((sub) => (
-              <div
-                key={sub.submissionId}
-                className="bg-[#121215] border border-[#24242B] hover:border-amber-500/40 rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-4 group transition-all"
-              >
-                <div className="space-y-3">
-                  {/* Group & Deadline Badge */}
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="bg-zinc-800 text-zinc-300 font-bold px-2.5 py-1 rounded-md border border-zinc-700">
-                      {sub.groupName}
-                    </span>
-                    <span className="text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      Pending Grade
-                    </span>
-                  </div>
+            {filteredSubmissions.map((sub) => {
+              const subKey = sub.submissionId || sub.studentId;
+              const isBookmarked = !!reviewLaterSet[subKey];
+
+              return (
+                <div
+                  key={sub.submissionId}
+                  className="bg-[#121215] border border-[#24242B] hover:border-amber-500/40 rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-4 group transition-all relative"
+                >
+                  <div className="space-y-3">
+                    {/* Group & Deadline Badge & Bookmark Button */}
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="bg-zinc-800 text-zinc-300 font-bold px-2.5 py-1 rounded-md border border-zinc-700">
+                        {sub.groupName}
+                      </span>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={(e) => toggleBookmark(sub, e)}
+                          className={`p-1.5 rounded-lg border transition-all ${
+                            isBookmarked
+                              ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                              : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white'
+                          }`}
+                          title={isBookmarked ? 'Remove Bookmark ⭐' : 'Save for Review Later ⭐'}
+                        >
+                          <Star className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />
+                        </button>
+
+                        <span className="text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          Pending Grade
+                        </span>
+                      </div>
+                    </div>
 
                   {/* Student Header */}
                   <div className="flex items-center gap-3 pt-1">
@@ -215,7 +280,8 @@ export const TeacherPendingReviews: React.FC = () => {
                   Review Code & Grade
                 </button>
               </div>
-            ))}
+            );
+          })}
           </div>
         )}
       </div>

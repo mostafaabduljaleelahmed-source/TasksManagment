@@ -362,12 +362,12 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
                   <button
                     onClick={() => {
                       onClose();
-                      navigate(`/assignment/${selectedSub.taskId}/review`);
+                      navigate(`/review-submission/${selectedSub.submissionId}?mode=review`);
                     }}
                     className="px-3 py-1 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-lg text-xs transition-all flex items-center gap-1 shadow-md"
                   >
                     <Award className="w-3.5 h-3.5" />
-                    Open Grading Page &rarr;
+                    مراجعة التسليم &rarr;
                   </button>
                 )}
               </div>

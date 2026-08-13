@@ -105,7 +105,7 @@ export const AssignmentsList: React.FC = () => {
               return (
                 <div
                   key={assignment.id}
-                  onClick={() => navigate(`/assignment/${assignment.id}/review`)}
+                  onClick={() => navigate('/teacher/pending-reviews')}
                   className="bg-[#121215] hover:bg-[#16161C] border border-[#24242B] hover:border-violet-500/40 rounded-2xl p-6 shadow-xl cursor-pointer transition-all duration-200 flex flex-col justify-between space-y-5 group"
                 >
                   <div className="space-y-3">

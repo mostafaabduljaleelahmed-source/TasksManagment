@@ -175,14 +175,14 @@ export const Dashboard: React.FC = () => {
   }, [user?.id, user?.role, user?.token, location.key]);
 
   const handleNotificationClick = (n: NotificationItem) => {
-    if (n.taskId) {
+    if (n.submissionId) {
+      navigate(`/review-submission/${n.submissionId}`);
+    } else if (n.taskId) {
       if (user?.role === 'Teacher') {
-        navigate(`/assignment/${n.taskId}/review`);
+        navigate('/teacher/pending-reviews');
       } else {
         navigate(`/task/${n.taskId}`);
       }
-    } else if (n.submissionId) {
-      navigate('/teacher/pending-reviews');
     } else {
       navigate('/');
     }
@@ -271,7 +271,7 @@ export const Dashboard: React.FC = () => {
                 {recentPending.map((item) => (
                   <div
                     key={item.submissionId}
-                    onClick={() => navigate(`/assignment/${item.taskId}/review`)}
+                    onClick={() => navigate(`/review-submission/${item.submissionId}`)}
                     className="bg-[#111827] border border-[#1F2937] hover:border-amber-500/50 rounded-2xl p-5 shadow-lg transition-all flex flex-col justify-between space-y-4 group cursor-pointer"
                   >
                     <div className="space-y-2">
@@ -352,7 +352,7 @@ export const Dashboard: React.FC = () => {
                     {todayActivity.map((act) => (
                       <tr
                         key={act.submissionId}
-                        onClick={() => navigate(`/assignment/${act.taskId}/review`)}
+                        onClick={() => navigate(`/review-submission/${act.submissionId}`)}
                         className="hover:bg-[#1A2234] transition-colors cursor-pointer"
                       >
                         <td className="px-5 py-3.5 flex items-center gap-3">

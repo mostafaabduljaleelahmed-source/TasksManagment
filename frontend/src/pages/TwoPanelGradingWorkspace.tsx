@@ -112,7 +112,24 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
   const [gradeInput, setGradeInput] = useState<number>(0);
   const [teacherFeedback, setTeacherFeedback] = useState<string>('');
   const [saving, setSaving] = useState(false);
-  const [reviewLaterSet, setReviewLaterSet] = useState<{ [subId: string]: boolean }>({});
+  
+  // Review Later Set persisted in localStorage per teacher
+  const [reviewLaterSet, setReviewLaterSet] = useState<{ [subId: string]: boolean }>(() => {
+    try {
+      const saved = localStorage.getItem('teacher_review_later_submissions');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('teacher_review_later_submissions', JSON.stringify(reviewLaterSet));
+    } catch (e) {
+      console.error('Failed to persist review later bookmarks', e);
+    }
+  }, [reviewLaterSet]);
 
   // Auto-save timer ref
   const autoSaveTimerRef = useRef<any>(null);
@@ -763,6 +780,8 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
                   const isActive = idx === activeStudentIdx;
                   const isGraded = sub.status === 'Graded';
                   const hasSub = sub.submissionId !== null;
+                  const subKey = sub.submissionId || sub.studentId;
+                  const isSubMarkedLater = !!reviewLaterSet[subKey];
 
                   return (
                     <button
@@ -774,6 +793,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
                           : 'bg-[#111827] text-zinc-400 hover:text-white border border-[#1F2937]'
                       }`}
                     >
+                      {isSubMarkedLater && <Star className="w-3 h-3 text-amber-400 fill-amber-400" />}
                       <span>{sub.studentName}</span>
                       {isGraded ? (
                         <span className="w-2 h-2 rounded-full bg-emerald-400" />

@@ -125,7 +125,7 @@ export const GlobalSearch: React.FC = () => {
       navigate(`/course/${item.courseId}`);
     } else if (type === 'assignment') {
       if (user?.role === 'Teacher') {
-        navigate(`/assignment/${item.id}/review`);
+        navigate('/teacher/pending-reviews');
       } else {
         navigate(`/task/${item.id}`);
       }

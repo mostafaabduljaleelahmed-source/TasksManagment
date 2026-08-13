@@ -811,7 +811,7 @@ export const CourseDetails: React.FC = () => {
                                   key={task.id}
                                   onClick={() => {
                                     if (isTeacherOrAdmin) {
-                                      navigate(`/assignment/${task.id}/review`);
+                                      navigate('/teacher/pending-reviews');
                                     } else {
                                       navigate(`/task/${task.id}`);
                                     }
