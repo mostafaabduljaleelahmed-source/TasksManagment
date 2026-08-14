@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { GlobalSearchModal } from './GlobalSearchModal';
+import { APP_VERSION } from '../constants/version';
 import {
   Menu, Bell
 } from 'lucide-react';
@@ -62,8 +63,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
           </h1>
         </div>
 
-        {/* Right Side: Notifications & User Profile Avatar */}
+        {/* Right Side: Version Badge, Notifications & User Profile Avatar */}
         <div className="flex items-center gap-2">
+          {/* Version Badge */}
+          <span className="px-2 py-0.5 text-[10px] font-bold font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-md">
+            {APP_VERSION}
+          </span>
+
           {/* Notifications */}
           {(user.role === 'Teacher' || user.role === 'Admin') && (
             <button

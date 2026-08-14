@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
+import { APP_VERSION } from '../constants/version';
 import {
   LayoutDashboard, BookOpen, FileCode, Users, Settings, User, LogOut,
   Globe, ShieldCheck, X, Trophy, Archive, Activity, Calendar, MessageSquare,
@@ -110,9 +111,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
-                <span className="text-base font-extrabold text-white tracking-tight block leading-none truncate">
-                  Classroom SaaS
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base font-extrabold text-white tracking-tight block leading-none truncate">
+                    Classroom SaaS
+                  </span>
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded">
+                    {APP_VERSION}
+                  </span>
+                </div>
                 <span className="text-[10px] text-blue-400 font-bold tracking-wider uppercase mt-1 block truncate">
                   {user.role === 'Teacher' ? 'Instructor' : user.role === 'Admin' ? 'Executive Admin' : 'Student Portal'}
                 </span>
