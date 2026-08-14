@@ -5,7 +5,7 @@ import { useToast } from '../context/ToastContext';
 import Editor from '@monaco-editor/react';
 import {
   AlertCircle, ArrowLeft, ArrowRight, Save, Loader2, Code, Sparkles,
-  RotateCcw, FileText, ChevronDown, Lock, Edit3, Bot, Star
+  RotateCcw, FileText, ChevronDown, Lock, Edit3, Star
 } from 'lucide-react';
 
 interface AttemptHistoryItem {
