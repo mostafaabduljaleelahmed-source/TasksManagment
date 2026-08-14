@@ -5,7 +5,7 @@ import { useToast } from '../context/ToastContext';
 import Editor from '@monaco-editor/react';
 import {
   AlertCircle, ArrowLeft, ArrowRight, Save, Loader2, Code, Sparkles,
-  RotateCcw, FileText, ChevronDown, Lock, Edit3
+  RotateCcw, FileText, ChevronDown, Lock, Edit3, Bot, Star
 } from 'lucide-react';
 
 interface AttemptHistoryItem {
@@ -15,6 +15,7 @@ interface AttemptHistoryItem {
   grade?: number | null;
   isReviewed: boolean;
   status: string;
+  teacherFeedback?: string | null;
 }
 
 interface PendingSubmissionQueueItem {
@@ -50,6 +51,7 @@ interface FeedbackTemplate {
 }
 
 const ARABIC_FEEDBACK_TEMPLATES: FeedbackTemplate[] = [
+  { emoji: '🤖', title: 'AI Detection', text: 'تم استخدام الذكاء الاصطناعي في حل المهمة (AI Generated Code). درجة المهمة: 0', ratio: 0 },
   { emoji: '🌟', title: 'ممتاز', text: 'عمل ممتاز، استمر بنفس المستوى.', ratio: 1.0 },
   { emoji: '👍', title: 'جيد', text: 'إجابة جيدة، تحتاج بعض التحسينات البسيطة.', ratio: 0.75 },
   { emoji: '🧠', title: 'يحتاج تحسين', text: 'يوجد خطأ في منطق الحل، حاول إعادة التفكير في الخوارزمية.', ratio: 0.50 },
@@ -72,6 +74,31 @@ export const GlobalReviewWorkspace: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Review Later ⭐ Bookmarks persisted in localStorage
+  const [reviewLaterSet, setReviewLaterSet] = useState<{ [subId: string]: boolean }>(() => {
+    try {
+      const saved = localStorage.getItem('teacher_review_later_submissions');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('teacher_review_later_submissions', JSON.stringify(reviewLaterSet));
+    } catch (e) {
+      console.error('Failed to save bookmarks', e);
+    }
+  }, [reviewLaterSet]);
+
+  const toggleBookmark = (subId: string) => {
+    setReviewLaterSet((prev) => ({
+      ...prev,
+      [subId]: !prev[subId]
+    }));
+  };
 
   // Single submission review mode state when loaded directly or from breakdown
   const [singleSubmission, setSingleSubmission] = useState<PendingSubmissionQueueItem | null>(null);
@@ -531,6 +558,36 @@ export const GlobalReviewWorkspace: React.FC = () => {
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset Review</span>
           </button>
+
+          {/* Review Later ⭐ Bookmark Button */}
+          {currentSubmission && (
+            <button
+              onClick={() => toggleBookmark(currentSubmission.submissionId || currentSubmission.studentId)}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                reviewLaterSet[currentSubmission.submissionId || currentSubmission.studentId]
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                  : 'bg-[#1F2937] hover:bg-zinc-700 text-zinc-400 hover:text-white border-[#374151]'
+              }`}
+              title={
+                reviewLaterSet[currentSubmission.submissionId || currentSubmission.studentId]
+                  ? 'Bookmarked for later review'
+                  : 'Bookmark to review later'
+              }
+            >
+              <Star
+                className={`w-3.5 h-3.5 ${
+                  reviewLaterSet[currentSubmission.submissionId || currentSubmission.studentId]
+                    ? 'fill-amber-400 text-amber-400'
+                    : ''
+                }`}
+              />
+              <span>
+                {reviewLaterSet[currentSubmission.submissionId || currentSubmission.studentId]
+                  ? 'Bookmarked ⭐'
+                  : 'Review Later ⭐'}
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Right Quick Presets Bar (100%, 75%, 50%, 25%, 0%) */}
