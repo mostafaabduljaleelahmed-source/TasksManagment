@@ -38,7 +38,7 @@ jobs:
         run: dotnet build backend/Platform.Api/Platform.Api.csproj --configuration Release --no-restore
 
       - name: Run Unit Tests
-        run: dotnet test backend/Platform.UnitTests/Platform.UnitTests.csproj --configuration Release --no-build
+        run: dotnet test backend/Platform.UnitTests/Platform.UnitTests.csproj --configuration Release
 
       - name: Publish to MonsterASP via WebDeploy
         run: |
