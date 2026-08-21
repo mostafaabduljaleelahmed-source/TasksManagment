@@ -41,5 +41,8 @@ jobs:
         run: dotnet test backend/Platform.UnitTests/Platform.UnitTests.csproj --configuration Release
 
       - name: Publish to MonsterASP via WebDeploy
+        shell: cmd
+        env:
+          MONSTERASP_PASSWORD: ${{ secrets.MONSTERASP_PASSWORD }}
         run: |
-          dotnet publish backend/Platform.Api/Platform.Api.csproj -c Release /p:PublishProfile=MonsterASP /p:Password="${{ secrets.MONSTERASP_PASSWORD }}" /p:EnableMsDeployAppOffline=True /p:AllowUntrustedCertificate=True /p:SkipExtraFilesOnServer=True
+          dotnet publish backend/Platform.Api/Platform.Api.csproj -c Release /p:PublishProfile=MonsterASP /p:UserName=site76452 /p:Password="%MONSTERASP_PASSWORD%" /p:EnableMsDeployAppOffline=True /p:AllowUntrustedCertificate=True /p:SkipExtraFilesOnServer=True
