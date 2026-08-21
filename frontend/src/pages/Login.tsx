@@ -190,54 +190,47 @@ export const Login: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-              {t('email')}
-            </label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">{t('email')}</label>
             <div className="relative">
-              <Mail className={`w-4 h-4 text-zinc-500 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={`w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-3 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all ${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
-                placeholder="you@school.com"
+                placeholder="name@example.com"
+                className="w-full bg-[#111116] border border-[#272730] rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold text-zinc-300">
-                {t('password')}
-              </label>
-              <Link
-                to="/forgot-password"
-                className="text-xs text-violet-400 hover:text-violet-300 font-semibold transition-colors"
-              >
-                Forgot Password?
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="block text-xs font-semibold text-slate-300">{t('password')}</label>
+              <Link to="/forgot-password" className="text-xs font-semibold text-indigo-400 hover:underline">
+                Forgot password?
               </Link>
             </div>
             <div className="relative">
-              <KeyRound className={`w-4 h-4 text-zinc-500 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
+              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-3 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all ${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
                 placeholder="••••••••"
+                className="w-full bg-[#111116] border border-[#272730] rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-zinc-400 pt-1">
+          <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-[#2F2F37] bg-[#1F1F24] text-violet-600 focus:ring-violet-500"
+                className="rounded border-[#2F2F37] bg-[#1F1F24] text-indigo-600 focus:ring-indigo-500"
               />
               <span>Remember Me</span>
             </label>
@@ -246,7 +239,7 @@ export const Login: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl py-3 px-4 shadow-lg shadow-violet-950/40 transition-all focus:outline-none disabled:opacity-50 text-xs"
+            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl py-3 px-4 shadow-lg shadow-indigo-950/40 transition-all focus:outline-none disabled:opacity-50 text-xs cursor-pointer"
           >
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />

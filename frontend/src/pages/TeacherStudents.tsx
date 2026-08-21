@@ -117,7 +117,6 @@ export const TeacherStudents: React.FC = () => {
             </span>
             Students Roster ({students.length})
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">Complete overview of all enrolled students across your teaching groups.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">

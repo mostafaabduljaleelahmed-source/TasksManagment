@@ -930,7 +930,7 @@ export const TwoPanelGradingWorkspace: React.FC = () => {
                       key={idx}
                       type="button"
                       onClick={() => handleSelectFeedbackTemplate(tmpl)}
-                      className="px-2.5 py-1.5 bg-[#111827] hover:bg-blue-600/30 border border-[#374151] rounded-xl text-xs text-zinc-200 font-semibold transition-all flex items-center gap-1"
+                      className="px-2.5 py-1.5 bg-[#111827] hover:bg-indigo-600/30 border border-[#374151] hover:border-indigo-500/50 rounded-xl text-xs text-slate-100 font-semibold transition-all flex items-center gap-1 cursor-pointer"
                     >
                       <span>{tmpl.emoji}</span>
                       <span>{tmpl.title}</span>

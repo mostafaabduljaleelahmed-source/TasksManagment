@@ -109,9 +109,6 @@ export const Leaderboard: React.FC = () => {
               <Trophy className="w-8 h-8 text-amber-400" />
               Classroom Leaderboard & Rankings
             </h1>
-            <p className="text-zinc-400 text-sm mt-1">
-              Celebrate top student performers ranked by average scores and completed assignments.
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -120,7 +117,7 @@ export const Leaderboard: React.FC = () => {
               <button
                 onClick={() => setRankingMode('grade')}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  rankingMode === 'grade' ? 'bg-amber-500 text-black shadow font-bold' : 'text-zinc-400 hover:text-white'
+                  rankingMode === 'grade' ? 'bg-indigo-600 text-white shadow font-bold' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 By Avg Grade
@@ -128,7 +125,7 @@ export const Leaderboard: React.FC = () => {
               <button
                 onClick={() => setRankingMode('completed')}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  rankingMode === 'completed' ? 'bg-amber-500 text-black shadow font-bold' : 'text-zinc-400 hover:text-white'
+                  rankingMode === 'completed' ? 'bg-indigo-600 text-white shadow font-bold' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 By Completed Tasks
@@ -323,11 +320,11 @@ export const Leaderboard: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs ${
-                          idx === 0 ? 'bg-amber-400 text-amber-950' : idx === 1 ? 'bg-slate-300 text-slate-950' : idx === 2 ? 'bg-amber-700 text-amber-100' : 'bg-zinc-800 text-zinc-400'
+                          idx === 0 ? 'bg-amber-400 text-amber-950 font-extrabold' : idx === 1 ? 'bg-slate-200 text-slate-900 font-extrabold' : idx === 2 ? 'bg-amber-800 text-amber-100 font-bold' : 'bg-slate-800 text-slate-300'
                         }`}>
                           #{idx + 1}
                         </span>
-                        <div className="w-8 h-8 rounded-full bg-violet-600 text-white flex items-center justify-center font-bold text-xs">
+                        <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
                           {item.studentName.substring(0, 2).toUpperCase()}
                         </div>
                         <div>

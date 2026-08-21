@@ -398,10 +398,10 @@ export const TaskWorkspace: React.FC = () => {
 
   if (!task) {
     return (
-      <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center text-zinc-500">
-        <ShieldAlert className="w-12 h-12 text-red-500 mb-3 animate-bounce" />
-        <p className="text-white font-bold">Workspace not accessible.</p>
-        <Link to="/" className="text-violet-400 mt-4 hover:underline">Go Back Home</Link>
+      <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center text-slate-400">
+        <ShieldAlert className="w-12 h-12 text-rose-500 mb-3 animate-pulse" />
+        <p className="text-slate-100 font-bold">Workspace not accessible.</p>
+        <Link to="/" className="text-indigo-400 mt-4 hover:underline">Go Back Home</Link>
       </div>
     );
   }

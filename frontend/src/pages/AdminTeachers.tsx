@@ -54,9 +54,6 @@ export const AdminTeachers: React.FC = () => {
             <ShieldCheck className="w-6 h-6 text-violet-400" />
             <h1 className="text-2xl font-black text-white">Academy Teacher Management</h1>
           </div>
-          <p className="text-xs text-zinc-400">
-            As the single Academy Administrator, you are the only authority who can provision new Teacher accounts.
-          </p>
         </div>
         <span className="px-3 py-1 bg-violet-500/10 border border-violet-500/30 text-violet-300 text-xs font-bold rounded-full">
           Admin Only

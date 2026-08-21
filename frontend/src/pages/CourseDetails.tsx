@@ -688,11 +688,6 @@ export const CourseDetails: React.FC = () => {
                     </button>
                   )}
                 </div>
-                <p className="text-zinc-400 text-sm mt-1">
-                  {isTeacherOrAdmin
-                    ? 'Create programming assignments, specify public/hidden cases, and unlock milestones.'
-                    : 'Solve python programming tasks and view automatic execution grading.'}
-                </p>
               </div>
               {isTeacherOrAdmin && (
                 <button

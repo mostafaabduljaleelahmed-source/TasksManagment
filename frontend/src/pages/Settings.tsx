@@ -187,8 +187,7 @@ export const Settings: React.FC = () => {
     <div className="space-y-10">
       <div>
         <h1 className="text-3xl font-extrabold text-white tracking-tight">{t('settings')}</h1>
-          <p className="text-sm text-zinc-400 mt-1">{t('settingsSubtitle')}</p>
-        </div>
+      </div>
 
         {/* Profile Picture & Info Form */}
         <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
@@ -201,7 +200,7 @@ export const Settings: React.FC = () => {
             {/* Profile Avatar Upload / Remove */}
             <div className="flex flex-col sm:flex-row items-center gap-6 pb-4 border-b border-[#1F1F26]">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center border-2 border-violet-400/40 overflow-hidden shadow-xl">
+                <div className="w-24 h-24 rounded-2xl bg-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center border-2 border-indigo-500/40 overflow-hidden shadow-xl">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={user?.name} className="w-full h-full object-cover" />
                   ) : (
@@ -346,7 +345,7 @@ export const Settings: React.FC = () => {
               <button
                 type="submit"
                 disabled={savingPassword}
-                className="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-violet-950/40 transition-all disabled:opacity-50"
+                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-indigo-950/40 transition-all disabled:opacity-50 cursor-pointer"
               >
                 {savingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                 {t('updatePassword')}

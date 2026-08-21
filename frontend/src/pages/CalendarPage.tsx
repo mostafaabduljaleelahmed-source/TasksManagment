@@ -91,7 +91,6 @@ export const CalendarPage: React.FC = () => {
               <CalendarIcon className="w-6 h-6 text-violet-400" />
               Academic Deadlines & Schedule Calendar
             </h1>
-            <p className="text-xs text-zinc-400 mt-1">Track upcoming assignment deadlines, session releases, and live class schedules.</p>
           </div>
 
           <div className="flex items-center gap-3 bg-[#121215] border border-[#24242B] p-1.5 rounded-xl">

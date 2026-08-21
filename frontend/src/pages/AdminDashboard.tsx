@@ -89,7 +89,6 @@ export const AdminDashboard: React.FC = () => {
               <span>Academy Executive Control</span>
             </div>
             <h1 className="text-2xl font-extrabold text-white tracking-tight">System Overview & Analytics</h1>
-            <p className="text-xs text-zinc-400 mt-1">Real-time statistics for students, instructors, courses, and submission workloads.</p>
           </div>
           <QuickActions role="Admin" />
         </div>

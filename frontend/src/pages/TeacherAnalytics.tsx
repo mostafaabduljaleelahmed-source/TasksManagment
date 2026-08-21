@@ -122,9 +122,6 @@ export const TeacherAnalytics: React.FC = () => {
               <BarChart3 className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400 shrink-0" />
               <span>{t('analyticsOverview')}</span>
             </h1>
-            <p className="text-zinc-400 text-xs sm:text-sm mt-1 line-clamp-2">
-              Cross-course analytics, submission velocity, difficulty trends, and pending evaluations.
-            </p>
           </div>
 
           <div className="flex items-center gap-3 bg-[#16161A] border border-[#24242B] p-2 rounded-xl">
@@ -176,8 +173,8 @@ export const TeacherAnalytics: React.FC = () => {
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-3xs text-zinc-400 uppercase tracking-wider block font-semibold">Total Students</span>
-                  <span className="text-2xl font-black text-indigo-400 mt-1 block">{analyticsData.totalStudents}</span>
+                  <span className="text-3xs text-slate-400 uppercase tracking-wider block font-semibold">Total Students</span>
+                  <span className="text-2xl font-black text-slate-100 mt-1 block">{analyticsData.totalStudents}</span>
                 </div>
               </div>
 
@@ -309,7 +306,7 @@ export const TeacherAnalytics: React.FC = () => {
                           <td className="p-3.5 text-right">
                             <button
                               onClick={() => navigate(`/grading-workspace/${sub.taskId}`)}
-                              className="px-3.5 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-lg font-semibold shadow-md transition-all ml-auto flex items-center gap-1.5"
+                              className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white rounded-lg font-semibold shadow-md transition-all ml-auto flex items-center gap-1.5 cursor-pointer"
                             >
                               <FileCode className="w-3.5 h-3.5" />
                               Evaluate

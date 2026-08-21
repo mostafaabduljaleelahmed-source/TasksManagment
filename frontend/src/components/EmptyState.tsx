@@ -82,7 +82,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       {actionLabel && onAction && (
         <button
           onClick={onAction}
-          className="mt-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 active:scale-95 text-white font-semibold text-xs py-2.5 px-5 rounded-xl shadow-lg transition-all"
+          className="mt-2 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-semibold text-xs py-2.5 px-5 rounded-xl shadow-lg shadow-emerald-950/40 border border-emerald-400/30 transition-all duration-200 cursor-pointer"
         >
           {actionLabel}
         </button>

@@ -117,7 +117,7 @@ export const TeacherProfile: React.FC = () => {
             {/* Header Banner Card */}
             <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-8 shadow-xl flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center border-2 border-violet-400/40 overflow-hidden shadow-xl">
+                <div className="w-24 h-24 rounded-2xl bg-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center border-2 border-indigo-500/40 overflow-hidden shadow-xl">
                   {data?.avatarUrl ? (
                     <img src={data.avatarUrl} alt={data.name} className="w-full h-full object-cover" />
                   ) : (

@@ -159,13 +159,10 @@ export const StudentProfile: React.FC = () => {
     <div className="pb-16 relative overflow-hidden space-y-8">
       <div>
         <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-            <User className="w-8 h-8 text-violet-400" />
-            {t('studentProfile')}
-          </h1>
-          <p className="text-zinc-400 text-xs mt-1">
-            Track your academic progress, assignment history, grades, and teacher feedback.
-          </p>
-        </div>
+          <User className="w-8 h-8 text-violet-400" />
+          {t('studentProfile')}
+        </h1>
+      </div>
 
         {error && (
           <div className="p-4 bg-red-950/40 border border-red-800/50 text-red-300 rounded-xl text-xs">
@@ -187,7 +184,7 @@ export const StudentProfile: React.FC = () => {
               <div className="bg-[#16161A] border border-[#24242B] rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="relative group">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center border border-violet-400/40 shadow-lg shrink-0 overflow-hidden">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center border border-indigo-500/40 shadow-lg shrink-0 overflow-hidden">
                       {profileData.studentInfo.avatarUrl || user?.avatarUrl ? (
                         <img
                           src={profileData.studentInfo.avatarUrl || user?.avatarUrl || ''}

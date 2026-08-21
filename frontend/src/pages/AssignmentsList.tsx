@@ -68,7 +68,6 @@ export const AssignmentsList: React.FC = () => {
               <FileCode className="w-6 h-6 text-violet-500" />
               Assignment Management
             </h1>
-            <p className="text-xs text-zinc-400 mt-1">Overview of all active course assignments, submission status, and class performance.</p>
           </div>
 
           <div className="relative">

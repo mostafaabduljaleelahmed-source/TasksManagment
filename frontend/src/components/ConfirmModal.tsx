@@ -64,10 +64,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className={`saas-button-primary min-h-[48px] ${
+            className={`saas-button-primary min-h-[48px] px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 text-white transition-all cursor-pointer ${
               danger
-                ? 'bg-red-600 hover:bg-red-500 shadow-red-950/40'
-                : 'bg-blue-600 hover:bg-blue-500 shadow-blue-950/40'
+                ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-950/40 border border-rose-500/40'
+                : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-950/40 border border-indigo-500/40'
             }`}
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}

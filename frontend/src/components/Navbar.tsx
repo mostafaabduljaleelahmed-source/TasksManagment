@@ -46,19 +46,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
 
   return (
     <>
-      <nav className="border-b border-[#1F2937] bg-[#111827]/95 backdrop-blur-md sticky top-0 z-40 px-3 sm:px-6 py-2.5 flex items-center justify-between min-h-[56px]">
+      <nav className="border-b border-slate-800/80 bg-[#0B0F19]/90 backdrop-blur-md sticky top-0 z-40 px-3 sm:px-6 py-2.5 flex items-center justify-between min-h-[56px]">
         {/* Left Side: Off-canvas Hamburger & Page Title */}
         <div className="flex items-center gap-2.5 shrink-0 min-w-0">
           <button
             onClick={onOpenMobileDrawer}
-            className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center text-zinc-300 hover:text-white bg-[#1F2937]/70 border border-[#374151]/50 rounded-xl active:scale-95 transition-transform"
+            className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-300 hover:text-white bg-slate-800/70 border border-slate-700/50 rounded-xl active:scale-95 transition-transform cursor-pointer"
             aria-label="Open Navigation Drawer"
           >
-            <Menu className="w-5 h-5 text-blue-400" />
+            <Menu className="w-5 h-5 text-indigo-400" />
           </button>
 
           {/* Mobile Title */}
-          <h1 className="text-sm sm:text-base font-extrabold text-white truncate max-w-[150px] sm:max-w-none">
+          <h1 className="text-sm sm:text-base font-extrabold text-slate-100 truncate max-w-[150px] sm:max-w-none">
             {getPageTitle()}
           </h1>
         </div>
@@ -74,7 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
           {(user.role === 'Teacher' || user.role === 'Admin') && (
             <button
               onClick={() => navigate('/teacher/pending-reviews')}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center bg-[#1F2937]/70 hover:bg-[#374151] border border-[#374151]/50 text-amber-400 rounded-xl transition-colors relative active:scale-95"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center bg-slate-800/70 hover:bg-slate-700 border border-slate-700/50 text-amber-400 rounded-xl transition-colors relative active:scale-95 cursor-pointer"
               aria-label="Pending Reviews & Notifications"
             >
               <Bell className="w-4 h-4" />
@@ -85,10 +85,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
           {/* User Profile Avatar */}
           <Link
             to="/profile"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center p-0.5 rounded-xl border border-blue-500/40 bg-blue-600/20 active:scale-95 transition-transform"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center p-0.5 rounded-xl border border-indigo-500/40 bg-indigo-600/20 active:scale-95 transition-transform"
             aria-label="User Profile"
           >
-            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-black text-xs flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white font-black text-xs flex items-center justify-center overflow-hidden">
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
               ) : (

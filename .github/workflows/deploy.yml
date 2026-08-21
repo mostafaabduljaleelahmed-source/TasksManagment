@@ -1,0 +1,45 @@
+name: Deploy to MonsterASP
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy via WebDeploy (MSDeploy)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Frontend Assets
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore backend/Platform.Api/Platform.Api.csproj
+
+      - name: Build Backend
+        run: dotnet build backend/Platform.Api/Platform.Api.csproj --configuration Release --no-restore
+
+      - name: Run Unit Tests
+        run: dotnet test backend/Platform.UnitTests/Platform.UnitTests.csproj --configuration Release --no-build
+
+      - name: Publish to MonsterASP via WebDeploy
+        run: |
+          dotnet publish backend/Platform.Api/Platform.Api.csproj -c Release /p:PublishProfile=MonsterASP /p:Password="${{ secrets.MONSTERASP_PASSWORD }}" /p:EnableMsDeployAppOffline=True /p:AllowUntrustedCertificate=True /p:SkipExtraFilesOnServer=True

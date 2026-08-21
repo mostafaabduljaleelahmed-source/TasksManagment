@@ -52,13 +52,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().substring(0, 2)
     : 'U';
 
+  const firstName = user.name ? user.name.trim().split(/\s+/)[0] : '';
+  const displayName = firstName || user.name || 'User';
+
   const toggleLanguage = () => {
     setLanguage(lang === 'ar' ? 'en' : 'ar');
   };
 
   const isTeacherOrAdmin = user.role === 'Teacher' || user.role === 'Admin';
 
-  const renderNavLink = (path: string, label: string, icon: React.ReactNode, activeBgColor: string = 'bg-blue-400') => {
+  const renderNavLink = (path: string, label: string, icon: React.ReactNode, activeBgColor: string = 'bg-indigo-400') => {
     const active = isActive(path);
     return (
       <div className="relative group/item" key={path}>
@@ -66,12 +69,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           to={path}
           onClick={onClose}
           aria-label={label}
-          className={`flex items-center gap-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-250 ${
+          className={`flex items-center gap-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
             isCollapsed ? 'justify-center px-0' : 'justify-between px-3.5'
           } ${
             active
-              ? 'bg-blue-600/15 text-blue-400 border border-blue-500/20 font-bold shadow-sm'
-              : 'text-zinc-400 hover:text-white hover:bg-[#1F2937]/50 border border-transparent'
+              ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-bold shadow-sm'
+              : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 border border-transparent'
           }`}
         >
           <span className="flex items-center gap-3 shrink-0">
@@ -83,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Hover Tooltip in Collapsed Mode */}
         {isCollapsed && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 px-2.5 py-1.5 bg-[#1F2937] text-white text-xs font-semibold rounded-lg shadow-xl border border-[#374151] whitespace-nowrap opacity-0 pointer-events-none group-hover/item:opacity-100 transition-opacity duration-150">
+          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 px-2.5 py-1.5 bg-slate-900 text-slate-100 text-xs font-semibold rounded-lg shadow-xl border border-slate-800 whitespace-nowrap opacity-0 pointer-events-none group-hover/item:opacity-100 transition-opacity duration-150">
             {label}
           </div>
         )}
@@ -93,20 +96,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const sidebarContent = (collapsed: boolean) => (
     <aside
-      className={`w-full bg-[#111827] border-r border-[#1F2937] flex flex-col justify-between h-full select-none transition-all duration-250 ${
+      className={`w-full bg-[#0B0F19] border-r border-slate-800/80 flex flex-col justify-between h-full select-none transition-all duration-200 ${
         collapsed ? 'items-center px-2 py-4' : 'p-4'
       }`}
     >
       <div className="flex flex-col gap-4 overflow-y-auto w-full">
         {/* Header with Brand Logo, Collapse Toggle, and Mobile Close */}
-        <div className="flex items-center justify-between border-b border-[#1F2937] pb-3 min-h-[48px]">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 min-h-[48px]">
           <Link
             to="/"
             className={`flex items-center gap-3 group shrink-0 ${collapsed ? 'justify-center w-full' : ''}`}
             onClick={onClose}
             aria-label="Home"
           >
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-base shadow-lg shadow-blue-950/50 shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-base shadow-lg shadow-indigo-950/50 shrink-0">
               ⚡
             </div>
             {!collapsed && (
@@ -242,36 +245,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* User Card & Logout */}
-        <div
-          className={`flex items-center bg-[#1F2937]/50 rounded-xl border border-[#374151]/40 ${
-            collapsed ? 'justify-center p-2' : 'justify-between p-2.5'
-          }`}
-        >
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0 border border-blue-400/30">
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                userInitials
+        {/* Simplified User Profile Card & Logout */}
+        <div className={`bg-[#1F2937]/50 rounded-xl border border-[#374151]/40 ${collapsed ? 'p-2' : 'p-3'} w-full space-y-2.5`}>
+          <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'} gap-2.5`}>
+            <div className="flex items-center gap-2.5 min-w-0 overflow-hidden">
+              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0 border border-blue-400/30">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                ) : (
+                  userInitials
+                )}
+              </div>
+              {!collapsed && (
+                <div className="min-w-0 overflow-hidden">
+                  <p className="text-xs font-bold text-white truncate max-w-[120px]">{displayName}</p>
+                  <p className="text-[10px] text-zinc-400 font-medium truncate">
+                    {user.role === 'Teacher' ? t('teacher') : user.role === 'Admin' ? (lang === 'ar' ? 'مسؤول' : 'Admin') : t('student')}
+                  </p>
+                </div>
               )}
             </div>
-            {!collapsed && (
-              <div className="truncate">
-                <p className="text-xs font-bold text-white truncate">{user.name}</p>
-                <p className="text-[10px] text-zinc-400 capitalize truncate">{user.role}</p>
-              </div>
+
+            {collapsed && (
+              <button
+                onClick={logout}
+                className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0 flex items-center justify-center min-h-[36px] min-w-[36px]"
+                aria-label={t('logout')}
+                title={t('logout')}
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             )}
           </div>
 
           {!collapsed && (
             <button
               onClick={logout}
-              className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/30 rounded-lg text-xs font-bold transition-all min-h-[38px] active:scale-[0.98]"
               aria-label={t('logout')}
               title={t('logout')}
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{t('logout')}</span>
             </button>
           )}
         </div>

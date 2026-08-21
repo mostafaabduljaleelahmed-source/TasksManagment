@@ -94,7 +94,6 @@ export const SystemSettings: React.FC = () => {
             <Settings className="w-7 h-7 text-violet-400" />
             Academy System Settings
           </h1>
-          <p className="text-sm text-zinc-400 mt-1">Configure global branding, academy emails, visual theme accents, and footer metadata.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -274,7 +273,7 @@ export const SystemSettings: React.FC = () => {
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-violet-950/40 transition-all disabled:opacity-50"
+              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-indigo-950/40 transition-all disabled:opacity-50 cursor-pointer"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save System Settings

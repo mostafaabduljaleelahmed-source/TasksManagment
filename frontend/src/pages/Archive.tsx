@@ -124,9 +124,6 @@ export const Archive: React.FC = () => {
             <ArchiveIcon className="w-6 h-6 text-amber-400" />
             Archived Items Vault
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
-            Archived courses, sessions, and assignments are hidden from normal lists. Restore them anytime.
-          </p>
         </div>
       </div>
 

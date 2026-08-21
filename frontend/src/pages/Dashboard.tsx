@@ -196,11 +196,6 @@ export const Dashboard: React.FC = () => {
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
             {user?.role === 'Teacher' || user?.role === 'Admin' ? 'Executive Academy & Teaching Workspace' : 'Student Workspace'}
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
-            {user?.role === 'Teacher' || user?.role === 'Admin'
-              ? 'Focus on your daily teaching workflow: pending reviews, student activity, and course management.'
-              : 'Overview of your pending assignments, completed work, teacher feedback, and recent grades.'}
-          </p>
         </div>
 
         {user && <QuickActions role={user.role as any} />}

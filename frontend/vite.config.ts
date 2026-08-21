@@ -13,6 +13,15 @@ const outDir = isVercel
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5115',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
   build: {
     outDir,
     emptyOutDir: true,

@@ -182,13 +182,12 @@ export const UserManagement: React.FC = () => {
               <Users className="w-6 h-6 text-violet-400" />
               User & Instructor Management
             </h1>
-            <p className="text-xs text-zinc-400 mt-1">Govern academy teachers and student accounts, enable/disable access, or provision new instructors.</p>
           </div>
 
           {activeTab === 'Teachers' && (
             <button
               onClick={() => setShowCreateTeacher(true)}
-              className="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-violet-950/40"
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-indigo-950/40 cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
               Create Teacher Account
@@ -445,7 +444,7 @@ export const UserManagement: React.FC = () => {
                 <button
                   type="submit"
                   disabled={creatingTeacher}
-                  className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center gap-2"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all cursor-pointer"
                 >
                   {creatingTeacher ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                   Create Teacher

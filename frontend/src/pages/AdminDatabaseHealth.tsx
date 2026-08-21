@@ -91,9 +91,6 @@ export const AdminDatabaseHealth: React.FC = () => {
             </span>
             Database Integrity & System Health
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
-            Real-time forensic health telemetry, database constraint audit, and automated repair tools.
-          </p>
         </div>
 
         <div className="flex items-center gap-3">

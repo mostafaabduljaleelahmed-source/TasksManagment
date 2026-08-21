@@ -129,9 +129,6 @@ export const ActivityLogPage: React.FC = () => {
             <Activity className="w-6 h-6 text-indigo-400" />
             Platform Activity Audit Log
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
-            Read-only chronological audit log recording course events, submissions, grading, and roster updates.
-          </p>
         </div>
 
         {/* Filter Input */}

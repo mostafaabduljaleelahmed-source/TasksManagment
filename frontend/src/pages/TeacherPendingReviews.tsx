@@ -109,7 +109,6 @@ export const TeacherPendingReviews: React.FC = () => {
             </span>
             Pending Reviews ({submissions.length})
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">Dedicated workspace for reviewing ungraded student submissions.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
