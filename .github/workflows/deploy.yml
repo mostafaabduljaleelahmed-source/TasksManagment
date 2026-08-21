@@ -45,4 +45,4 @@ jobs:
         env:
           MONSTERASP_PASSWORD: ${{ secrets.MONSTERASP_PASSWORD }}
         run: |
-          dotnet publish backend/Platform.Api/Platform.Api.csproj -c Release /p:PublishProfile=MonsterASP /p:UserName=site76452 /p:Password="%MONSTERASP_PASSWORD%" /p:AuthType=Basic /p:MSDeployServiceURL="https://site76452.siteasp.net:8172/msdeploy.axd" /p:EnableMsDeployAppOffline=True /p:AllowUntrustedCertificate=True /p:SkipExtraFilesOnServer=True
+          dotnet publish backend/Platform.Api/Platform.Api.csproj -c Release /p:PublishProfile=MonsterASP /p:Password="%MONSTERASP_PASSWORD%" /p:EnableMsDeployAppOffline=True /p:AllowUntrustedCertificate=True /p:SkipExtraFilesOnServer=True
