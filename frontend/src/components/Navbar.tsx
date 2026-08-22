@@ -4,9 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { GlobalSearchModal } from './GlobalSearchModal';
 import { APP_VERSION } from '../constants/version';
-import {
-  Menu, Bell
-} from 'lucide-react';
+import { Menu, Inbox } from 'lucide-react';
 
 interface NavbarProps {
   onOpenMobileDrawer?: () => void;
@@ -46,49 +44,42 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
 
   return (
     <>
-      <nav className="border-b border-slate-800/80 bg-[#0B0F19]/90 backdrop-blur-md sticky top-0 z-40 px-3 sm:px-6 py-2.5 flex items-center justify-between min-h-[56px]">
-        {/* Left Side: Off-canvas Hamburger & Page Title */}
+      <header className="border-b border-[#1B2333] bg-[#0E121A] sticky top-0 z-40 px-3 sm:px-5 py-2 flex items-center justify-between min-h-[44px]">
         <div className="flex items-center gap-2.5 shrink-0 min-w-0">
           <button
             onClick={onOpenMobileDrawer}
-            className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-300 hover:text-white bg-slate-800/70 border border-slate-700/50 rounded-xl active:scale-95 transition-transform cursor-pointer"
+            className="md:hidden p-1.5 text-slate-300 hover:text-white bg-[#151B28] border border-[#232F45] rounded flex items-center justify-center cursor-pointer"
             aria-label="Open Navigation Drawer"
           >
-            <Menu className="w-5 h-5 text-indigo-400" />
+            <Menu className="w-4 h-4 text-blue-400" />
           </button>
-
-          {/* Mobile Title */}
-          <h1 className="text-sm sm:text-base font-extrabold text-slate-100 truncate max-w-[150px] sm:max-w-none">
+          <h1 className="text-xs sm:text-sm font-bold text-slate-100 truncate max-w-[180px] sm:max-w-none">
             {getPageTitle()}
           </h1>
         </div>
 
-        {/* Right Side: Version Badge, Notifications & User Profile Avatar */}
         <div className="flex items-center gap-2">
-          {/* Version Badge */}
-          <span className="px-2 py-0.5 text-[10px] font-bold font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-md">
+          <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded">
             {APP_VERSION}
           </span>
 
-          {/* Notifications */}
           {(user.role === 'Teacher' || user.role === 'Admin') && (
             <button
               onClick={() => navigate('/teacher/pending-reviews')}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center bg-slate-800/70 hover:bg-slate-700 border border-slate-700/50 text-amber-400 rounded-xl transition-colors relative active:scale-95 cursor-pointer"
-              aria-label="Pending Reviews & Notifications"
+              className="p-1.5 bg-[#151B28] hover:bg-[#1E2638] border border-[#232F45] text-amber-400 rounded transition-colors relative flex items-center justify-center cursor-pointer"
+              title="Pending Reviews Queue"
             >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+              <Inbox className="w-3.5 h-3.5" />
+              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-amber-500 rounded-full" />
             </button>
           )}
 
-          {/* User Profile Avatar */}
           <Link
             to="/profile"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center p-0.5 rounded-xl border border-indigo-500/40 bg-indigo-600/20 active:scale-95 transition-transform"
+            className="p-0.5 rounded border border-[#232F45] bg-[#151B28] transition-transform"
             aria-label="User Profile"
           >
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white font-black text-xs flex items-center justify-center overflow-hidden">
+            <div className="w-6 h-6 rounded bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center overflow-hidden">
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
               ) : (
@@ -97,11 +88,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
             </div>
           </Link>
         </div>
-      </nav>
+      </header>
 
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 };
-
-

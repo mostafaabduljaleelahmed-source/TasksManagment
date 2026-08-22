@@ -1,29 +1,30 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg-main: #0B0F19;
-  --bg-card: #111827;
-  --bg-secondary: #1E293B;
-  --primary: #4F46E5;
-  --primary-hover: #4338CA;
-  --success: #10B981;
-  --warning: #F59E0B;
-  --danger: #EF4444;
-  --text-main: #F8FAFC;
-  --text-muted: #94A3B8;
+  --bg-main: #0B0E14;
+  --bg-surface: #121620;
+  --bg-surface-hover: #1A202E;
+  --bg-inset: #07090E;
+  --border-subtle: #1B2333;
+  --border-strong: #2A364F;
+  --text-heading: #F1F5F9;
+  --text-main: #CBD5E1;
+  --text-muted: #64748B;
 
-  /* Safe Area Insets */
+  --accent-primary: #3B82F6;
+  --accent-primary-hover: #2563EB;
+  --status-emerald: #10B981;
+  --status-amber: #F59E0B;
+  --status-rose: #EF4444;
+
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
-
-  /* Touch Target Minimum Standard */
-  --min-touch-target: 48px;
 }
 
 @layer base {
@@ -32,10 +33,11 @@
     max-width: 100vw;
     width: 100%;
     -webkit-tap-highlight-color: transparent;
+    background-color: var(--bg-main);
   }
   
   body {
-    @apply bg-[#090D16] text-[#F8FAFC] antialiased selection:bg-indigo-500/30 selection:text-indigo-200;
+    @apply bg-[#0B0E14] text-slate-300 antialiased selection:bg-blue-600/30 selection:text-blue-200;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     padding-top: var(--sat);
     padding-bottom: var(--sab);
@@ -45,100 +47,83 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Outfit', 'Inter', sans-serif;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
+    color: var(--text-heading);
   }
 }
 
-/* Custom Scrollbars */
+/* Precise Institutional Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #090D16;
+  background: #0B0E14;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1E293B;
-  border-radius: 9999px;
+  background: #1E2638;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #2D3B57;
 }
 
-/* Glassmorphism & High-Craft Cards */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(51, 65, 85, 0.5);
+/* Institutional Design Utility Classes */
+.academic-surface {
+  background-color: #121620;
+  border: 1px solid #1B2333;
 }
 
-.glass-card {
-  background: rgba(17, 24, 39, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(51, 65, 85, 0.6);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+.academic-panel {
+  background-color: #0E121A;
+  border: 1px solid #182030;
 }
 
-.glow-indigo {
-  box-shadow: 0 0 30px -5px rgba(79, 70, 229, 0.25);
+.academic-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-.glow-emerald {
-  box-shadow: 0 0 30px -5px rgba(16, 185, 129, 0.25);
+.academic-table th {
+  background-color: #0F131C;
+  color: #94A3B8;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 16px;
+  border-bottom: 1px solid #1E2638;
 }
 
-.glow-sky {
-  box-shadow: 0 0 30px -5px rgba(2, 132, 199, 0.25);
+.academic-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #141A28;
+  color: #CBD5E1;
+  font-size: 0.8125rem;
 }
 
-/* SaaS Component Design System */
-.saas-card {
-  @apply bg-[#111827]/90 border border-slate-800/80 rounded-2xl shadow-xl transition-all duration-200 p-4 sm:p-6 hover:border-slate-700;
+.academic-table tr:hover td {
+  background-color: #161C2A;
 }
 
-.saas-button-primary {
-  @apply bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-sm min-h-[44px] px-5 shadow-lg shadow-indigo-950/40 border border-indigo-500/30 transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer w-full sm:w-auto;
+.academic-button-primary {
+  @apply bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs py-2 px-4 rounded-lg shadow-sm border border-blue-500/30 transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
 }
 
-.saas-button-secondary {
-  @apply bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-sm min-h-[44px] px-4 border border-slate-700 transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer w-full sm:w-auto;
+.academic-button-secondary {
+  @apply bg-[#161C29] hover:bg-[#1E2638] text-slate-200 font-semibold text-xs py-2 px-3.5 rounded-lg border border-[#232F45] transition-all flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer;
 }
 
-.saas-input {
-  @apply bg-slate-950 border border-slate-800 text-slate-100 rounded-xl text-sm min-h-[44px] px-4 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all w-full placeholder:text-slate-500;
+.academic-button-danger {
+  @apply bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-semibold text-xs py-2 px-3.5 rounded-lg border border-rose-500/30 transition-all flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer;
 }
 
-/* Status Badges */
-.badge-indigo {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-950/80 text-indigo-300 border border-indigo-800/50;
-}
-
-.badge-emerald {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-800/50;
-}
-
-.badge-amber {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-950/80 text-amber-300 border border-amber-800/50;
-}
-
-.badge-rose {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-950/80 text-rose-300 border border-rose-800/50;
-}
-
-/* Responsive Typography */
-.text-mobile-h1 {
-  font-size: clamp(1.5rem, 5vw, 2.25rem);
-  line-height: 1.25;
-}
-
-.text-mobile-h2 {
-  font-size: clamp(1.25rem, 4vw, 1.75rem);
-  line-height: 1.3;
+.academic-input {
+  @apply bg-[#080B10] border border-[#1E2638] text-slate-100 rounded-lg text-xs py-2 px-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all w-full placeholder:text-slate-600;
 }
 
 /* Force Monaco Editor containers to strictly render LTR */
@@ -156,10 +141,11 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(3px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+

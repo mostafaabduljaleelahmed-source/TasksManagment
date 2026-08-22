@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { useTranslation } from '../utils/i18n';
-import { Breadcrumbs } from '../components/Breadcrumbs';
 import {
-  Clock, CheckCircle2, FileCode, Search, SortAsc, Loader2, Star
+  Inbox, Search, ArrowRight, ArrowLeft, RefreshCw, CheckCircle2, AlertTriangle
 } from 'lucide-react';
 
 interface PendingSubmission {
   submissionId: string;
   studentId: string;
   studentName: string;
-  studentRegisterId: string;
+  studentRegisterId?: string;
   studentAvatarUrl?: string | null;
   taskId: string;
   taskTitle: string;
+  language?: string;
+  description?: string;
   maxGrade: number;
-  deadline: string;
+  deadline?: string;
   groupName: string;
   submittedAt: string;
   attemptNumber: number;
@@ -25,264 +27,207 @@ interface PendingSubmission {
 
 export const TeacherPendingReviews: React.FC = () => {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { error: toastError } = useToast();
+  const { lang, isRtl } = useTranslation();
   const navigate = useNavigate();
 
-  const [submissions, setSubmissions] = useState<PendingSubmission[]>([]);
+  const [pendingQueue, setPendingQueue] = useState<PendingSubmission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<string>('newest');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [showSavedOnly, setShowSavedOnly] = useState<boolean>(false);
-
-  // Review Later Set persisted in localStorage per teacher
-  const [reviewLaterSet, setReviewLaterSet] = useState<{ [subId: string]: boolean }>(() => {
-    try {
-      const saved = localStorage.getItem('teacher_review_later_submissions');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState<string>('ALL');
 
   useEffect(() => {
-    try {
-      localStorage.setItem('teacher_review_later_submissions', JSON.stringify(reviewLaterSet));
-    } catch (e) {
-      console.error('Failed to save bookmarks', e);
-    }
-  }, [reviewLaterSet]);
+    fetchPendingQueue();
+  }, [user]);
 
-  const toggleBookmark = (sub: PendingSubmission, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const key = sub.submissionId || sub.studentId;
-    setReviewLaterSet((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
-
-  const fetchPendingSubmissions = async () => {
-    if (!user) return;
+  const fetchPendingQueue = async () => {
+    if (!user || !user.token) return;
     setLoading(true);
-    setError(null);
+    setFetchError(null);
     try {
-      const res = await fetch(`${API_URL}/dashboard/teacher/pending-reviews?sortBy=${sortBy}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
+      const response = await fetch(`${API_URL}/dashboard/teacher/pending-reviews?sortBy=newest`, {
+        headers: { Authorization: `Bearer ${user.token}` }
       });
-      if (!res.ok) throw new Error('Failed to load pending reviews');
-      const data = await res.json();
-      setSubmissions(data);
-    } catch (err: any) {
-      setError(err.message || 'Error loading pending reviews');
+      if (response.ok) {
+        const data: PendingSubmission[] = await response.json();
+        setPendingQueue(data);
+      } else {
+        const errText = lang === 'ar' ? 'فشل تحميل قائمة التقييمات المعلقة من الخادم' : 'Failed to load evaluation queue from server';
+        setFetchError(errText);
+        toastError(errText);
+      }
+    } catch (err) {
+      console.error('Error fetching pending queue:', err);
+      const connText = lang === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error';
+      setFetchError(connText);
+      toastError(connText);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchPendingSubmissions();
-  }, [user, sortBy]);
+  const coursesList = Array.from(new Set(pendingQueue.map(item => item.groupName || 'Unassigned')));
 
-  const filteredSubmissions = submissions.filter((sub) => {
-    const key = sub.submissionId || sub.studentId;
-    if (showSavedOnly && !reviewLaterSet[key]) return false;
+  const filteredQueue = pendingQueue.filter(item => {
+    const matchesSearch =
+      item.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.studentRegisterId && item.studentRegisterId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      item.taskTitle.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const courseIdentifier = item.groupName || 'Unassigned';
+    const matchesCourse = selectedCourse === 'ALL' || courseIdentifier === selectedCourse;
 
-    const term = searchTerm.toLowerCase();
-    return (
-      sub.studentName.toLowerCase().includes(term) ||
-      sub.studentRegisterId.toLowerCase().includes(term) ||
-      sub.taskTitle.toLowerCase().includes(term) ||
-      sub.groupName.toLowerCase().includes(term)
-    );
+    return matchesSearch && matchesCourse;
   });
 
   return (
-    <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-6">
-      <Breadcrumbs items={[{ label: 'Pending Reviews' }]} />
-
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F2937] pb-6">
+    <div className="space-y-4 animate-fade-in max-w-7xl mx-auto px-2 sm:px-4 py-3">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1B2333] pb-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-white flex items-center gap-3">
-            <span className="p-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl">
-              🟡
+          <div className="flex items-center gap-2">
+            <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              {lang === 'ar' ? 'مراجعة التسليمات المعلقة' : 'Evaluation Queue'}
+            </h1>
+            <span className="px-2 py-0.5 text-xs font-mono font-bold bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded">
+              {pendingQueue.length} {lang === 'ar' ? 'في الانتظار' : 'Pending'}
             </span>
-            Pending Reviews ({submissions.length})
-          </h1>
+          </div>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {lang === 'ar'
+              ? 'سجل التقييم اليدوي المستمر لتكاليف الطلاب المعلقة'
+              : 'Continuous manual review and feedback work queue'}
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Search */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder={t('search')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="saas-input pl-9 w-48 sm:w-64"
-            />
-          </div>
-
-          {/* Reset All Submissions Button */}
-          {(user?.role === 'Teacher' || user?.role === 'Admin') && (
+        <div className="flex items-center gap-2">
+          {pendingQueue.length > 0 && (
             <button
-              onClick={async () => {
-                if (!window.confirm('هل أنت متاكد من إعادة تعيين جميع تسليمات الطلاب وتعيينها كمراجعات معلقة؟ (لن يتم حذف كود أي طالب)')) return;
-                try {
-                  const res = await fetch(`${API_URL}/submissions/reset-all`, {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${user.token}` },
-                  });
-                  const data = await res.json();
-                  if (!res.ok) throw new Error(data.message || 'فشل إعادة التعين');
-                  alert(data.message || 'تم إعادة تعيين جميع التسليمات إلى المراجعات المعلقة.');
-                  fetchPendingSubmissions();
-                } catch (err: any) {
-                  alert(err.message || 'حدث خطأ أثناء إعادة التعيين');
-                }
-              }}
-              className="px-3.5 py-2 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5"
-              title="إعادة تعيين كافة التسليمات لـ Pending"
+              onClick={() => navigate(`/review-submission/${pendingQueue[0].submissionId}`)}
+              className="academic-button-primary"
             >
-              <span>🔄</span>
-              <span>إعادة تعيين كافة التسليمات</span>
+              <Inbox className="w-3.5 h-3.5" />
+              <span>{lang === 'ar' ? 'بدء التقييم المتتابع' : 'Start Review Queue'}</span>
             </button>
           )}
-
-          {/* Filter Saved Only Toggle Button */}
           <button
-            onClick={() => setShowSavedOnly(!showSavedOnly)}
-            className={`px-3 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all ${
-              showSavedOnly
-                ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-md'
-                : 'bg-[#111827] border-[#1F2937] text-zinc-400 hover:text-white'
-            }`}
+            onClick={fetchPendingQueue}
+            className="academic-button-secondary"
+            title={lang === 'ar' ? 'تحديث' : 'Refresh'}
           >
-            <Star className={`w-3.5 h-3.5 ${showSavedOnly ? 'fill-amber-400 text-amber-400' : ''}`} />
-            <span>{showSavedOnly ? 'Bookmarked Only (⭐)' : 'Show Bookmarked'}</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
-
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-2 bg-[#111827] border border-[#1F2937] px-3 py-2 rounded-xl text-xs">
-            <SortAsc className="w-3.5 h-3.5 text-zinc-400" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-transparent text-zinc-300 focus:outline-none cursor-pointer"
-            >
-              <option value="newest" className="bg-[#111827]">Newest First</option>
-              <option value="oldest" className="bg-[#111827]">Oldest First</option>
-              <option value="deadline" className="bg-[#111827]">Closest Deadline</option>
-              <option value="group" className="bg-[#111827]">Group Name</option>
-              <option value="task" className="bg-[#111827]">Task Title</option>
-              <option value="student" className="bg-[#111827]">Student Name</option>
-            </select>
-          </div>
         </div>
       </div>
 
-        {/* Workspace Content */}
+      {/* Filter & Search Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+          <input
+            type="text"
+            placeholder={lang === 'ar' ? 'البحث باسم الطالب أو المهمة...' : 'Search student or task...'}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="academic-input pl-8"
+          />
+        </div>
+
+        <select
+          value={selectedCourse}
+          onChange={(e) => setSelectedCourse(e.target.value)}
+          className="academic-input sm:w-56"
+        >
+          <option value="ALL">{lang === 'ar' ? 'جميع المقررات / المجموعات' : 'All Courses / Groups'}</option>
+          {coursesList.map(c => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Queue Work Table */}
+      <div className="academic-surface rounded-lg overflow-hidden border border-[#1B2333]">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-10 h-10 animate-spin text-amber-500 mb-3" />
-            <p className="text-sm text-zinc-400">{t('loading')}</p>
+          <div className="p-8 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
+            <RefreshCw className="w-4 h-4 animate-spin text-blue-400" />
+            <span>{lang === 'ar' ? 'جاري تحميل قائمة التقييم...' : 'Loading evaluation queue...'}</span>
           </div>
-        ) : error ? (
-          <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-center">
-            {error}
+        ) : fetchError ? (
+          <div className="p-8 text-center space-y-2">
+            <AlertTriangle className="w-8 h-8 mx-auto text-rose-400" />
+            <p className="text-xs font-semibold text-rose-300">{fetchError}</p>
+            <button onClick={fetchPendingQueue} className="academic-button-secondary py-1 px-3 text-xs mx-auto">
+              {lang === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+            </button>
           </div>
-        ) : filteredSubmissions.length === 0 ? (
-          <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-12 text-center space-y-3">
-            <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
-            <h3 className="text-lg font-bold text-white">All Caught Up!</h3>
-            <p className="text-xs text-zinc-400 max-w-md mx-auto">
-              {showSavedOnly
-                ? 'No student submissions are currently bookmarked for review.'
-                : 'There are no pending student submissions waiting for manual review right now.'}
+        ) : filteredQueue.length === 0 ? (
+          <div className="p-12 text-center text-slate-500 space-y-2">
+            <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-400/80" />
+            <p className="text-xs font-semibold text-slate-300">
+              {lang === 'ar' ? 'لا توجد تسليمات معلقة للتقييم' : 'Evaluation Queue Clear'}
+            </p>
+            <p className="text-[11px] text-slate-500">
+              {lang === 'ar' ? 'جميع تسليمات الطلاب تم تقييمها بنجاح' : 'All submitted student tasks have been evaluated'}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSubmissions.map((sub) => {
-              const subKey = sub.submissionId || sub.studentId;
-              const isBookmarked = !!reviewLaterSet[subKey];
-
-              return (
-                <div
-                  key={sub.submissionId}
-                  className="bg-[#121215] border border-[#24242B] hover:border-amber-500/40 rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-4 group transition-all relative"
-                >
-                  <div className="space-y-3">
-                    {/* Group & Deadline Badge & Bookmark Button */}
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="bg-zinc-800 text-zinc-300 font-bold px-2.5 py-1 rounded-md border border-zinc-700">
-                        {sub.groupName}
+          <div className="overflow-x-auto">
+            <table className="academic-table">
+              <thead>
+                <tr>
+                  <th>{lang === 'ar' ? 'الطالب' : 'Student'}</th>
+                  <th>{lang === 'ar' ? 'المهمة البرمجية' : 'Task'}</th>
+                  <th>{lang === 'ar' ? 'المقرر / المجموعة' : 'Course / Group'}</th>
+                  <th>{lang === 'ar' ? 'المحاولة' : 'Attempt'}</th>
+                  <th>{lang === 'ar' ? 'تاريخ التسليم' : 'Submitted At'}</th>
+                  <th className="text-right">{lang === 'ar' ? 'الإجراء' : 'Action'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredQueue.map((item) => (
+                  <tr key={item.submissionId}>
+                    <td>
+                      <div className="font-semibold text-slate-100">{item.studentName}</div>
+                      <div className="text-[11px] font-mono text-slate-500">ID: {item.studentRegisterId || '-'}</div>
+                    </td>
+                    <td>
+                      <div className="font-medium text-slate-200">{item.taskTitle}</div>
+                    </td>
+                    <td>
+                      <span className="px-2 py-0.5 text-[11px] font-mono font-medium bg-[#161C29] text-slate-300 border border-[#232F45] rounded">
+                        {item.groupName}
                       </span>
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={(e) => toggleBookmark(sub, e)}
-                          className={`p-1.5 rounded-lg border transition-all ${
-                            isBookmarked
-                              ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
-                              : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white'
-                          }`}
-                          title={isBookmarked ? 'Remove Bookmark ⭐' : 'Save for Review Later ⭐'}
-                        >
-                          <Star className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />
-                        </button>
-
-                        <span className="text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          Pending Grade
-                        </span>
-                      </div>
-                    </div>
-
-                  {/* Student Header */}
-                  <div className="flex items-center gap-3 pt-1">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 to-violet-600 text-white font-extrabold text-sm flex items-center justify-center border border-amber-400/30 overflow-hidden shrink-0">
-                      {sub.studentAvatarUrl ? (
-                        <img src={sub.studentAvatarUrl} alt={sub.studentName} className="w-full h-full object-cover" />
-                      ) : (
-                        sub.studentName.substring(0, 2).toUpperCase()
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">
-                        {sub.studentName}
-                      </h4>
-                      <p className="text-xs text-zinc-400 font-mono">ID: {sub.studentRegisterId}</p>
-                    </div>
-                  </div>
-
-                  {/* Task Metadata */}
-                  <div className="bg-[#1A1A20] border border-[#292933] rounded-xl p-3 space-y-1.5 text-xs">
-                    <div className="font-bold text-white flex items-center justify-between">
-                      <span className="truncate">{sub.taskTitle}</span>
-                      <span className="text-violet-400 shrink-0 font-bold">{sub.maxGrade} pts</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1 border-t border-[#292933]">
-                      <span>Submitted: {new Date(sub.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      <span>Attempt #{sub.attemptNumber}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Review Action */}
-                <button
-                  onClick={() => navigate(`/review-submission/${sub.submissionId}`)}
-                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-950/30 transition-all flex items-center justify-center gap-2"
-                >
-                  <FileCode className="w-4 h-4" />
-                  Review Code & Grade
-                </button>
-              </div>
-            );
-          })}
+                    </td>
+                    <td>
+                      <span className="text-xs font-mono font-semibold text-amber-400">
+                        #{item.attemptNumber}
+                      </span>
+                    </td>
+                    <td className="text-slate-400 text-xs font-mono">
+                      {new Date(item.submittedAt).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </td>
+                    <td className="text-right">
+                      <button
+                        onClick={() => navigate(`/review-submission/${item.submissionId}`)}
+                        className="academic-button-primary py-1 px-3"
+                      >
+                        <span>{lang === 'ar' ? 'تقييم' : 'Evaluate'}</span>
+                        {isRtl ? <ArrowLeft className="w-3 h-3" /> : <ArrowRight className="w-3 h-3" />}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
+    </div>
   );
 };

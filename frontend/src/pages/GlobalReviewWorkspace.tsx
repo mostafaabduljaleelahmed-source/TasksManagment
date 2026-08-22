@@ -1,747 +1,325 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useTranslation } from '../utils/i18n';
 import Editor from '@monaco-editor/react';
 import {
-  AlertCircle, ArrowLeft, ArrowRight, Save, Loader2, Code, Sparkles,
-  RotateCcw, FileText, ChevronDown, Lock, Edit3, Star
+  Save, ArrowRight, ArrowLeft, CheckCircle2, Code, AlertTriangle
 } from 'lucide-react';
-
-interface AttemptHistoryItem {
-  submissionId: string;
-  attemptNumber: number;
-  submittedAt: string;
-  grade?: number | null;
-  isReviewed: boolean;
-  status: string;
-  teacherFeedback?: string | null;
-}
 
 interface PendingSubmissionQueueItem {
   submissionId: string;
   studentId: string;
   studentName: string;
-  studentRegisterId: string;
+  studentRegisterId?: string;
   studentAvatarUrl?: string | null;
   taskId: string;
   taskTitle: string;
-  language: string;
-  description: string;
+  language?: string;
+  description?: string;
   maxGrade: number;
-  deadline?: string | null;
+  deadline?: string;
   groupName: string;
   submittedAt: string;
   attemptNumber: number;
   code: string;
-  grade?: number | null;
-  teacherFeedback?: string | null;
-  status: string;
-  isReviewed: boolean;
-  publicTestCasesJson?: string | null;
-  attachmentsJson?: string | null;
-  attempts?: AttemptHistoryItem[];
 }
-
-interface FeedbackTemplate {
-  emoji: string;
-  title: string;
-  text: string;
-  ratio: number;
-}
-
-const ARABIC_FEEDBACK_TEMPLATES: FeedbackTemplate[] = [
-  { emoji: '🤖', title: 'AI Detection', text: 'تم استخدام الذكاء الاصطناعي في حل المهمة (AI Generated Code). درجة المهمة: 0', ratio: 0 },
-  { emoji: '🌟', title: 'ممتاز', text: 'عمل ممتاز، استمر بنفس المستوى.', ratio: 1.0 },
-  { emoji: '👍', title: 'جيد', text: 'إجابة جيدة، تحتاج بعض التحسينات البسيطة.', ratio: 0.75 },
-  { emoji: '🧠', title: 'يحتاج تحسين', text: 'يوجد خطأ في منطق الحل، حاول إعادة التفكير في الخوارزمية.', ratio: 0.50 },
-  { emoji: '❌', title: 'الناتج غير صحيح', text: 'الناتج لا يطابق المطلوب.', ratio: 0.25 },
-  { emoji: '⚠️', title: 'خطأ أثناء التنفيذ', text: 'الكود يتوقف أثناء التنفيذ.', ratio: 0 },
-  { emoji: '🚫', title: 'خطأ نحوي', text: 'يوجد خطأ في كتابة الكود.', ratio: 0.25 },
-];
 
 export const GlobalReviewWorkspace: React.FC = () => {
-  const { submissionId } = useParams<{ submissionId: string }>();
-  const [searchParams] = useSearchParams();
-  const isExplicitReviewMode = searchParams.get('mode') === 'review';
-
+  const { submissionId } = useParams<{ submissionId?: string }>();
   const { user } = useAuth();
-  const toast = useToast();
+  const { success, error: toastError } = useToast();
+  const { lang, isRtl } = useTranslation();
   const navigate = useNavigate();
 
   const [queue, setQueue] = useState<PendingSubmissionQueueItem[]>([]);
-  const [activeQueueIdx, setActiveQueueIdx] = useState<number>(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Review Later ⭐ Bookmarks persisted in localStorage
-  const [reviewLaterSet, setReviewLaterSet] = useState<{ [subId: string]: boolean }>(() => {
-    try {
-      const saved = localStorage.getItem('teacher_review_later_submissions');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [gradeInput, setGradeInput] = useState<string>('');
+  const [feedbackInput, setFeedbackInput] = useState<string>('');
+  const [activePreset, setActivePreset] = useState<string | null>(null);
+
+  const FEEDBACK_PRESETS = [
+    { id: 'p1', label: lang === 'ar' ? 'ممتاز - كود نظيف وهيكل سليم' : 'Excellent - Clean code structure', gradePct: 1.0 },
+    { id: 'p2', label: lang === 'ar' ? 'جيد جداً - يحتاج تحسين بسيط في التنسيق' : 'Very Good - Needs minor formatting', gradePct: 0.85 },
+    { id: 'p3', label: lang === 'ar' ? 'مقبول - منطق الحل صحيح ولكن كفاءة الكود منخفضة' : 'Acceptable - Low efficiency', gradePct: 0.70 },
+    { id: 'p4', label: lang === 'ar' ? 'ضعيف - لا يحقق المخرجات المطلوبة' : 'Unsatisfactory - Output incorrect', gradePct: 0.40 }
+  ];
 
   useEffect(() => {
+    fetchReviewQueue();
+  }, [user]);
+
+  const fetchReviewQueue = async () => {
+    if (!user || !user.token) return;
+    setLoading(true);
+    setFetchError(null);
     try {
-      localStorage.setItem('teacher_review_later_submissions', JSON.stringify(reviewLaterSet));
-    } catch (e) {
-      console.error('Failed to save bookmarks', e);
+      const response = await fetch(`${API_URL}/dashboard/teacher/pending-reviews?sortBy=newest`, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      if (response.ok) {
+        const data: PendingSubmissionQueueItem[] = await response.json();
+        setQueue(data);
+        if (submissionId) {
+          const idx = data.findIndex(s => s.submissionId === submissionId);
+          if (idx !== -1) {
+            setCurrentIndex(idx);
+          }
+        }
+      } else {
+        const errText = lang === 'ar' ? 'فشل تحميل بيانات التقييم من الخادم' : 'Failed to load evaluation data from server';
+        setFetchError(errText);
+        toastError(errText);
+      }
+    } catch (err) {
+      console.error('Error fetching review queue:', err);
+      const connText = lang === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error';
+      setFetchError(connText);
+      toastError(connText);
+    } finally {
+      setLoading(false);
     }
-  }, [reviewLaterSet]);
-
-  const toggleBookmark = (subId: string) => {
-    setReviewLaterSet((prev) => ({
-      ...prev,
-      [subId]: !prev[subId]
-    }));
   };
 
-  // Single submission review mode state when loaded directly or from breakdown
-  const [singleSubmission, setSingleSubmission] = useState<PendingSubmissionQueueItem | null>(null);
+  const currentItem = queue[currentIndex];
 
-  // Form inputs & feedback state (presetFeedback vs manualFeedback)
-  const [gradeInput, setGradeInput] = useState<number>(0);
-  const [selectedPresetTitle, setSelectedPresetTitle] = useState<string | null>(null);
-  const [presetFeedback, setPresetFeedback] = useState<string>('');
-  const [manualFeedback, setManualFeedback] = useState<string>('');
-  const gradeInputRef = useRef<HTMLInputElement>(null);
-
-  const isReviewMode = isExplicitReviewMode || singleSubmission !== null;
-  const currentSubmission = isReviewMode ? singleSubmission : (queue[activeQueueIdx] || null);
-  const maxGrade = currentSubmission?.maxGrade || 10;
-
-  // Determine if active displayed attempt is the latest attempt (editable) or an older attempt (read-only)
-  const isLatestAttempt = React.useMemo(() => {
-    if (!currentSubmission || !currentSubmission.attempts || currentSubmission.attempts.length === 0) return true;
-    const highestAttemptNum = Math.max(...currentSubmission.attempts.map((a) => a.attemptNumber));
-    return currentSubmission.attemptNumber >= highestAttemptNum;
-  }, [currentSubmission]);
-
-  const isFormReadOnly = isReviewMode && !isLatestAttempt;
-
-  // Derived full feedback text displayed in textarea and sent to API
-  const teacherFeedback = React.useMemo(() => {
-    if (presetFeedback && manualFeedback) {
-      return `${presetFeedback}\n${manualFeedback}`;
+  useEffect(() => {
+    if (currentItem) {
+      setGradeInput(String(currentItem.maxGrade));
+      setFeedbackInput('');
+      setActivePreset(null);
     }
-    return presetFeedback || manualFeedback;
-  }, [presetFeedback, manualFeedback]);
+  }, [currentIndex, currentItem]);
 
-  // Grade percentage presets (100%, 75%, 50%, 25%, 0%)
-  const gradePresets = React.useMemo(() => {
-    return [
-      { label: '100%', value: maxGrade, keyboard: '5' },
-      { label: '75%', value: Math.round(maxGrade * 0.75 * 10) / 10, keyboard: '4' },
-      { label: '50%', value: Math.round(maxGrade * 0.5 * 10) / 10, keyboard: '3' },
-      { label: '25%', value: Math.round(maxGrade * 0.25 * 10) / 10, keyboard: '2' },
-      { label: '0%', value: 0, keyboard: '1' },
-    ];
-  }, [maxGrade]);
-
-  const handleApplyGradePreset = (val: number) => {
-    setGradeInput(val);
-    toast.success(`Set Grade: ${val}/${maxGrade}`);
+  const handleApplyPreset = (preset: typeof FEEDBACK_PRESETS[0]) => {
+    if (!currentItem) return;
+    setActivePreset(preset.id);
+    const calculatedGrade = Math.round(currentItem.maxGrade * preset.gradePct);
+    setGradeInput(String(calculatedGrade));
+    setFeedbackInput(preset.label);
   };
 
-  const handleSelectFeedbackTemplate = (template: FeedbackTemplate) => {
-    // If clicking the currently selected active preset, ignore
-    if (selectedPresetTitle === template.title) {
+  const handleSaveGrade = async (advanceNext = false) => {
+    if (!currentItem || !user || !user.token) return;
+    const scoreNum = parseInt(gradeInput, 10);
+    if (isNaN(scoreNum) || scoreNum < 0 || scoreNum > currentItem.maxGrade) {
+      toastError(lang === 'ar' ? `الرجاء إدخال درجة بين 0 و ${currentItem.maxGrade}` : `Please enter grade 0-${currentItem.maxGrade}`);
       return;
     }
 
-    // Mutually exclusive replace of preset feedback while preserving manual notes
-    setSelectedPresetTitle(template.title);
-    setPresetFeedback(template.text);
-
-    // Apply suggested grade score based on template ratio
-    const suggestedGrade = Math.round(maxGrade * template.ratio * 10) / 10;
-    setGradeInput(suggestedGrade);
-    toast.success(`Preset Applied: ${template.title} (${suggestedGrade}/${maxGrade})`);
-  };
-
-  const handleTextareaChange = (value: string) => {
-    // When editing textarea manually, preserve preset prefix if present
-    if (presetFeedback && value.startsWith(presetFeedback)) {
-      let suffix = value.slice(presetFeedback.length);
-      if (suffix.startsWith('\n')) {
-        suffix = suffix.slice(1);
-      }
-      setManualFeedback(suffix);
-    } else {
-      // If teacher edited or deleted the preset prefix, clear active preset selection
-      setSelectedPresetTitle(null);
-      setPresetFeedback('');
-      setManualFeedback(value);
-    }
-  };
-
-  const handleResetReviewForm = () => {
-    setGradeInput(currentSubmission?.grade ?? maxGrade);
-    setSelectedPresetTitle(null);
-    setPresetFeedback('');
-    setManualFeedback(currentSubmission?.teacherFeedback ?? '');
-    toast.success('Reset evaluation form to initial state');
-  };
-
-  // Keyboard Shortcuts Handler
-  useEffect(() => {
-    const handleGlobalShortcuts = (e: KeyboardEvent) => {
-      const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
-      const isEditingText = targetTag === 'input' || targetTag === 'textarea';
-
-      if (!isEditingText && currentSubmission) {
-        if (e.key === '1') {
-          e.preventDefault();
-          handleApplyGradePreset(0);
-          return;
-        } else if (e.key === '2') {
-          e.preventDefault();
-          handleApplyGradePreset(Math.round(maxGrade * 0.25 * 10) / 10);
-          return;
-        } else if (e.key === '3') {
-          e.preventDefault();
-          handleApplyGradePreset(Math.round(maxGrade * 0.5 * 10) / 10);
-          return;
-        } else if (e.key === '4') {
-          e.preventDefault();
-          handleApplyGradePreset(Math.round(maxGrade * 0.75 * 10) / 10);
-          return;
-        } else if (e.key === '5') {
-          e.preventDefault();
-          handleApplyGradePreset(maxGrade);
-          return;
-        }
-      }
-
-      if (e.ctrlKey && (e.key === 's' || e.key === 'S' || e.key === 'س')) {
-        e.preventDefault();
-        handleSaveAndNext();
-      } else if (e.ctrlKey && e.key === 'ArrowRight') {
-        e.preventDefault();
-        if (activeQueueIdx < queue.length - 1) {
-          handleSelectQueueItem(activeQueueIdx + 1);
-        }
-      } else if (e.ctrlKey && e.key === 'ArrowLeft') {
-        e.preventDefault();
-        if (activeQueueIdx > 0) {
-          handleSelectQueueItem(activeQueueIdx - 1);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleGlobalShortcuts);
-    return () => window.removeEventListener('keydown', handleGlobalShortcuts);
-  }, [activeQueueIdx, queue, currentSubmission, maxGrade, gradeInput, teacherFeedback]);
-
-  // Fetch Global Pending Queue from Backend
-  const fetchGlobalPendingQueue = async (targetSubId?: string, preferredIndex?: number) => {
-    if (!user) return;
-    setLoading(true);
-    setError(null);
+    setSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/dashboard/teacher/pending-reviews?sortBy=oldest`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      if (!res.ok) throw new Error('Failed to fetch pending reviews queue');
-      const items: PendingSubmissionQueueItem[] = await res.json();
-      setQueue(items);
-
-      if (items.length > 0) {
-        let selectedIdx = 0;
-
-        if (targetSubId) {
-          const matchIdx = items.findIndex((s) => s.submissionId === targetSubId);
-          if (matchIdx !== -1) {
-            selectedIdx = matchIdx;
-          } else if (preferredIndex !== undefined) {
-            selectedIdx = Math.min(preferredIndex, items.length - 1);
-          }
-        }
-
-        setActiveQueueIdx(selectedIdx);
-        populateGradingForm(items[selectedIdx]);
-      }
-    } catch (err: any) {
-      setError(err.message || 'Error loading review queue');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch single submission details when in Review Mode
-  const fetchSingleSubmission = async (subId: string) => {
-    if (!user) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${API_URL}/submissions/${subId}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      if (!res.ok) throw new Error('Failed to load submission for Review Mode');
-      const item: PendingSubmissionQueueItem = await res.json();
-      setSingleSubmission(item);
-      populateGradingForm(item);
-    } catch (err: any) {
-      setError(err.message || 'Error loading submission');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isExplicitReviewMode && submissionId) {
-      fetchSingleSubmission(submissionId);
-    } else {
-      fetchGlobalPendingQueue(submissionId);
-    }
-  }, [user, submissionId, isExplicitReviewMode]);
-
-  const populateGradingForm = (item: PendingSubmissionQueueItem) => {
-    if (item) {
-      const initialGrade = item.grade !== null && item.grade !== undefined ? item.grade : item.maxGrade;
-      setGradeInput(initialGrade);
-      setSelectedPresetTitle(null);
-      setPresetFeedback('');
-      setManualFeedback(item.teacherFeedback || '');
-
-      setTimeout(() => {
-        if (gradeInputRef.current) {
-          gradeInputRef.current.focus();
-          gradeInputRef.current.select();
-        }
-      }, 100);
-    }
-  };
-
-  const executeSaveReview = async (): Promise<boolean> => {
-    if (!currentSubmission) return false;
-    setSaving(true);
-    try {
-      const res = await fetch(`${API_URL}/submissions/${currentSubmission.submissionId}/review`, {
+      const response = await fetch(`${API_URL}/submissions/${currentItem.submissionId}/review`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
+          Authorization: `Bearer ${user.token}`
         },
         body: JSON.stringify({
-          grade: gradeInput,
-          teacherFeedback: teacherFeedback,
-          teacherNotes: '',
-        }),
+          grade: scoreNum,
+          teacherFeedback: feedbackInput,
+          teacherNotes: ''
+        })
       });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || 'Failed to save grade');
+      if (response.ok) {
+        success(lang === 'ar' ? 'تم حفظ التقييم بنجاح' : 'Grade saved successfully');
+        const nextQueue = queue.filter((_, idx) => idx !== currentIndex);
+        setQueue(nextQueue);
+        if (advanceNext && nextQueue.length > 0) {
+          const nextIdx = currentIndex >= nextQueue.length ? 0 : currentIndex;
+          setCurrentIndex(nextIdx);
+        } else if (nextQueue.length === 0) {
+          navigate('/teacher/pending-reviews');
+        }
+      } else {
+        toastError(lang === 'ar' ? 'فشل حفظ التقييم' : 'Failed to save grade');
       }
-
-      toast.success(`Grade saved successfully (${gradeInput}/${currentSubmission.maxGrade})`);
-      return true;
-    } catch (err: any) {
-      toast.error(err.message || 'Error saving grade');
-      return false;
+    } catch (err) {
+      toastError(lang === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error');
     } finally {
-      setSaving(false);
+      setSubmitting(false);
     }
-  };
-
-  const handleSaveAndNext = async () => {
-    if (!currentSubmission) return;
-    const currentSubId = currentSubmission.submissionId;
-    const currentIdx = activeQueueIdx;
-
-    const success = await executeSaveReview();
-    if (success) {
-      await fetchGlobalPendingQueue(currentSubId, currentIdx);
-    }
-  };
-
-  const handleSelectQueueItem = (idx: number) => {
-    if (idx < 0 || idx >= queue.length) return;
-    setActiveQueueIdx(idx);
-    populateGradingForm(queue[idx]);
-  };
-
-  // Switch active attempt view for multi-attempt tasks
-  const handleSelectAttempt = (attSubId: string) => {
-    fetchSingleSubmission(attSubId);
   };
 
   if (loading) {
     return (
-      <div className="h-screen bg-[#0B0F19] flex flex-col items-center justify-center text-zinc-400 p-6">
-        <Loader2 className="w-10 h-10 animate-spin text-amber-500 mb-4" />
-        <p className="text-sm font-medium">
-          {isReviewMode ? 'Loading Submission for Review Mode...' : 'Loading Canvas LMS Pending Queue...'}
-        </p>
+      <div className="h-[80vh] flex items-center justify-center text-slate-400 text-xs">
+        {lang === 'ar' ? 'جاري فتح بيئة التقييم...' : 'Loading evaluation console...'}
       </div>
     );
   }
 
-  if (error) {
+  if (fetchError) {
     return (
-      <div className="p-8 max-w-4xl mx-auto space-y-4">
-        <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-center">
-          <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
-          <h2 className="text-lg font-bold">Failed to load Submission</h2>
-          <p className="text-xs mt-1">{error}</p>
-          <button
-            onClick={() => navigate('/teacher/pending-reviews')}
-            className="mt-4 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-xl transition-colors"
-          >
-            Back to Pending Queue
-          </button>
-        </div>
+      <div className="p-12 text-center space-y-3">
+        <AlertTriangle className="w-8 h-8 mx-auto text-rose-400" />
+        <h2 className="text-sm font-bold text-rose-300">{fetchError}</h2>
+        <button onClick={fetchReviewQueue} className="academic-button-secondary mx-auto">
+          {lang === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+        </button>
       </div>
     );
   }
 
-  if (!isReviewMode && (queue.length === 0 || !currentSubmission)) {
+  if (!currentItem) {
     return (
-      <div className="h-screen bg-[#0B0F19] flex flex-col items-center justify-center p-6 text-center">
-        <div className="bg-[#111827] border border-[#1F2937] p-10 rounded-3xl max-w-md shadow-2xl space-y-4">
-          <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-2xl">
-            🎉
-          </div>
-          <h2 className="text-xl font-black text-white">All Submissions Reviewed!</h2>
-          <p className="text-xs text-zinc-400 leading-relaxed">
-            There are no more pending student submissions waiting for evaluation in the global queue.
-          </p>
-          <button
-            onClick={() => navigate('/teacher/pending-reviews')}
-            className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl text-xs shadow-lg transition-all"
-          >
-            Return to Pending Reviews Page
-          </button>
-        </div>
+      <div className="p-12 text-center space-y-3">
+        <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-400" />
+        <h2 className="text-sm font-bold text-white">
+          {lang === 'ar' ? 'تم الانتهاء من جميع التقييمات المعلقة' : 'Review Queue Completed'}
+        </h2>
+        <button onClick={() => navigate('/teacher/pending-reviews')} className="academic-button-secondary mx-auto">
+          {lang === 'ar' ? 'العودة للقائمة' : 'Return to Queue'}
+        </button>
       </div>
     );
   }
-
-  if (!currentSubmission) return null;
-
-  const remainingCount = queue.length;
 
   return (
-    <div className="h-full w-full overflow-hidden bg-[#0B0F19] text-zinc-100 flex flex-col font-sans">
-      
-      {/* 1. TOP HEADER (Student Name, Task Name, Attempt, Queue Position / Mode Badge) */}
-      <header className="shrink-0 bg-[#111827] border-b border-[#1F2937] px-4 py-2.5 flex items-center justify-between gap-3 z-30">
-        
+    <div className="h-[calc(100vh-60px)] flex flex-col -m-3 sm:-m-6 select-none bg-[#07090E]">
+      {/* Top Header Console Bar */}
+      <div className="h-11 bg-[#0E121A] border-b border-[#1B2333] px-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate(-1)}
-            className="p-2 bg-[#1F2937] hover:bg-zinc-700 text-zinc-300 rounded-xl transition-colors shrink-0"
-            title="Back"
+            onClick={() => navigate('/teacher/pending-reviews')}
+            className="text-slate-400 hover:text-white text-xs font-semibold flex items-center gap-1 shrink-0"
           >
-            <ArrowLeft className="w-4 h-4" />
+            {isRtl ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+            <span>{lang === 'ar' ? 'القائمة' : 'Exit Queue'}</span>
           </button>
-
-          <div className="min-w-0 space-y-0.5">
-            <div className="flex items-center gap-2 min-w-0">
-              <h1 className="text-base font-extrabold text-white truncate">{currentSubmission.studentName}</h1>
-              <span className="text-xs text-zinc-400 font-mono shrink-0">({currentSubmission.studentRegisterId})</span>
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/15 border border-blue-500/30 text-blue-400 font-mono shrink-0">
-                {currentSubmission.groupName}
-              </span>
-              {isReviewMode && (
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/20 border border-purple-500/30 text-purple-300 font-mono shrink-0 flex items-center gap-1">
-                  <Edit3 className="w-3 h-3" />
-                  Review Mode
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-zinc-400 flex items-center gap-2 truncate">
-              Task: <strong className="text-zinc-200 truncate">{currentSubmission.taskTitle}</strong>
-            </p>
+          <div className="h-4 w-px bg-[#1B2333]" />
+          <div className="min-w-0 truncate">
+            <span className="text-xs font-bold text-white">{currentItem.studentName}</span>
+            <span className="text-[11px] font-mono text-slate-400 ml-2">({currentItem.groupName})</span>
           </div>
         </div>
 
-        {/* Attempt Selector Dropdown & Queue Position Pills */}
-        <div className="hidden sm:flex items-center gap-2.5 bg-[#161E2E] px-3 py-1.5 rounded-2xl border border-[#1F2937] text-xs font-mono font-bold shrink-0">
-          
-          {/* Attempt Selector Dropdown if multiple attempts exist */}
-          {currentSubmission.attempts && currentSubmission.attempts.length > 1 ? (
-            <div className="relative flex items-center">
-              <select
-                value={currentSubmission.submissionId}
-                onChange={(e) => handleSelectAttempt(e.target.value)}
-                className="bg-[#0B0F19] text-amber-400 font-mono text-xs font-bold px-3 py-1 rounded-xl border border-amber-500/30 focus:outline-none focus:border-amber-400 cursor-pointer appearance-none pr-7"
-              >
-                {currentSubmission.attempts.map((att) => {
-                  const isLatest = att.attemptNumber === Math.max(...currentSubmission.attempts!.map(a => a.attemptNumber));
-                  return (
-                    <option key={att.submissionId} value={att.submissionId} className="bg-[#111827] text-white">
-                      Attempt #{att.attemptNumber} {isLatest ? '(Reviewed) ⭐' : '(Read Only)'}
-                    </option>
-                  );
-                })}
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-amber-400 absolute right-2 pointer-events-none" />
-            </div>
-          ) : (
-            <span className="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
-              Attempt #{currentSubmission.attemptNumber}
-            </span>
-          )}
-
-          {!isReviewMode && (
-            <>
-              <span className="text-zinc-500">•</span>
-              <span className="text-purple-400">
-                Queue: #{activeQueueIdx + 1} / {queue.length}
-              </span>
-              <span className="text-zinc-500">•</span>
-              <span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
-                {remainingCount} Remaining
-              </span>
-            </>
-          )}
-        </div>
-
-        {/* Prev / Next Nav Buttons (Active in Pending Mode) */}
-        {!isReviewMode && (
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => handleSelectQueueItem(activeQueueIdx - 1)}
-              disabled={activeQueueIdx === 0}
-              className="px-3 py-1.5 bg-[#1F2937] hover:bg-zinc-700 disabled:opacity-30 text-zinc-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
-              title="Previous (Ctrl + ←)"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Previous</span>
-            </button>
-            <button
-              onClick={() => handleSelectQueueItem(activeQueueIdx + 1)}
-              disabled={activeQueueIdx === queue.length - 1}
-              className="px-3 py-1.5 bg-[#1F2937] hover:bg-zinc-700 disabled:opacity-30 text-zinc-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
-              title="Next (Ctrl + →)"
-            >
-              <span>Next</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-      </header>
-
-      {/* 2. FIXED ACTION TOOLBAR (Save, Save & Next, Reset Review, Quick Presets) */}
-      <div className="shrink-0 bg-[#161E2E] border-b border-[#1F2937] px-4 py-2 flex items-center justify-between gap-3 text-xs z-20">
-        
-        {/* Left Action Buttons */}
         <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs font-mono text-slate-400">
+            {currentIndex + 1} / {queue.length}
+          </span>
           <button
-            onClick={handleSaveAndNext}
-            disabled={saving}
-            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-amber-950/30 transition-all flex items-center gap-2 disabled:opacity-50"
+            disabled={submitting}
+            onClick={() => handleSaveGrade(false)}
+            className="academic-button-secondary py-1 px-3"
           >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save & Next (Ctrl+S) ➔
+            <Save className="w-3.5 h-3.5" />
+            <span>{lang === 'ar' ? 'حفظ فقط' : 'Save'}</span>
           </button>
-
           <button
-            onClick={executeSaveReview}
-            disabled={saving}
-            className="px-3.5 py-2 bg-[#1F2937] hover:bg-zinc-700 text-zinc-200 font-bold text-xs rounded-xl border border-[#374151] transition-colors"
+            disabled={submitting}
+            onClick={() => handleSaveGrade(true)}
+            className="academic-button-primary py-1 px-3"
           >
-            Save Grade
+            <span>{lang === 'ar' ? 'حفظ والتالي' : 'Save & Next'}</span>
+            {isRtl ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
           </button>
-
-          <button
-            onClick={handleResetReviewForm}
-            className="px-3 py-2 bg-[#1F2937] hover:bg-zinc-700 text-zinc-400 hover:text-white font-semibold text-xs rounded-xl border border-[#374151] transition-colors flex items-center gap-1.5"
-            title="Reset Form Input"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Review</span>
-          </button>
-
-          {/* Review Later ⭐ Bookmark Button */}
-          {currentSubmission && (
-            <button
-              onClick={() => toggleBookmark(currentSubmission.submissionId || currentSubmission.studentId)}
-              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
-                reviewLaterSet[currentSubmission.submissionId || currentSubmission.studentId]
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
-                  : 'bg-[#1F2937] hover:bg-zinc-700 text-zinc-400 hover:text-white border-[#374151]'
-              }`}
-              title={
-                reviewLaterSet[currentSubmission.submissionId || currentSubmission.studentId]
-                  ? 'Bookmarked for later review'
-                  : 'Bookmark to review later'
-              }
-            >
-              <Star
-                className={`w-3.5 h-3.5 ${
-                  reviewLaterSet[currentSubmission.submissionId || currentSubmission.studentId]
-                    ? 'fill-amber-400 text-amber-400'
-                    : ''
-                }`}
-              />
-              <span>
-                {reviewLaterSet[currentSubmission.submissionId || currentSubmission.studentId]
-                  ? 'Bookmarked ⭐'
-                  : 'Review Later ⭐'}
-              </span>
-            </button>
-          )}
-        </div>
-
-        {/* Right Quick Presets Bar (100%, 75%, 50%, 25%, 0%) */}
-        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
-          <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mr-1">Quick Presets:</span>
-          {gradePresets.map((preset) => (
-            <button
-              key={preset.label}
-              type="button"
-              onClick={() => handleApplyGradePreset(preset.value)}
-              className={`px-2.5 py-1 rounded-xl text-xs font-mono font-bold transition-all ${
-                gradeInput === preset.value
-                  ? 'bg-amber-500 text-black shadow-md border border-amber-400'
-                  : 'bg-[#111827] text-zinc-300 hover:text-white border border-[#1F2937] hover:border-zinc-500'
-              }`}
-            >
-              {preset.label}
-            </button>
-          ))}
         </div>
       </div>
 
-      {/* 3. MAIN WORKSPACE (FLEX-1 MONACO / FIXED 390PX RIGHT PANEL) */}
-      <div className="flex-1 flex flex-col md:flex-row min-h-0 min-w-0 overflow-hidden">
-        
-        {/* LEFT: MONACO EDITOR (FLEX-1 AUTO CONSUME REMAINING WIDTH, NO PAGE OVERFLOW) */}
-        <div className="flex-1 min-w-0 flex flex-col bg-[#111827] border-r border-[#1F2937] min-h-0 overflow-hidden">
-          <div className="bg-[#1A2234] border-b border-[#1F2937] px-4 py-2 flex items-center justify-between shrink-0 text-xs font-bold text-white">
-            <div className="flex items-center gap-2">
-              <Code className="w-4 h-4 text-blue-400" />
-              <span>Student Submitted Code ({currentSubmission.language.toUpperCase()})</span>
-            </div>
-            <div className="text-[11px] text-zinc-400 font-mono">
-              Submitted: {new Date(currentSubmission.submittedAt).toLocaleString()}
-            </div>
+      {/* Main IDE Split Console View */}
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row">
+        {/* Left: Code Viewer Panel */}
+        <div className="flex-1 min-h-0 flex flex-col border-r border-[#1B2333]">
+          <div className="h-8 bg-[#0F131C] border-b border-[#1B2333] px-3 flex items-center justify-between shrink-0">
+            <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5">
+              <Code className="w-3.5 h-3.5 text-blue-400" />
+              <span>solution.{(currentItem.language || 'cpp').toLowerCase() === 'c++' ? 'cpp' : (currentItem.language || 'cpp').toLowerCase()}</span>
+            </span>
+            <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.2 rounded">
+              Attempt #{currentItem.attemptNumber}
+            </span>
           </div>
-
-          <div className="flex-1 min-h-0 min-w-0 relative">
+          <div className="flex-1 min-h-0 relative">
             <Editor
               height="100%"
-              width="100%"
-              language={(currentSubmission.language || 'cpp').toLowerCase() === 'c++' ? 'cpp' : (currentSubmission.language || 'cpp').toLowerCase()}
-              value={currentSubmission.code || ''}
+              defaultLanguage={(currentItem.language || 'cpp').toLowerCase() === 'c++' ? 'cpp' : (currentItem.language || 'cpp').toLowerCase()}
               theme="vs-dark"
+              value={currentItem.code}
               options={{
                 readOnly: true,
-                minimap: { enabled: false },
                 fontSize: 13,
+                minimap: { enabled: false },
                 scrollBeyondLastLine: false,
-                automaticLayout: true,
+                lineNumbersMinChars: 3
               }}
             />
           </div>
         </div>
 
-        {/* RIGHT: EVALUATION PANEL (FIXED WIDTH 390PX, INTERNAL SCROLL ONLY) */}
-        <div className="w-full md:w-[390px] lg:w-[410px] shrink-0 bg-[#111827] flex flex-col p-4 space-y-4 border-l border-[#1F2937] overflow-y-auto">
-          
-          {/* Grade Score Section */}
-          <div className={`space-y-1.5 p-3.5 rounded-2xl border ${isFormReadOnly ? 'bg-zinc-900/50 border-zinc-800 opacity-60' : 'bg-[#161E2E] border-[#1F2937]'}`}>
-            <div className="flex justify-between items-center">
-              <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider">
-                Grade Score (Max {maxGrade} pts)
-              </label>
-              {isFormReadOnly && (
-                <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
-                  <Lock className="w-3 h-3" /> Read Only (Older Attempt)
-                </span>
-              )}
+        {/* Right: Evaluation Controls Panel */}
+        <div className="w-full md:w-96 bg-[#0E121A] flex flex-col shrink-0 border-t md:border-t-0 border-[#1B2333]">
+          <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+            {/* Task Info Header */}
+            <div className="bg-[#151B28] p-3 rounded border border-[#232F45] space-y-1">
+              <h3 className="text-xs font-bold text-white truncate">{currentItem.taskTitle}</h3>
+              <p className="text-[11px] text-slate-400 line-clamp-2">{currentItem.description || 'No task description.'}</p>
             </div>
-            <div className="flex items-center gap-3">
-              <input
-                ref={gradeInputRef}
-                type="number"
-                min={0}
-                max={maxGrade}
-                value={gradeInput}
-                disabled={isFormReadOnly}
-                onChange={(e) => setGradeInput(Number(e.target.value))}
-                className="w-full bg-[#0B0F19] border border-[#1F2937] text-white font-mono text-lg font-black rounded-xl px-3.5 py-2 focus:outline-none focus:border-amber-500 disabled:opacity-50"
-              />
-              <span className="text-xs font-bold text-zinc-500 font-mono shrink-0">/ {maxGrade}</span>
-            </div>
-          </div>
 
-          {/* Quick Feedback Presets */}
-          <div className="space-y-1.5">
-            <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
-              <span>Quick Comments Template</span>
-              <Sparkles className="w-3 h-3 text-amber-400" />
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {ARABIC_FEEDBACK_TEMPLATES.map((tmpl) => {
-                const isActive = selectedPresetTitle === tmpl.title;
-                return (
+            {/* Score Box */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                {lang === 'ar' ? 'الدرجة المستحقة' : 'Assigned Score'}
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  max={currentItem.maxGrade}
+                  value={gradeInput}
+                  onChange={(e) => setGradeInput(e.target.value)}
+                  className="academic-input font-mono text-base font-bold text-white text-center w-24"
+                />
+                <span className="text-sm font-mono text-slate-400">/ {currentItem.maxGrade}</span>
+              </div>
+            </div>
+
+            {/* Presets */}
+            <div className="space-y-2 pt-2 border-t border-[#1B2333]">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                {lang === 'ar' ? 'قوالب الملاحظات التوجيهية' : 'Feedback Presets'}
+              </label>
+              <div className="space-y-1.5">
+                {FEEDBACK_PRESETS.map((preset) => (
                   <button
-                    key={tmpl.title}
-                    type="button"
-                    disabled={isFormReadOnly}
-                    onClick={() => handleSelectFeedbackTemplate(tmpl)}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border disabled:opacity-30 ${
-                      isActive
-                        ? 'bg-amber-500 text-black border-amber-400 font-bold shadow-md'
-                        : 'bg-[#161E2E] hover:bg-zinc-800 border-[#1F2937] text-zinc-200'
+                    key={preset.id}
+                    onClick={() => handleApplyPreset(preset)}
+                    className={`w-full text-left p-2 rounded text-xs border transition-colors ${
+                      activePreset === preset.id
+                        ? 'bg-blue-600/20 border-blue-500 text-blue-200 font-semibold'
+                        : 'bg-[#151B28] border-[#232F45] text-slate-300 hover:border-slate-600'
                     }`}
                   >
-                    <span>{tmpl.emoji}</span>
-                    <span>{tmpl.title}</span>
+                    {preset.label}
                   </button>
-                );
-              })}
+                ))}
+              </div>
+            </div>
+
+            {/* Manual Feedback */}
+            <div className="space-y-1.5 pt-2 border-t border-[#1B2333]">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                {lang === 'ar' ? 'ملاحظات المدرس' : 'Teacher Notes & Feedback'}
+              </label>
+              <textarea
+                rows={4}
+                value={feedbackInput}
+                onChange={(e) => {
+                  setFeedbackInput(e.target.value);
+                  setActivePreset(null);
+                }}
+                placeholder={lang === 'ar' ? 'اكتب ملاحظاتك للطالب هنا...' : 'Enter feedback notes for student...'}
+                className="academic-input resize-none py-2"
+              />
             </div>
           </div>
-
-          {/* Feedback Comments Textarea */}
-          <div className="space-y-1.5 flex-1 flex flex-col min-h-[110px]">
-            <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider">
-              Teacher Feedback Comments
-            </label>
-            <textarea
-              rows={4}
-              disabled={isFormReadOnly}
-              placeholder={isFormReadOnly ? "Older attempt feedback is read-only..." : "Write feedback comments for the student..."}
-              value={teacherFeedback}
-              onChange={(e) => handleTextareaChange(e.target.value)}
-              className="w-full flex-1 bg-[#0B0F19] border border-[#1F2937] text-white text-xs rounded-xl p-3 focus:outline-none focus:border-amber-500 disabled:opacity-50"
-            />
-          </div>
-
-          {/* Task Description Panel */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-blue-400" />
-              Task Description
-            </label>
-            <div className="bg-[#161E2E] border border-[#1F2937] p-3 rounded-xl text-xs text-zinc-300 max-h-36 overflow-y-auto leading-relaxed whitespace-pre-wrap">
-              {currentSubmission.description || 'No task description available.'}
-            </div>
-          </div>
-
-          {/* Attempt History & Metadata */}
-          <div className="space-y-1.5 bg-[#161E2E] p-3 rounded-xl border border-[#1F2937] text-xs text-zinc-300">
-            <div className="flex justify-between items-center font-bold">
-              <span>Attempt Information:</span>
-              <span className="text-amber-400 font-mono">Attempt #{currentSubmission.attemptNumber}</span>
-            </div>
-            <div className="text-[11px] text-zinc-400 flex justify-between">
-              <span>Group: {currentSubmission.groupName}</span>
-              <span>Deadline: {currentSubmission.deadline ? new Date(currentSubmission.deadline).toLocaleDateString() : 'None'}</span>
-            </div>
-          </div>
-
         </div>
-
       </div>
     </div>
   );
