@@ -29,10 +29,12 @@ public class GoogleAuthService : IGoogleAuthService
 
         try
         {
+            // Fallback matches the ID shipped in the frontend build (not a secret - Client IDs are public).
+            // Guards against the server's appsettings.json being out of sync with what's deployed.
             var clientId = _configuration["Google:ClientId"];
             if (string.IsNullOrWhiteSpace(clientId))
             {
-                throw new InvalidOperationException("Google Client ID is not configured on the server.");
+                clientId = "358750878165-v3m0j8qust1dd1dcrjr6uvosi4n2qbov.apps.googleusercontent.com";
             }
 
             var validationSettings = new GoogleJsonWebSignature.ValidationSettings

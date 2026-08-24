@@ -96,6 +96,31 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors("AllowAll");
+
+// Block direct access to backend/config files. Needed because the publish layout flattens the
+// frontend build into the same folder as appsettings.json, DLLs, etc., so the static file
+// provider below (rooted at that folder) would otherwise serve them straight over HTTP.
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? string.Empty;
+    var fileName = Path.GetFileName(path);
+    var isBlockedFile =
+        fileName.StartsWith("appsettings", StringComparison.OrdinalIgnoreCase) ||
+        fileName.Equals("web.config", StringComparison.OrdinalIgnoreCase) ||
+        fileName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ||
+        fileName.EndsWith(".pdb", StringComparison.OrdinalIgnoreCase) ||
+        fileName.EndsWith(".deps.json", StringComparison.OrdinalIgnoreCase) ||
+        fileName.EndsWith(".runtimeconfig.json", StringComparison.OrdinalIgnoreCase);
+
+    if (isBlockedFile)
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    await next();
+});
+
 app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = app.Environment.WebRootFileProvider });
 app.UseStaticFiles(new StaticFileOptions { FileProvider = app.Environment.WebRootFileProvider });
 app.UseHttpsRedirection();
