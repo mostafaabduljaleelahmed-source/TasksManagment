@@ -10,6 +10,8 @@ interface LeaderboardEntry {
   studentEmail: string;
   avatarUrl?: string | null;
   averageGrade: number;
+  totalScore: number;
+  totalPossibleScore: number;
   completedTasks: number;
   totalTasks: number;
   totalSubmissions: number;
@@ -67,7 +69,7 @@ export const Leaderboard: React.FC = () => {
             <span>{lang === 'ar' ? 'لوحة الصدارة الأكاديمية' : 'Academic Leaderboard'}</span>
           </h1>
           <p className="text-xs text-sage-400 mt-0.5">
-            {lang === 'ar' ? 'تصنيف الطلاب حسب متوسط الدرجات والتكليفات المكتملة' : 'Student rankings by average performance and tasks completed'}
+            {lang === 'ar' ? 'تصنيف الطلاب حسب إجمالي الدرجات والتكليفات المكتملة' : 'Student rankings by total marks earned and tasks completed'}
           </p>
         </div>
 
@@ -115,7 +117,7 @@ export const Leaderboard: React.FC = () => {
                   <th className="w-16 text-center">{lang === 'ar' ? 'الترتيب' : 'Rank'}</th>
                   <th>{lang === 'ar' ? 'الطالب' : 'Student'}</th>
                   <th>{lang === 'ar' ? 'التكليفات المكتملة' : 'Tasks Completed'}</th>
-                  <th className="text-right">{lang === 'ar' ? 'متوسط الدرجات' : 'Average Grade'}</th>
+                  <th className="text-right">{lang === 'ar' ? 'إجمالي الدرجات' : 'Total Marks'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -150,8 +152,16 @@ export const Leaderboard: React.FC = () => {
                           <span className="text-sage-500">{lang === 'ar' ? 'لا تكليفات بعد' : 'No tasks yet'}</span>
                         )}
                       </td>
-                      <td className="text-right font-mono font-bold text-xs text-primary-400">
-                        {entry.totalTasks > 0 ? `${entry.averageGrade.toFixed(1)}%` : 'N/A'}
+                      <td className="text-right font-mono">
+                        {entry.totalTasks > 0 ? (
+                          <>
+                            <span className="font-bold text-sm text-primary-400">{entry.totalScore}</span>
+                            <span className="text-sage-500 text-xs"> / {entry.totalPossibleScore}</span>
+                            <span className="block text-[10px] text-sage-500">{entry.averageGrade.toFixed(1)}%</span>
+                          </>
+                        ) : (
+                          <span className="text-xs text-sage-500">N/A</span>
+                        )}
                       </td>
                     </tr>
                   );

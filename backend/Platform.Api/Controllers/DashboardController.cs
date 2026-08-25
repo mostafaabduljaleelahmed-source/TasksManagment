@@ -891,9 +891,13 @@ public class DashboardController : ControllerBase
             ? new List<Guid> { courseId.Value }
             : enrollments.Select(e => e.CourseId).Distinct().ToList();
 
+        // Deliberately NOT filtered by Session.IsUnlocked: that flag only gates whether students
+        // can currently submit/view a task, not whether past graded work should still count
+        // toward the leaderboard. A teacher locking a session after the deadline (a normal
+        // workflow) must not erase already-earned marks from the ranking.
         var assignedTasks = await _context.Sessions
-            .Where(s => targetCourseIds.Contains(s.CourseId) && s.IsUnlocked)
-            .SelectMany(s => s.Tasks)
+            .Where(s => targetCourseIds.Contains(s.CourseId) && !s.IsArchived)
+            .SelectMany(s => s.Tasks.Where(t => !t.IsArchived))
             .ToListAsync(cancellationToken);
 
         var ranked = _gradingCalculator.BuildLeaderboard(enrollments, submissions, assignedTasks);

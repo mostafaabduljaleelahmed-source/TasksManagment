@@ -88,6 +88,7 @@ public class GradingCalculator : IGradingCalculator
             var studentTasks = taskList.Where(t => t.Session != null && studentCourseIds.Contains(t.Session.CourseId)).ToList();
 
             var completedTasks = studentTasks.Count(t => GetHighestGradedSubmission(studentSubs.Where(s => s.TaskId == t.Id)) != null);
+            var (totalScore, totalPossible) = CalculateLeaderboardTotals(studentTasks, studentSubs);
 
             entries.Add(new LeaderboardEntryDto
             {
@@ -96,7 +97,9 @@ public class GradingCalculator : IGradingCalculator
                 StudentEmail = student.Email,
                 AvatarUrl = student.AvatarUrl,
                 StudentRegisterId = student.StudentId ?? "-",
-                AverageGrade = CalculateLeaderboardAverage(studentTasks, studentSubs),
+                AverageGrade = totalPossible > 0 ? Math.Round(totalScore * 100.0 / totalPossible, 1) : 0.0,
+                TotalScore = totalScore,
+                TotalPossibleScore = totalPossible,
                 CompletedTasks = completedTasks,
                 TotalTasks = studentTasks.Count,
                 TotalSubmissions = studentSubs.Count,
@@ -111,27 +114,28 @@ public class GradingCalculator : IGradingCalculator
     }
 
     /// <summary>
-    /// Leaderboard-specific average: divides by every assigned task, not just the ones the
-    /// student attempted. Unlike <see cref="CalculateStudentAverageGrade"/> (which averages only
-    /// over attempted tasks -- appropriate for a student's own profile, "how am I doing on what
-    /// I've submitted"), a competitive ranking must not let a student who did 1 of 20 tasks
-    /// perfectly outrank one who did 18 of 20 well: every assigned task counts toward the
-    /// denominator, and an unattempted or ungraded task contributes 0%.
+    /// Leaderboard totals: literal sum of earned points and sum of possible points across every
+    /// assigned task (not an average of per-task percentages). This is what "total marks" means --
+    /// a task worth 60 points should move the ranking more than a task worth 5, which an average-
+    /// of-percentages would flatten. An unattempted or ungraded task contributes 0 earned points
+    /// but its max grade still counts toward the possible total, so skipping work still costs rank.
     /// </summary>
-    private double CalculateLeaderboardAverage(IEnumerable<ProgrammingTask> assignedTasks, IEnumerable<Submission> studentSubmissions)
+    private (int totalScore, int totalPossible) CalculateLeaderboardTotals(IEnumerable<ProgrammingTask> assignedTasks, IEnumerable<Submission> studentSubmissions)
     {
         var taskList = assignedTasks?.ToList() ?? new List<ProgrammingTask>();
-        if (taskList.Count == 0) return 0.0;
+        if (taskList.Count == 0) return (0, 0);
 
         var subs = studentSubmissions?.ToList() ?? new List<Submission>();
 
-        double total = 0.0;
+        int totalScore = 0;
+        int totalPossible = 0;
         foreach (var task in taskList)
         {
             var bestSub = GetHighestGradedSubmission(subs.Where(s => s.TaskId == task.Id));
-            total += bestSub != null ? GradeCalculator.CalculatePercentage(bestSub.Grade, task.MaxGrade) : 0.0;
+            totalScore += bestSub?.Grade ?? 0;
+            totalPossible += task.MaxGrade;
         }
 
-        return Math.Round(total / taskList.Count, 1);
+        return (totalScore, totalPossible);
     }
 }

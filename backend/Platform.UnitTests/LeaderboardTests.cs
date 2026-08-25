@@ -41,14 +41,15 @@ public class LeaderboardTests
         new() { StudentId = student.Id, Student = student, CourseId = course.Id, Course = course };
 
     [Fact]
-    public void Leaderboard_RanksByAverageGradePercentage_NotRawGradeSum()
+    public void Leaderboard_RanksByTotalMarksEarned_WeightedByEachTasksPointValue()
     {
         var teacher = new User { Id = Guid.NewGuid(), Name = "Teacher", Email = "teacher@test.com", Role = UserRole.Teacher, PasswordHash = "hash" };
         var (course, _, task40, task60) = MakeCourseWithTwoTasks(teacher);
 
-        // Alice: 40/40 (100%) on the small task, nothing on the big one -> average of (100 + 0) / 2 = 50%.
+        // Two tasks worth 40 and 60 points -- 100 possible total for anyone enrolled in this course.
+        // Alice: full marks (40/40) on the small task, nothing on the big one -> 40/100 total.
         var alice = new User { Id = Guid.NewGuid(), Name = "Alice", Email = "alice@test.com", Role = UserRole.Student, PasswordHash = "hash" };
-        // Bob: 30/60 (50%) on the big task only -> average of (0 + 50) / 2 = 25%.
+        // Bob: 30/60 on the big task only -> 30/100 total.
         var bob = new User { Id = Guid.NewGuid(), Name = "Bob", Email = "bob@test.com", Role = UserRole.Student, PasswordHash = "hash" };
 
         var enrollments = new List<Enrollment> { Enroll(alice, course), Enroll(bob, course) };
@@ -58,19 +59,19 @@ public class LeaderboardTests
         var result = new GradingCalculator().BuildLeaderboard(enrollments, submissions, tasks);
 
         Assert.Equal(2, result.Count);
-        // A raw-grade-sum ranking would treat Bob's 30 as bigger than Alice's 40-on-a-smaller-task
-        // incorrectly, or ignore that Bob skipped a task entirely -- percentage-of-assigned-work
-        // is what must decide rank.
         Assert.Equal("Alice", result[0].StudentName);
-        Assert.Equal(50.0, result[0].AverageGrade);
+        Assert.Equal(40, result[0].TotalScore);
+        Assert.Equal(100, result[0].TotalPossibleScore);
+        Assert.Equal(40.0, result[0].AverageGrade);
         Assert.Equal("Bob", result[1].StudentName);
-        Assert.Equal(25.0, result[1].AverageGrade);
+        Assert.Equal(30, result[1].TotalScore);
+        Assert.Equal(30.0, result[1].AverageGrade);
         Assert.Equal(2, result[0].TotalTasks);
         Assert.Equal(1, result[0].CompletedTasks);
     }
 
     [Fact]
-    public void Leaderboard_TieOnAverageGrade_BreaksTieOnCompletedTaskCount()
+    public void Leaderboard_TieOnTotalMarks_BreaksTieOnCompletedTaskCount()
     {
         var teacher = new User { Id = Guid.NewGuid(), Name = "Teacher", Email = "teacher@test.com", Role = UserRole.Teacher, PasswordHash = "hash" };
         var (course, _, task40, task60) = MakeCourseWithTwoTasks(teacher);
@@ -79,18 +80,20 @@ public class LeaderboardTests
         var bob = new User { Id = Guid.NewGuid(), Name = "Bob", Email = "bob@test.com", Role = UserRole.Student, PasswordHash = "hash" };
 
         var enrollments = new List<Enrollment> { Enroll(alice, course), Enroll(bob, course) };
-        // Both land on exactly 50% average, but Alice earned it across both assigned tasks while
-        // Bob only ever attempted one of the two and happened to ace it.
+        // Both land on exactly 50/100 total marks, but Alice earned it across both assigned
+        // tasks while Bob only ever attempted one of the two.
         var submissions = new List<Submission>
         {
-            MakeSubmission(task40, alice, 20), // 50%
-            MakeSubmission(task60, alice, 30), // 50%
-            MakeSubmission(task40, bob, 40),   // 100% on the one task Bob attempted
+            MakeSubmission(task40, alice, 20),
+            MakeSubmission(task60, alice, 30), // Alice: 20 + 30 = 50
+            MakeSubmission(task60, bob, 50),   // Bob: 50 + 0 (task40 untouched) = 50
         };
         var tasks = new List<ProgrammingTask> { task40, task60 };
 
         var result = new GradingCalculator().BuildLeaderboard(enrollments, submissions, tasks);
 
+        Assert.Equal(50, result[0].TotalScore);
+        Assert.Equal(50, result[1].TotalScore);
         Assert.Equal(50.0, result[0].AverageGrade);
         Assert.Equal(50.0, result[1].AverageGrade);
         Assert.Equal("Alice", result[0].StudentName);

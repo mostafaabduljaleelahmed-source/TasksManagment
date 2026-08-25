@@ -10,6 +10,8 @@ public class LeaderboardEntryDto
     public string? AvatarUrl { get; set; }
     public string StudentRegisterId { get; set; } = "-";
     public double AverageGrade { get; set; }
+    public int TotalScore { get; set; }
+    public int TotalPossibleScore { get; set; }
     public int CompletedTasks { get; set; }
     public int TotalTasks { get; set; }
     public int TotalSubmissions { get; set; }
