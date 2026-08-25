@@ -390,7 +390,7 @@ export const TaskWorkspace: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center text-zinc-500">
-        <Loader2 className="w-10 h-10 animate-spin text-violet-500 mb-3" />
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-3" />
         <p>Loading task workspace...</p>
       </div>
     );
@@ -500,7 +500,7 @@ export const TaskWorkspace: React.FC = () => {
               onClick={() => setActiveTab('description')}
               className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold border-b-2 transition-all ${
                 activeTab === 'description'
-                  ? 'border-violet-500 text-white bg-[#1F1F28]/50'
+                  ? 'border-indigo-500 text-white bg-[#1F1F28]/50'
                   : 'border-transparent text-zinc-400 hover:text-white'
               }`}
             >
@@ -511,7 +511,7 @@ export const TaskWorkspace: React.FC = () => {
               onClick={() => setActiveTab('history')}
               className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold border-b-2 transition-all ${
                 activeTab === 'history'
-                  ? 'border-violet-500 text-white bg-[#1F1F28]/50'
+                  ? 'border-indigo-500 text-white bg-[#1F1F28]/50'
                   : 'border-transparent text-zinc-400 hover:text-white'
               }`}
             >
@@ -637,7 +637,7 @@ export const TaskWorkspace: React.FC = () => {
                         <div
                           key={sub.id}
                           onClick={() => setSelectedSubmission(sub)}
-                          className="bg-[#1F1F24] border border-[#2F2F37] hover:border-violet-500/40 rounded-xl p-3 cursor-pointer hover:bg-zinc-800/30 transition-all flex flex-col gap-1.5 group"
+                          className="bg-[#1F1F24] border border-[#2F2F37] hover:border-indigo-500/40 rounded-xl p-3 cursor-pointer hover:bg-zinc-800/30 transition-all flex flex-col gap-1.5 group"
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-white">Attempt #{sub.attemptNumber}</span>
@@ -656,7 +656,7 @@ export const TaskWorkspace: React.FC = () => {
                             {new Date(sub.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
 
-                          <div className="flex justify-end items-center text-[11px] text-violet-400 font-semibold pt-1">
+                          <div className="flex justify-end items-center text-[11px] text-indigo-400 font-semibold pt-1">
                             <span>Inspect &rarr;</span>
                           </div>
                         </div>

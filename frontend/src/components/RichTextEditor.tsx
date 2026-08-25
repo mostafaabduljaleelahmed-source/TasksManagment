@@ -170,7 +170,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             type="button"
             onClick={() => setMode('write')}
             className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 ${
-              mode === 'write' ? 'bg-violet-600 text-white' : 'text-zinc-400 hover:text-white'
+              mode === 'write' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Edit3 className="w-3 h-3" />
@@ -180,7 +180,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             type="button"
             onClick={() => setMode('preview')}
             className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 ${
-              mode === 'preview' ? 'bg-violet-600 text-white' : 'text-zinc-400 hover:text-white'
+              mode === 'preview' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Eye className="w-3 h-3" />

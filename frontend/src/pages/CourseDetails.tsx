@@ -582,7 +582,7 @@ export const CourseDetails: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#09090B] text-zinc-100 relative overflow-hidden pb-12">
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-violet-600/5 rounded-full blur-[128px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/5 rounded-full blur-[128px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-600/5 rounded-full blur-[128px] pointer-events-none" />
 
       {/* Tab Control */}
@@ -592,7 +592,7 @@ export const CourseDetails: React.FC = () => {
             <button
               onClick={() => setActiveTab('curriculum')}
               className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap text-center ${
-                activeTab === 'curriculum' ? 'bg-violet-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
+                activeTab === 'curriculum' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
               }`}
             >
               Curriculum
@@ -600,7 +600,7 @@ export const CourseDetails: React.FC = () => {
             <button
               onClick={() => setActiveTab('dashboard')}
               className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap text-center ${
-                activeTab === 'dashboard' ? 'bg-violet-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
+                activeTab === 'dashboard' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
               }`}
             >
               Dashboard
@@ -608,7 +608,7 @@ export const CourseDetails: React.FC = () => {
             <button
               onClick={() => setActiveTab('notifications')}
               className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap text-center flex items-center justify-center gap-1.5 relative ${
-                activeTab === 'notifications' ? 'bg-violet-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
+                activeTab === 'notifications' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
               }`}
             >
               Notifications
@@ -619,7 +619,7 @@ export const CourseDetails: React.FC = () => {
             <button
               onClick={() => setActiveTab('export')}
               className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap text-center ${
-                activeTab === 'export' ? 'bg-violet-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
+                activeTab === 'export' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
               }`}
             >
               Export
@@ -692,7 +692,7 @@ export const CourseDetails: React.FC = () => {
               {isTeacherOrAdmin && (
                 <button
                   onClick={() => setShowSessionModal(true)}
-                  className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-5 rounded-lg shadow-lg hover:shadow-violet-900/20 transition-all text-sm shrink-0"
+                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-5 rounded-lg shadow-lg hover:shadow-indigo-900/20 transition-all text-sm shrink-0"
                 >
                   <Plus className="w-4.5 h-4.5" />
                   Add Session
@@ -702,7 +702,7 @@ export const CourseDetails: React.FC = () => {
 
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
-                <Loader2 className="w-10 h-10 animate-spin text-violet-500 mb-3" />
+                <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-3" />
                 <p>Loading curriculum...</p>
               </div>
             ) : sessions.length === 0 ? (
@@ -731,7 +731,7 @@ export const CourseDetails: React.FC = () => {
                                 <ChevronRight className="w-5 h-5 text-zinc-400" />
                               )}
                             </button>
-                            <span className="text-[10px] sm:text-xs bg-violet-500/10 border border-violet-500/25 text-violet-400 font-bold uppercase tracking-wider py-0.5 sm:py-1 px-2 sm:px-2.5 rounded-full shrink-0">
+                            <span className="text-[10px] sm:text-xs bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 font-bold uppercase tracking-wider py-0.5 sm:py-1 px-2 sm:px-2.5 rounded-full shrink-0">
                               Session {session.order}
                             </span>
                             <h3 className="text-sm sm:text-lg font-bold text-white tracking-tight truncate">{session.title}</h3>
@@ -772,7 +772,7 @@ export const CourseDetails: React.FC = () => {
                                   setSelectedSessionId(session.id);
                                   setShowTaskModal(true);
                                 }}
-                                className="text-xs text-violet-400 hover:text-white flex items-center gap-1 font-semibold ml-2"
+                                className="text-xs text-indigo-400 hover:text-white flex items-center gap-1 font-semibold ml-2"
                               >
                                 <Plus className="w-3.5 h-3.5" />
                                 Add Task
@@ -983,7 +983,7 @@ export const CourseDetails: React.FC = () => {
                             onClick={() => setTaskActiveTab('overview')}
                             className={`flex-1 pb-2 text-xs font-semibold text-center border-b-2 transition-all ${
                               taskActiveTab === 'overview'
-                                ? 'border-violet-500 text-white'
+                                ? 'border-indigo-500 text-white'
                                 : 'border-transparent text-zinc-400 hover:text-white'
                             }`}
                           >
@@ -993,7 +993,7 @@ export const CourseDetails: React.FC = () => {
                             onClick={() => setTaskActiveTab('submissions')}
                             className={`flex-1 pb-2 text-xs font-semibold text-center border-b-2 transition-all ${
                               taskActiveTab === 'submissions'
-                                ? 'border-violet-500 text-white'
+                                ? 'border-indigo-500 text-white'
                                 : 'border-transparent text-zinc-400 hover:text-white'
                             }`}
                           >
@@ -1042,7 +1042,7 @@ export const CourseDetails: React.FC = () => {
                               </div>
                               <div className="flex justify-between text-xs py-1">
                                 <span className="text-zinc-400">Submission Rate</span>
-                                <span className="font-bold text-violet-400">{taskStats.submissionRate}%</span>
+                                <span className="font-bold text-indigo-400">{taskStats.submissionRate}%</span>
                               </div>
                             </div>
                           </div>
@@ -1126,7 +1126,7 @@ export const CourseDetails: React.FC = () => {
                                             studentName: sub.studentName,
                                             studentRegisterId: sub.studentRegisterId
                                           })}
-                                          className="text-violet-400 hover:text-violet-300 flex items-center gap-0.5 font-semibold"
+                                          className="text-indigo-400 hover:text-indigo-300 flex items-center gap-0.5 font-semibold"
                                         >
                                           <Eye className="w-3.5 h-3.5" />
                                           Review
@@ -1160,12 +1160,12 @@ export const CourseDetails: React.FC = () => {
             {/* Metrics cards row */}
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
               <div className="bg-[#16161A] border border-[#24242B] p-4 rounded-xl shadow">
-                <Users className="w-5 h-5 text-violet-400 mb-2" />
+                <Users className="w-5 h-5 text-indigo-400 mb-2" />
                 <span className="text-3xs text-zinc-400 uppercase tracking-wider block">Total Students</span>
                 <span className="text-lg font-bold text-white mt-1 block">{dashboardMetrics.totalStudents}</span>
               </div>
               <div className="bg-[#16161A] border border-[#24242B] p-4 rounded-xl shadow">
-                <BookOpen className="w-5 h-5 text-violet-400 mb-2" />
+                <BookOpen className="w-5 h-5 text-indigo-400 mb-2" />
                 <span className="text-3xs text-zinc-400 uppercase tracking-wider block">Total Tasks</span>
                 <span className="text-lg font-bold text-white mt-1 block">{dashboardMetrics.totalTasks}</span>
               </div>
@@ -1185,12 +1185,12 @@ export const CourseDetails: React.FC = () => {
                 <span className="text-lg font-bold text-white mt-1 block">{dashboardMetrics.lateSubmissions}</span>
               </div>
               <div className="bg-[#16161A] border border-[#24242B] p-4 rounded-xl shadow">
-                <Award className="w-5 h-5 text-violet-400 mb-2" />
+                <Award className="w-5 h-5 text-indigo-400 mb-2" />
                 <span className="text-3xs text-zinc-400 uppercase tracking-wider block">Average Grade</span>
                 <span className="text-lg font-bold text-white mt-1 block">{dashboardMetrics.averageCourseGrade}%</span>
               </div>
               <div className="bg-[#16161A] border border-[#24242B] p-4 rounded-xl shadow">
-                <BarChart3 className="w-5 h-5 text-violet-400 mb-2" />
+                <BarChart3 className="w-5 h-5 text-indigo-400 mb-2" />
                 <span className="text-3xs text-zinc-400 uppercase tracking-wider block">Completion Rate</span>
                 <span className="text-lg font-bold text-white mt-1 block">{dashboardMetrics.completionRate}%</span>
               </div>
@@ -1267,7 +1267,7 @@ export const CourseDetails: React.FC = () => {
                         <td className="px-6 py-4 text-center text-red-400">{session.studentsPending}</td>
                         <td className="px-6 py-4 text-center font-bold">{session.averageGrade} pts</td>
                         <td className="px-6 py-4 text-center">
-                          <span className="text-violet-400 font-semibold">{session.completionPercentage}%</span>
+                          <span className="text-indigo-400 font-semibold">{session.completionPercentage}%</span>
                         </td>
                       </tr>
                     ))}
@@ -1283,12 +1283,12 @@ export const CourseDetails: React.FC = () => {
           <div className="bg-[#16161A] border border-[#24242B] rounded-xl p-6 shadow-xl space-y-6">
             <div className="flex justify-between items-center border-b border-[#24242B] pb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Bell className="w-5 h-5 text-violet-400" />
+                <Bell className="w-5 h-5 text-indigo-400" />
                 Instructor Alert Inbox
               </h2>
               <button
                 onClick={fetchNotifications}
-                className="text-xs text-violet-400 hover:text-white flex items-center gap-1"
+                className="text-xs text-indigo-400 hover:text-white flex items-center gap-1"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 Refresh
@@ -1303,7 +1303,7 @@ export const CourseDetails: React.FC = () => {
                   <div
                     key={n.id}
                     className={`py-4 flex justify-between items-center gap-4 ${
-                      !n.isRead ? 'bg-violet-600/5 px-3 rounded-lg border border-violet-500/10' : ''
+                      !n.isRead ? 'bg-indigo-600/5 px-3 rounded-lg border border-indigo-500/10' : ''
                     }`}
                   >
                     <div>
@@ -1317,7 +1317,7 @@ export const CourseDetails: React.FC = () => {
                     {!n.isRead && (
                       <button
                         onClick={() => markNotificationAsRead(n.id)}
-                        className="text-xs text-violet-400 hover:text-white font-semibold shrink-0"
+                        className="text-xs text-indigo-400 hover:text-white font-semibold shrink-0"
                       >
                         Mark read
                       </button>
@@ -1332,8 +1332,8 @@ export const CourseDetails: React.FC = () => {
         {/* Tab content: Export Grades */}
         {activeTab === 'export' && (
           <div className="max-w-md mx-auto bg-[#16161A] border border-[#24242B] rounded-2xl p-8 text-center shadow-xl space-y-6">
-            <div className="w-16 h-16 bg-violet-600/10 border border-violet-500/20 rounded-full flex items-center justify-center mx-auto">
-              <FileSpreadsheet className="w-8 h-8 text-violet-400" />
+            <div className="w-16 h-16 bg-indigo-600/10 border border-indigo-500/20 rounded-full flex items-center justify-center mx-auto">
+              <FileSpreadsheet className="w-8 h-8 text-indigo-400" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white mb-2">Export Grades Spreadsheet</h2>
@@ -1343,7 +1343,7 @@ export const CourseDetails: React.FC = () => {
             </div>
             <button
               onClick={handleExportCSV}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-medium rounded-lg py-3 px-4 shadow-lg hover:shadow-violet-900/30 transition-all focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 text-white font-medium rounded-lg py-3 px-4 shadow-lg hover:shadow-indigo-900/30 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <Download className="w-5 h-5" />
               Download CSV Report
@@ -1388,13 +1388,13 @@ export const CourseDetails: React.FC = () => {
                   placeholder="e.g. Session 1: Introduction to Variables"
                   value={newSessionTitle}
                   onChange={(e) => setNewSessionTitle(e.target.value)}
-                  className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               <button
                 type="submit"
                 disabled={sessionLoading}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-medium rounded-lg py-2.5 px-4 transition-all"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 text-white font-medium rounded-lg py-2.5 px-4 transition-all"
               >
                 {sessionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create'}
               </button>
@@ -1422,13 +1422,13 @@ export const CourseDetails: React.FC = () => {
                   placeholder="e.g. Print Hello World"
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
-                  className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4 bg-[#1F1F24] p-4 rounded-xl border border-[#2F2F37]">
                 <div>
-                  <label className="block text-xs font-bold text-violet-400 uppercase tracking-wider mb-2">Grading Evaluation Mode</label>
+                  <label className="block text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Grading Evaluation Mode</label>
                   <select
                     value="ManualReview"
                     disabled
@@ -1442,7 +1442,7 @@ export const CourseDetails: React.FC = () => {
                   <select
                     value={taskLanguage}
                     onChange={(e) => setTaskLanguage(e.target.value)}
-                    className="w-full bg-[#16161A] border border-[#2F2F37] text-white font-semibold rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full bg-[#16161A] border border-[#2F2F37] text-white font-semibold rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="python">Python (3.11)</option>
                   </select>
@@ -1464,7 +1464,7 @@ export const CourseDetails: React.FC = () => {
                   <select
                     value={taskType}
                     onChange={(e) => setTaskType(e.target.value as any)}
-                    className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="BasicExercise">Basic Console Output</option>
                     <option value="InputExercise">Input & Output Exercise</option>
@@ -1478,7 +1478,7 @@ export const CourseDetails: React.FC = () => {
                     required
                     value={taskMaxGrade}
                     onChange={(e) => setTaskMaxGrade(parseInt(e.target.value) || 100)}
-                    className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
@@ -1490,7 +1490,7 @@ export const CourseDetails: React.FC = () => {
                     type="datetime-local"
                     value={taskDeadline}
                     onChange={(e) => setTaskDeadline(e.target.value)}
-                    className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               )}
@@ -1506,7 +1506,7 @@ export const CourseDetails: React.FC = () => {
                 <button
                   type="submit"
                   disabled={taskLoading}
-                  className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-violet-900/20"
+                  className="bg-gradient-to-r from-indigo-600 to-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-indigo-900/20"
                 >
                   {taskLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Task'}
                 </button>

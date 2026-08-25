@@ -179,7 +179,7 @@ export const UserManagement: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-              <Users className="w-6 h-6 text-violet-400" />
+              <Users className="w-6 h-6 text-indigo-400" />
               User & Instructor Management
             </h1>
           </div>
@@ -202,7 +202,7 @@ export const UserManagement: React.FC = () => {
               onClick={() => setActiveTab('Teachers')}
               className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
                 activeTab === 'Teachers'
-                  ? 'bg-violet-600 text-white shadow-md'
+                  ? 'bg-indigo-600 text-white shadow-md'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
@@ -213,7 +213,7 @@ export const UserManagement: React.FC = () => {
               onClick={() => setActiveTab('Students')}
               className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
                 activeTab === 'Students'
-                  ? 'bg-violet-600 text-white shadow-md'
+                  ? 'bg-indigo-600 text-white shadow-md'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
@@ -230,7 +230,7 @@ export const UserManagement: React.FC = () => {
               placeholder={`Search ${activeTab.toLowerCase()} by name or email...`}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500"
+              className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
             />
           </div>
         </div>
@@ -268,7 +268,7 @@ export const UserManagement: React.FC = () => {
                       <tr key={u.id} className="hover:bg-[#16161B] transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden">
                               {u.avatarUrl ? <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" /> : u.name[0]}
                             </div>
                             <div>
@@ -278,7 +278,7 @@ export const UserManagement: React.FC = () => {
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
-                          <span className="px-2.5 py-1 bg-violet-500/10 text-violet-300 border border-violet-500/20 rounded-lg text-[10px] font-bold font-mono">
+                          <span className="px-2.5 py-1 bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-lg text-[10px] font-bold font-mono">
                             {u.role === 'Student' && u.studentId ? `ID: ${u.studentId}` : u.role}
                           </span>
                         </td>
@@ -344,7 +344,7 @@ export const UserManagement: React.FC = () => {
                   <div key={u.id} className="p-4 bg-[#16161B] border border-[#24242B] rounded-xl space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-violet-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden">
+                        <div className="w-9 h-9 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden">
                           {u.avatarUrl ? <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" /> : u.name[0]}
                         </div>
                         <div>
@@ -388,7 +388,7 @@ export const UserManagement: React.FC = () => {
           <div className="bg-[#121215] border border-[#2B2B36] rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-[#1F1F26] pb-4">
               <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-violet-400" />
+                <UserPlus className="w-5 h-5 text-indigo-400" />
                 Provision Teacher Account
               </h3>
               <button onClick={() => setShowCreateTeacher(false)} className="text-zinc-500 hover:text-white">
@@ -404,7 +404,7 @@ export const UserManagement: React.FC = () => {
                   value={teacherName}
                   onChange={(e) => setTeacherName(e.target.value)}
                   placeholder="e.g. Dr. Alexander Wright"
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
@@ -416,7 +416,7 @@ export const UserManagement: React.FC = () => {
                   value={teacherEmail}
                   onChange={(e) => setTeacherEmail(e.target.value)}
                   placeholder="e.g. wright@academy.com"
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
@@ -428,7 +428,7 @@ export const UserManagement: React.FC = () => {
                   value={teacherPassword}
                   onChange={(e) => setTeacherPassword(e.target.value)}
                   placeholder="Set account password"
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
@@ -510,7 +510,7 @@ export const UserManagement: React.FC = () => {
           <div className="bg-[#121215] border border-[#2B2B36] rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#1F1F26] pb-4">
               <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-                <Eye className="w-5 h-5 text-violet-400" />
+                <Eye className="w-5 h-5 text-indigo-400" />
                 {viewUser.name}'s Profile
               </h3>
               <button onClick={() => setViewUser(null)} className="text-zinc-500 hover:text-white">
@@ -520,7 +520,7 @@ export const UserManagement: React.FC = () => {
 
             <div className="space-y-4 text-xs">
               <div className="flex items-center gap-4 p-3 bg-[#17171C] rounded-xl">
-                <div className="w-12 h-12 rounded-full bg-violet-600 text-white font-bold flex items-center justify-center text-base overflow-hidden">
+                <div className="w-12 h-12 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-base overflow-hidden">
                   {viewUser.avatarUrl ? <img src={viewUser.avatarUrl} alt={viewUser.name} className="w-full h-full object-cover" /> : viewUser.name[0]}
                 </div>
                 <div>
@@ -532,7 +532,7 @@ export const UserManagement: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 bg-[#1A1A20] rounded-xl border border-[#292933]">
                   <span className="text-[10px] text-zinc-500 uppercase font-bold">Role</span>
-                  <p className="font-bold text-violet-400">{viewUser.role}</p>
+                  <p className="font-bold text-indigo-400">{viewUser.role}</p>
                 </div>
 
                 <div className="p-3 bg-[#1A1A20] rounded-xl border border-[#292933]">

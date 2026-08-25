@@ -110,7 +110,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
       <div className="bg-[#121215] border border-[#2B2B36] rounded-2xl max-w-xl w-full p-4 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
         {/* Search Input Bar */}
         <div className="flex items-center gap-3 bg-[#1A1A20] border border-[#2B2B36] rounded-xl px-4 py-3">
-          <Search className="w-5 h-5 text-violet-400 shrink-0" />
+          <Search className="w-5 h-5 text-indigo-400 shrink-0" />
           <input
             type="text"
             autoFocus
@@ -120,7 +120,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
             className="w-full bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none"
           />
           {searching ? (
-            <Loader2 className="w-4 h-4 text-violet-400 animate-spin shrink-0" />
+            <Loader2 className="w-4 h-4 text-indigo-400 animate-spin shrink-0" />
           ) : query ? (
             <button onClick={() => setQuery('')} className="text-zinc-500 hover:text-white">
               <X className="w-4 h-4" />
@@ -148,14 +148,14 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
               className="p-3 bg-[#17171C] hover:bg-[#1E1E26] border border-[#22222A] rounded-xl flex items-center justify-between cursor-pointer transition-all group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
                   {item.type === 'Course' && <BookOpen className="w-4 h-4" />}
                   {item.type === 'Session' && <Layers className="w-4 h-4" />}
                   {item.type === 'Task' && <CheckSquare className="w-4 h-4" />}
                   {item.type === 'User' && <GraduationCap className="w-4 h-4" />}
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-white group-hover:text-violet-300 transition-colors">
+                  <h4 className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
                     {item.title}
                   </h4>
                   {item.subtitle && <p className="text-[10px] text-zinc-400">{item.subtitle}</p>}

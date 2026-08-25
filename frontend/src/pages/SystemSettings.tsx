@@ -77,7 +77,7 @@ export const SystemSettings: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="flex items-center gap-3 text-violet-400">
+        <div className="flex items-center gap-3 text-indigo-400">
           <Loader2 className="w-5 h-5 animate-spin" />
           <span className="text-sm font-semibold">Loading System Settings...</span>
         </div>
@@ -91,7 +91,7 @@ export const SystemSettings: React.FC = () => {
 
         <div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-            <Settings className="w-7 h-7 text-violet-400" />
+            <Settings className="w-7 h-7 text-indigo-400" />
             Academy System Settings
           </h1>
         </div>
@@ -100,7 +100,7 @@ export const SystemSettings: React.FC = () => {
           {/* General Branding */}
           <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
             <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-              <ShieldCheck className="w-5 h-5 text-violet-400" />
+              <ShieldCheck className="w-5 h-5 text-indigo-400" />
               <h2 className="text-base font-bold text-white">Academy Identity & Branding</h2>
             </div>
 
@@ -111,14 +111,14 @@ export const SystemSettings: React.FC = () => {
                   type="text"
                   value={academyName}
                   onChange={(e) => setAcademyName(e.target.value)}
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-zinc-300 mb-1.5 flex items-center gap-2">
-                  <Image className="w-3.5 h-3.5 text-violet-400" />
+                  <Image className="w-3.5 h-3.5 text-indigo-400" />
                   Academy Logo URL
                 </label>
                 <input
@@ -126,7 +126,7 @@ export const SystemSettings: React.FC = () => {
                   value={academyLogo}
                   onChange={(e) => setAcademyLogo(e.target.value)}
                   placeholder="https://example.com/logo.png"
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
                 />
               </div>
             </div>
@@ -135,7 +135,7 @@ export const SystemSettings: React.FC = () => {
           {/* Theme Palette */}
           <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
             <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-              <Palette className="w-5 h-5 text-violet-400" />
+              <Palette className="w-5 h-5 text-indigo-400" />
               <h2 className="text-base font-bold text-white">System Color Palette</h2>
             </div>
 
@@ -181,7 +181,7 @@ export const SystemSettings: React.FC = () => {
           {/* Contact & Support Emails */}
           <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
             <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-              <Mail className="w-5 h-5 text-violet-400" />
+              <Mail className="w-5 h-5 text-indigo-400" />
               <h2 className="text-base font-bold text-white">Contact & Support Email Configuration</h2>
             </div>
 
@@ -192,21 +192,21 @@ export const SystemSettings: React.FC = () => {
                   type="email"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-zinc-300 mb-1.5 flex items-center gap-1.5">
-                  <HelpCircle className="w-3.5 h-3.5 text-violet-400" />
+                  <HelpCircle className="w-3.5 h-3.5 text-indigo-400" />
                   Support Email
                 </label>
                 <input
                   type="email"
                   value={supportEmail}
                   onChange={(e) => setSupportEmail(e.target.value)}
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
@@ -218,7 +218,7 @@ export const SystemSettings: React.FC = () => {
                 type="text"
                 value={footerText}
                 onChange={(e) => setFooterText(e.target.value)}
-                className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
                 required
               />
             </div>

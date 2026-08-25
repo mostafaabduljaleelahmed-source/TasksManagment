@@ -38,7 +38,7 @@ export const VerifyEmail: React.FC = () => {
       <div className="w-full max-w-md bg-[#16161A] border border-[#24242B] rounded-2xl p-8 shadow-2xl text-center relative z-10">
         {loading ? (
           <div className="py-12 space-y-4">
-            <Loader2 className="w-10 h-10 text-violet-500 animate-spin mx-auto" />
+            <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mx-auto" />
             <h2 className="text-lg font-bold text-white">Verifying Email...</h2>
             <p className="text-xs text-zinc-400">Please wait while we validate your account verification token.</p>
           </div>
@@ -54,7 +54,7 @@ export const VerifyEmail: React.FC = () => {
             <div className="pt-4">
               <Link
                 to="/login"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs rounded-xl transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition-colors"
               >
                 Proceed to Login
               </Link>

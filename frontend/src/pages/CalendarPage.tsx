@@ -88,7 +88,7 @@ export const CalendarPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-3">
-              <CalendarIcon className="w-6 h-6 text-violet-400" />
+              <CalendarIcon className="w-6 h-6 text-indigo-400" />
               Academic Deadlines & Schedule Calendar
             </h1>
           </div>
@@ -136,11 +136,11 @@ export const CalendarPage: React.FC = () => {
                   key={dayNum}
                   className={`h-24 p-2 rounded-xl border flex flex-col justify-between transition-all ${
                     isToday
-                      ? 'bg-violet-600/10 border-violet-500/50 text-violet-300'
+                      ? 'bg-indigo-600/10 border-indigo-500/50 text-indigo-300'
                       : 'bg-[#17171C] border-[#22222A] text-zinc-300 hover:border-[#2D2D38]'
                   }`}
                 >
-                  <span className={`text-xs font-bold ${isToday ? 'text-violet-400' : 'text-zinc-400'}`}>{dayNum}</span>
+                  <span className={`text-xs font-bold ${isToday ? 'text-indigo-400' : 'text-zinc-400'}`}>{dayNum}</span>
 
                   <div className="space-y-1 overflow-y-auto max-h-14">
                     {dayEvents.map((ev) => (

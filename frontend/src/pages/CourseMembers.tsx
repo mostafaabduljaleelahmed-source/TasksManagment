@@ -106,14 +106,14 @@ export const CourseMembers: React.FC = () => {
           <div>
             <Link
               to={`/course/${courseId}`}
-              className="inline-flex items-center gap-2 text-xs font-semibold text-violet-400 hover:text-violet-300 mb-2 transition-colors"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-400 hover:text-indigo-300 mb-2 transition-colors"
             >
               {isRtl ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
               {t('courses')} / {data?.courseName || 'Course'}
             </Link>
             <h1 className="text-2xl font-extrabold text-white flex items-center gap-3">
-              <Users className="w-6 h-6 text-violet-500" />
-              Student Management: <span className="text-violet-400">{data?.courseName}</span>
+              <Users className="w-6 h-6 text-indigo-500" />
+              Student Management: <span className="text-indigo-400">{data?.courseName}</span>
             </h1>
             <p className="text-xs text-zinc-400 mt-1">Course Code: <span className="font-mono text-zinc-200">{data?.courseCode}</span></p>
           </div>
@@ -121,7 +121,7 @@ export const CourseMembers: React.FC = () => {
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-10 h-10 animate-spin text-violet-500 mb-3" />
+            <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-3" />
             <p className="text-sm text-zinc-400">Loading student roster...</p>
           </div>
         ) : error || !data ? (
@@ -132,12 +132,12 @@ export const CourseMembers: React.FC = () => {
           <div className="space-y-8">
             {/* Instructor Section Card */}
             <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl">
-              <h2 className="text-xs font-bold text-violet-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <School className="w-4 h-4 text-violet-400" />
+              <h2 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <School className="w-4 h-4 text-indigo-400" />
                 {t('instructor')}
               </h2>
               <div className="flex items-center gap-4 bg-[#1A1A20] p-4 border border-[#292933] rounded-xl">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold text-lg flex items-center justify-center border border-violet-400/30 overflow-hidden shadow-md">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-600 text-white font-bold text-lg flex items-center justify-center border border-indigo-400/30 overflow-hidden shadow-md">
                   {data.teacher.avatarUrl ? (
                     <img src={data.teacher.avatarUrl} alt={data.teacher.name} className="w-full h-full object-cover" />
                   ) : (
@@ -161,7 +161,7 @@ export const CourseMembers: React.FC = () => {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-base font-bold text-white flex items-center gap-2">
-                    <GraduationCap className="w-5 h-5 text-violet-400" />
+                    <GraduationCap className="w-5 h-5 text-indigo-400" />
                     Enrolled Students ({filteredStudents.length})
                   </h2>
                   <p className="text-xs text-zinc-400">Click any student to view detailed submissions, grades, and teacher actions.</p>
@@ -176,12 +176,12 @@ export const CourseMembers: React.FC = () => {
                       placeholder="Search by name, ID, email..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className={`bg-[#1A1A20] border border-[#292933] rounded-xl text-xs text-white py-2 ${isRtl ? 'pr-9 pl-4' : 'pl-9 pr-4'} focus:outline-none focus:border-violet-500 w-48 sm:w-64`}
+                      className={`bg-[#1A1A20] border border-[#292933] rounded-xl text-xs text-white py-2 ${isRtl ? 'pr-9 pl-4' : 'pl-9 pr-4'} focus:outline-none focus:border-indigo-500 w-48 sm:w-64`}
                     />
                   </div>
 
                   <div className="flex items-center gap-2 bg-[#1A1A20] border border-[#292933] px-3 py-1.5 rounded-xl text-xs">
-                    <Filter className="w-3.5 h-3.5 text-violet-400" />
+                    <Filter className="w-3.5 h-3.5 text-indigo-400" />
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
@@ -228,7 +228,7 @@ export const CourseMembers: React.FC = () => {
                         >
                           {/* Student Profile & Email */}
                           <td className="px-4 py-3.5 font-medium text-white flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-violet-600 text-white font-bold text-xs flex items-center justify-center border border-violet-400/30 overflow-hidden shrink-0">
+                            <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center justify-center border border-indigo-400/30 overflow-hidden shrink-0">
                               {student.avatarUrl ? (
                                 <img src={student.avatarUrl} alt={student.name} className="w-full h-full object-cover" />
                               ) : (
@@ -236,7 +236,7 @@ export const CourseMembers: React.FC = () => {
                               )}
                             </div>
                             <div>
-                              <div className="font-bold text-white group-hover:text-violet-300 transition-colors">{student.name}</div>
+                              <div className="font-bold text-white group-hover:text-indigo-300 transition-colors">{student.name}</div>
                               <div className="text-[11px] text-zinc-400">{student.email}</div>
                             </div>
                           </td>
@@ -284,7 +284,7 @@ export const CourseMembers: React.FC = () => {
                                 e.stopPropagation();
                                 setSelectedStudent(student);
                               }}
-                              className="px-3 py-1 bg-violet-600/20 hover:bg-violet-600/40 border border-violet-500/30 text-violet-300 font-bold rounded-lg text-xs transition-colors flex items-center gap-1 ml-auto"
+                              className="px-3 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 font-bold rounded-lg text-xs transition-colors flex items-center gap-1 ml-auto"
                             >
                               <Eye className="w-3.5 h-3.5" /> View Details
                             </button>

@@ -192,7 +192,7 @@ export const Settings: React.FC = () => {
         {/* Profile Picture & Info Form */}
         <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
           <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-            <User className="w-5 h-5 text-violet-400" />
+            <User className="w-5 h-5 text-indigo-400" />
             <h2 className="text-base font-bold text-white">{t('personalInfo')}</h2>
           </div>
 
@@ -300,7 +300,7 @@ export const Settings: React.FC = () => {
         {/* Change Password Form */}
         <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
           <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-            <Lock className="w-5 h-5 text-violet-400" />
+            <Lock className="w-5 h-5 text-indigo-400" />
             <h2 className="text-base font-bold text-white">{t('changePassword')}</h2>
           </div>
 
@@ -357,7 +357,7 @@ export const Settings: React.FC = () => {
         {/* Preferences Section: Language & Theme */}
         <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
           <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-            <Globe className="w-5 h-5 text-violet-400" />
+            <Globe className="w-5 h-5 text-indigo-400" />
             <h2 className="text-base font-bold text-white">{t('preferences')}</h2>
           </div>
 
@@ -366,10 +366,10 @@ export const Settings: React.FC = () => {
             <div className="p-4 bg-[#1A1A20] border border-[#292933] rounded-xl space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-violet-400" />
+                  <Globe className="w-4 h-4 text-indigo-400" />
                   {lang === 'ar' ? 'لغة العرض' : 'Display Language'}
                 </span>
-                <span className="text-[10px] uppercase font-bold text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded">
+                <span className="text-[10px] uppercase font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
                   {lang.toUpperCase()}
                 </span>
               </div>
@@ -380,24 +380,24 @@ export const Settings: React.FC = () => {
                   onClick={() => setLanguage('en')}
                   className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                     lang === 'en'
-                      ? 'bg-violet-600/20 border-violet-500 text-violet-300'
+                      ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
                       : 'bg-[#121215] border-[#292933] text-zinc-400 hover:text-white'
                   }`}
                 >
                   English (LTR)
-                  {lang === 'en' && <CheckCircle2 className="w-3.5 h-3.5 text-violet-400" />}
+                  {lang === 'en' && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
                 </button>
                 <button
                   type="button"
                   onClick={() => setLanguage('ar')}
                   className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                     lang === 'ar'
-                      ? 'bg-violet-600/20 border-violet-500 text-violet-300'
+                      ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
                       : 'bg-[#121215] border-[#292933] text-zinc-400 hover:text-white'
                   }`}
                 >
                   العربية (RTL)
-                  {lang === 'ar' && <CheckCircle2 className="w-3.5 h-3.5 text-violet-400" />}
+                  {lang === 'ar' && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
                 </button>
               </div>
             </div>
@@ -406,10 +406,10 @@ export const Settings: React.FC = () => {
             <div className="p-4 bg-[#1A1A20] border border-[#292933] rounded-xl space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white flex items-center gap-2">
-                  <Palette className="w-4 h-4 text-violet-400" />
+                  <Palette className="w-4 h-4 text-indigo-400" />
                   {lang === 'ar' ? 'مظهر الواجهة' : 'Interface Theme'}
                 </span>
-                <span className="text-[10px] uppercase font-bold text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded">
+                <span className="text-[10px] uppercase font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
                   {theme.toUpperCase()}
                 </span>
               </div>
@@ -420,24 +420,24 @@ export const Settings: React.FC = () => {
                   onClick={() => setTheme('dark')}
                   className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                     theme === 'dark'
-                      ? 'bg-violet-600/20 border-violet-500 text-violet-300'
+                      ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
                       : 'bg-[#121215] border-[#292933] text-zinc-400 hover:text-white'
                   }`}
                 >
                   Dark Zinc
-                  {theme === 'dark' && <CheckCircle2 className="w-3.5 h-3.5 text-violet-400" />}
+                  {theme === 'dark' && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
                 </button>
                 <button
                   type="button"
                   onClick={() => setTheme('midnight')}
                   className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                     theme === 'midnight'
-                      ? 'bg-violet-600/20 border-violet-500 text-violet-300'
+                      ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
                       : 'bg-[#121215] border-[#292933] text-zinc-400 hover:text-white'
                   }`}
                 >
                   Midnight Obsidian
-                  {theme === 'midnight' && <CheckCircle2 className="w-3.5 h-3.5 text-violet-400" />}
+                  {theme === 'midnight' && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
                 </button>
               </div>
             </div>
@@ -447,14 +447,14 @@ export const Settings: React.FC = () => {
         {/* Email Notifications Settings Section */}
         <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
           <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-            <Mail className="w-5 h-5 text-violet-400" />
+            <Mail className="w-5 h-5 text-indigo-400" />
             <h2 className="text-base font-bold text-white">Email Notifications</h2>
           </div>
 
           <div className="p-4 bg-[#1A1A20] border border-[#292933] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <span className="text-xs font-bold text-white flex items-center gap-2">
-                <Bell className="w-4 h-4 text-violet-400" />
+                <Bell className="w-4 h-4 text-indigo-400" />
                 Notification Emails
               </span>
               <p className="text-xs text-zinc-400 leading-relaxed max-w-xl">

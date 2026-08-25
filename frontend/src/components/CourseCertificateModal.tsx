@@ -30,7 +30,7 @@ export const CourseCertificateModal: React.FC<CourseCertificateModalProps> = ({
       <div className="bg-[#0D0D12] border border-[#2B2B36] rounded-3xl max-w-3xl w-full p-6 space-y-6 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
         {/* Header Action Bar */}
         <div className="flex items-center justify-between border-b border-[#1F1F26] pb-4">
-          <div className="flex items-center gap-2 text-violet-400 font-bold text-xs">
+          <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs">
             <Award className="w-5 h-5 text-amber-400" />
             <span>Verified Official Certificate</span>
           </div>

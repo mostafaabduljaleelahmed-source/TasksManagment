@@ -69,8 +69,8 @@ export const AdminDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="flex items-center gap-3 text-violet-400">
-          <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center gap-3 text-indigo-400">
+          <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
           <span className="text-sm font-semibold">Loading Admin Dashboard...</span>
         </div>
       </div>
@@ -82,9 +82,9 @@ export const AdminDashboard: React.FC = () => {
       <Breadcrumbs items={[{ label: 'Admin Executive Dashboard' }]} />
 
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-violet-950/40 via-[#121217] to-indigo-950/40 p-6 rounded-2xl border border-violet-500/20">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-indigo-950/40 via-[#121217] to-indigo-950/40 p-6 rounded-2xl border border-indigo-500/20">
           <div>
-            <div className="flex items-center gap-2 text-violet-400 font-semibold text-xs uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-2 text-indigo-400 font-semibold text-xs uppercase tracking-wider mb-1">
               <ShieldCheck className="w-4 h-4" />
               <span>Academy Executive Control</span>
             </div>
@@ -107,7 +107,7 @@ export const AdminDashboard: React.FC = () => {
           <div className="bg-[#121215] border border-[#24242B] rounded-xl p-4 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-zinc-400 uppercase">Teachers</span>
-              <Users className="w-4 h-4 text-violet-400" />
+              <Users className="w-4 h-4 text-indigo-400" />
             </div>
             <p className="text-2xl font-black text-white">{stats?.totalTeachers || 0}</p>
             <span className="text-[10px] text-zinc-500 font-medium">Instructors</span>
@@ -168,7 +168,7 @@ export const AdminDashboard: React.FC = () => {
                 <UserCheck className="w-4 h-4 text-sky-400" />
                 <h3 className="text-sm font-extrabold text-white">Newest Students</h3>
               </div>
-              <Link to="/admin/users" className="text-xs text-violet-400 hover:underline font-semibold flex items-center gap-0.5">
+              <Link to="/admin/users" className="text-xs text-indigo-400 hover:underline font-semibold flex items-center gap-0.5">
                 View All <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
@@ -227,7 +227,7 @@ export const AdminDashboard: React.FC = () => {
           <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-[#1F1F26] pb-3">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-violet-400" />
+                <Clock className="w-4 h-4 text-indigo-400" />
                 <h3 className="text-sm font-extrabold text-white">Recent System Activity</h3>
               </div>
             </div>
@@ -237,7 +237,7 @@ export const AdminDashboard: React.FC = () => {
                 stats.recentActivity.map((act) => (
                   <div key={act.id} className="p-2.5 bg-[#17171C] border border-[#22222A] rounded-xl space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-violet-300">{act.action}</span>
+                      <span className="text-[11px] font-bold text-indigo-300">{act.action}</span>
                       <span className="text-[9px] text-zinc-500">{new Date(act.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <p className="text-[11px] text-zinc-300 leading-tight">{act.details}</p>

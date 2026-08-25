@@ -54,7 +54,7 @@ export const ForgotPassword: React.FC = () => {
             <div className="pt-2">
               <Link
                 to="/login"
-                className="inline-flex items-center gap-2 text-violet-400 hover:text-violet-300 font-bold text-xs transition-colors"
+                className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-bold text-xs transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back to Login
@@ -74,7 +74,7 @@ export const ForgotPassword: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-3 pl-10 pr-4 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                  className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-3 pl-10 pr-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                   placeholder="you@school.com"
                 />
               </div>

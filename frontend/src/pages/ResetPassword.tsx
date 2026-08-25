@@ -76,7 +76,7 @@ export const ResetPassword: React.FC = () => {
             <div className="pt-4">
               <button
                 onClick={() => navigate('/login')}
-                className="px-6 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs rounded-xl transition-colors"
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition-colors"
               >
                 Proceed to Login
               </button>
@@ -95,7 +95,7 @@ export const ResetPassword: React.FC = () => {
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-3 pl-10 pr-4 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                  className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-3 pl-10 pr-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                   placeholder="••••••••"
                 />
               </div>
@@ -112,7 +112,7 @@ export const ResetPassword: React.FC = () => {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-3 pl-10 pr-4 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                  className="w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-3 pl-10 pr-4 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                   placeholder="••••••••"
                 />
               </div>

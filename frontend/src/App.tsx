@@ -67,7 +67,7 @@ const TeacherRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center text-zinc-500">
-        <Loader2 className="w-8 h-8 animate-spin text-violet-500 mb-2" />
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-2" />
       </div>
     );
   }
@@ -85,7 +85,7 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center text-zinc-500">
-        <Loader2 className="w-8 h-8 animate-spin text-violet-500 mb-2" />
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-2" />
       </div>
     );
   }

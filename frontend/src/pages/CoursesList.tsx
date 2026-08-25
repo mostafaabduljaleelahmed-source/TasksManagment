@@ -361,7 +361,7 @@ export const CoursesList: React.FC = () => {
                             e.stopPropagation();
                             handleDuplicateCourse(course.id);
                           }}
-                          className="p-1 hover:bg-violet-500/20 text-zinc-400 hover:text-violet-400 rounded-lg transition-colors"
+                          className="p-1 hover:bg-indigo-500/20 text-zinc-400 hover:text-indigo-400 rounded-lg transition-colors"
                           title="Duplicate Course"
                         >
                           <Copy className="w-4 h-4" />

@@ -83,7 +83,7 @@ export const ActivityLogPage: React.FC = () => {
         );
       case 'Assignment Created':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-violet-500/15 text-violet-300 border border-violet-500/30">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
             <Plus className="w-3 h-3" /> Assignment Created
           </span>
         );

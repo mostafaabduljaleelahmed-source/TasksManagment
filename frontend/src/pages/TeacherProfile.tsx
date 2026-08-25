@@ -109,7 +109,7 @@ export const TeacherProfile: React.FC = () => {
     <div className="space-y-8">
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-10 h-10 animate-spin text-violet-500 mb-3" />
+          <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-3" />
           <p className="text-sm text-zinc-400">{t('loading')}</p>
         </div>
       ) : (
@@ -140,7 +140,7 @@ export const TeacherProfile: React.FC = () => {
                 <p className="text-xs text-zinc-400">{data?.email}</p>
                 <div className="flex items-center justify-center md:justify-start gap-3 pt-2">
                   <label className="px-3 py-1.5 bg-[#1F1F26] hover:bg-[#2B2B36] border border-[#2B2B36] rounded-xl text-xs text-zinc-300 hover:text-white cursor-pointer transition-colors flex items-center gap-1.5">
-                    <Camera className="w-3.5 h-3.5 text-violet-400" />
+                    <Camera className="w-3.5 h-3.5 text-indigo-400" />
                     <span>{t('uploadPhoto')}</span>
                     <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
                   </label>
@@ -162,7 +162,7 @@ export const TeacherProfile: React.FC = () => {
               <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-5 shadow-lg space-y-1">
                 <div className="flex items-center justify-between text-zinc-400">
                   <span className="text-xs font-semibold">{t('myCourses')}</span>
-                  <BookOpen className="w-4 h-4 text-violet-400" />
+                  <BookOpen className="w-4 h-4 text-indigo-400" />
                 </div>
                 <div className="text-2xl font-black text-white">{data?.coursesCount}</div>
               </div>
@@ -195,7 +195,7 @@ export const TeacherProfile: React.FC = () => {
             {/* Courses List Section */}
             <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-4">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <School className="w-5 h-5 text-violet-400" />
+                <School className="w-5 h-5 text-indigo-400" />
                 {t('myCourses')}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -207,7 +207,7 @@ export const TeacherProfile: React.FC = () => {
                     </div>
                     <Link
                       to={`/course/${course.id}/members`}
-                      className="px-3 py-1.5 bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 rounded-xl text-xs font-semibold transition-colors"
+                      className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-semibold transition-colors"
                     >
                       {t('members')}
                     </Link>

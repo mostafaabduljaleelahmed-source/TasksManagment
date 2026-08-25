@@ -51,11 +51,11 @@ export const AdminTeachers: React.FC = () => {
       <div className="flex items-center justify-between border-b border-[#24242B] pb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <ShieldCheck className="w-6 h-6 text-violet-400" />
+            <ShieldCheck className="w-6 h-6 text-indigo-400" />
             <h1 className="text-2xl font-black text-white">Academy Teacher Management</h1>
           </div>
         </div>
-        <span className="px-3 py-1 bg-violet-500/10 border border-violet-500/30 text-violet-300 text-xs font-bold rounded-full">
+        <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-bold rounded-full">
           Admin Only
         </span>
       </div>
@@ -93,7 +93,7 @@ export const AdminTeachers: React.FC = () => {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={`w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all ${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                className={`w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
                 placeholder="Dr. Sarah Johnson"
               />
             </div>
@@ -110,7 +110,7 @@ export const AdminTeachers: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={`w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all ${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                className={`w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
                 placeholder="sarah.johnson@academy.com"
               />
             </div>
@@ -127,7 +127,7 @@ export const AdminTeachers: React.FC = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all ${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                className={`w-full bg-[#1F1F24] border border-[#2F2F37] text-white rounded-xl py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
                 placeholder="••••••••"
               />
             </div>
@@ -136,7 +136,7 @@ export const AdminTeachers: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl py-3 px-4 shadow-lg shadow-violet-950/40 transition-all focus:outline-none disabled:opacity-50 text-xs"
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 text-white font-bold rounded-xl py-3 px-4 shadow-lg shadow-indigo-950/40 transition-all focus:outline-none disabled:opacity-50 text-xs"
           >
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />

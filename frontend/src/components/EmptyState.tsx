@@ -15,12 +15,12 @@ interface EmptyStateProps {
 
 const defaultPresets: Record<EmptyStateVariant, { icon: React.ReactNode; title: string; description: string }> = {
   general: {
-    icon: <FolderOpen className="w-8 h-8 text-violet-400" />,
+    icon: <FolderOpen className="w-8 h-8 text-indigo-400" />,
     title: 'No Data Found',
     description: 'There are currently no items available to display here.',
   },
   tasks: {
-    icon: <Inbox className="w-8 h-8 text-violet-400" />,
+    icon: <Inbox className="w-8 h-8 text-indigo-400" />,
     title: 'No Tasks Yet',
     description: 'You are all caught up! No pending assignments or tasks available right now.',
   },
@@ -67,10 +67,10 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
-      className={`bg-[#16161A]/80 border border-[#24242B] backdrop-blur-md rounded-2xl p-8 sm:p-10 text-center flex flex-col items-center justify-center max-w-md mx-auto space-y-4 my-6 shadow-xl transition-all duration-300 hover:border-violet-500/30 ${className}`}
+      className={`bg-[#16161A]/80 border border-[#24242B] backdrop-blur-md rounded-2xl p-8 sm:p-10 text-center flex flex-col items-center justify-center max-w-md mx-auto space-y-4 my-6 shadow-xl transition-all duration-300 hover:border-indigo-500/30 ${className}`}
     >
-      <div className="p-4 bg-violet-600/10 border border-violet-500/20 rounded-2xl shadow-inner relative group">
-        <div className="absolute inset-0 rounded-2xl bg-violet-500/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="p-4 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl shadow-inner relative group">
+        <div className="absolute inset-0 rounded-2xl bg-indigo-500/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="relative z-10">{displayIcon}</div>
       </div>
 

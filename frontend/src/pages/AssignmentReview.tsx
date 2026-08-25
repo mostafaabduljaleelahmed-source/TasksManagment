@@ -219,9 +219,9 @@ export const AssignmentReview: React.FC = () => {
 
             <div className="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
               <span className="text-[11px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <Code className="w-3.5 h-3.5 text-violet-400" /> Avg Grade
+                <Code className="w-3.5 h-3.5 text-indigo-400" /> Avg Grade
               </span>
-              <div className="text-2xl font-extrabold text-violet-400 mt-2">{avgGrade} <span className="text-xs text-zinc-500">/ {data?.maxGrade}</span></div>
+              <div className="text-2xl font-extrabold text-indigo-400 mt-2">{avgGrade} <span className="text-xs text-zinc-500">/ {data?.maxGrade}</span></div>
             </div>
           </div>
 

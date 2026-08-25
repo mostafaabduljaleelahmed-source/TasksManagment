@@ -38,7 +38,7 @@ export const SubmissionDiffModal: React.FC<SubmissionDiffModalProps> = ({
       <div className="bg-[#121215] border border-[#2B2B36] rounded-2xl max-w-5xl w-full h-[85vh] p-6 flex flex-col space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#1F1F26] pb-4">
-          <div className="flex items-center gap-2 text-violet-400 font-extrabold text-sm">
+          <div className="flex items-center gap-2 text-indigo-400 font-extrabold text-sm">
             <ArrowLeftRight className="w-5 h-5" />
             <span>Code Attempt Comparison Diff</span>
           </div>
@@ -47,7 +47,7 @@ export const SubmissionDiffModal: React.FC<SubmissionDiffModalProps> = ({
               onClick={handleDownload}
               className="px-3.5 py-1.5 bg-[#1F1F26] hover:bg-[#2A2A34] border border-[#2B2B36] rounded-xl text-xs font-semibold text-zinc-200 transition-all flex items-center gap-2"
             >
-              <Download className="w-4 h-4 text-violet-400" />
+              <Download className="w-4 h-4 text-indigo-400" />
               Download Code
             </button>
             <button onClick={onClose} className="text-zinc-500 hover:text-white p-1">

@@ -65,7 +65,7 @@ export const AssignmentsList: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F1F26] pb-6">
           <div>
             <h1 className="text-2xl font-extrabold text-white flex items-center gap-3">
-              <FileCode className="w-6 h-6 text-violet-500" />
+              <FileCode className="w-6 h-6 text-indigo-500" />
               Assignment Management
             </h1>
           </div>
@@ -77,14 +77,14 @@ export const AssignmentsList: React.FC = () => {
               placeholder="Search assignment, course..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={`bg-[#1A1A20] border border-[#292933] rounded-xl text-xs text-white py-2 ${isRtl ? 'pr-9 pl-4' : 'pl-9 pr-4'} focus:outline-none focus:border-violet-500 w-64`}
+              className={`bg-[#1A1A20] border border-[#292933] rounded-xl text-xs text-white py-2 ${isRtl ? 'pr-9 pl-4' : 'pl-9 pr-4'} focus:outline-none focus:border-indigo-500 w-64`}
             />
           </div>
         </div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-zinc-400">
-            <Loader2 className="w-8 h-8 animate-spin text-violet-500 mb-3" />
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-3" />
             <p className="text-xs">Loading assignment overview...</p>
           </div>
         ) : error ? (
@@ -105,12 +105,12 @@ export const AssignmentsList: React.FC = () => {
                 <div
                   key={assignment.id}
                   onClick={() => navigate('/teacher/pending-reviews')}
-                  className="bg-[#121215] hover:bg-[#16161C] border border-[#24242B] hover:border-violet-500/40 rounded-2xl p-6 shadow-xl cursor-pointer transition-all duration-200 flex flex-col justify-between space-y-5 group"
+                  className="bg-[#121215] hover:bg-[#16161C] border border-[#24242B] hover:border-indigo-500/40 rounded-2xl p-6 shadow-xl cursor-pointer transition-all duration-200 flex flex-col justify-between space-y-5 group"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] uppercase font-bold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-                        <BookOpen className="w-3 h-3 text-violet-400" />
+                      <span className="text-[10px] uppercase font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                        <BookOpen className="w-3 h-3 text-indigo-400" />
                         {assignment.courseName}
                       </span>
                       <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
@@ -118,7 +118,7 @@ export const AssignmentsList: React.FC = () => {
                       </span>
                     </div>
 
-                    <h3 className="text-base font-extrabold text-white group-hover:text-violet-300 transition-colors line-clamp-1">
+                    <h3 className="text-base font-extrabold text-white group-hover:text-indigo-300 transition-colors line-clamp-1">
                       {assignment.title}
                     </h3>
                     <p className="text-xs text-zinc-400">Session: {assignment.sessionName}</p>
@@ -137,7 +137,7 @@ export const AssignmentsList: React.FC = () => {
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="p-2.5 bg-[#1A1A20] border border-[#292933] rounded-xl">
                         <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block flex items-center gap-1">
-                          <Users className="w-3 h-3 text-violet-400" /> Total Students
+                          <Users className="w-3 h-3 text-indigo-400" /> Total Students
                         </span>
                         <span className="font-extrabold text-white text-sm">{assignment.totalStudents}</span>
                       </div>
@@ -165,7 +165,7 @@ export const AssignmentsList: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="pt-2 flex items-center justify-between text-xs font-bold text-violet-400 group-hover:translate-x-1 transition-transform">
+                    <div className="pt-2 flex items-center justify-between text-xs font-bold text-indigo-400 group-hover:translate-x-1 transition-transform">
                       <span>Open Assignment Overview</span>
                       <ArrowRight className="w-4 h-4" />
                     </div>

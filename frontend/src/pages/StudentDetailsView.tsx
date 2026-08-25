@@ -200,7 +200,7 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#24242B] bg-[#1E1E24]">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-extrabold text-base flex items-center justify-center border border-violet-400/30 overflow-hidden shrink-0 shadow-md">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-600 text-white font-extrabold text-base flex items-center justify-center border border-indigo-400/30 overflow-hidden shrink-0 shadow-md">
               {student.avatarUrl ? (
                 <img src={student.avatarUrl} alt={student.name} className="w-full h-full object-cover" />
               ) : (
@@ -210,7 +210,7 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
             <div>
               <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
                 {student.name}
-                <span className="bg-violet-500/20 text-violet-300 text-xs px-2.5 py-0.5 rounded-full font-bold border border-violet-500/30">
+                <span className="bg-indigo-500/20 text-indigo-300 text-xs px-2.5 py-0.5 rounded-full font-bold border border-indigo-500/30">
                   Student ID: {student.studentRegisterId}
                 </span>
               </h2>
@@ -281,7 +281,7 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
                 </div>
                 <div className="bg-[#1A1A20] border border-[#292933] rounded-xl p-3 text-center">
                   <span className="text-[10px] text-zinc-500 font-bold block uppercase">Progress</span>
-                  <span className="text-xl font-extrabold text-violet-400">{student.progressPercentage}%</span>
+                  <span className="text-xl font-extrabold text-indigo-400">{student.progressPercentage}%</span>
                 </div>
               </div>
             </div>
@@ -324,7 +324,7 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
               <h4 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 mb-2">Submission Attempts</h4>
               {loading ? (
                 <div className="flex items-center gap-2 text-xs text-zinc-500 py-2">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-400" /> Loading submissions...
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" /> Loading submissions...
                 </div>
               ) : submissions.length === 0 ? (
                 <p className="text-xs text-zinc-500 italic">No code submissions recorded yet.</p>
@@ -336,7 +336,7 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
                       onClick={() => setSelectedSub(sub)}
                       className={`w-full text-left p-2.5 rounded-xl border text-xs transition-all flex items-center justify-between ${
                         selectedSub?.id === sub.id
-                          ? 'bg-violet-600/20 border-violet-500 text-white font-bold'
+                          ? 'bg-indigo-600/20 border-indigo-500 text-white font-bold'
                           : 'bg-[#1A1A20] border-[#292933] text-zinc-400 hover:text-white'
                       }`}
                     >
@@ -354,7 +354,7 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
             <div className="flex-1 flex flex-col overflow-hidden bg-[#16161A]">
               <div className="px-5 py-3 border-b border-[#24242B] bg-[#1E1E24] flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-bold text-white">
-                  <FileCode className="w-4 h-4 text-violet-400" />
+                  <FileCode className="w-4 h-4 text-indigo-400" />
                   <span>{selectedSub.taskTitle}</span>
                   <span className="text-zinc-500 font-normal"> Attempt #{selectedSub.attemptNumber}</span>
                 </div>
@@ -364,7 +364,7 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
                       onClose();
                       navigate(`/review-submission/${selectedSub.id}?mode=review`);
                     }}
-                    className="px-3 py-1 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-lg text-xs transition-all flex items-center gap-1 shadow-md"
+                    className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs transition-all flex items-center gap-1 shadow-md"
                   >
                     <Award className="w-3.5 h-3.5" />
                     مراجعة التسليم &rarr;

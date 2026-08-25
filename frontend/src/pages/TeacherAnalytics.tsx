@@ -113,7 +113,7 @@ export const TeacherAnalytics: React.FC = () => {
   return (
     <div className="pb-16 relative overflow-hidden space-y-8">
       {/* Background ambient lighting */}
-      <div className="absolute top-20 right-0 w-96 h-96 bg-violet-600/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-20 right-0 w-96 h-96 bg-indigo-600/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-600/5 rounded-full blur-3xl pointer-events-none" />
         {/* Header with Filter */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -159,7 +159,7 @@ export const TeacherAnalytics: React.FC = () => {
             {/* Top Key Metrics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-                <div className="p-2.5 bg-violet-500/10 border border-violet-500/20 rounded-xl text-violet-400 w-fit mb-3">
+                <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400 w-fit mb-3">
                   <BookOpen className="w-5 h-5" />
                 </div>
                 <div>
@@ -298,7 +298,7 @@ export const TeacherAnalytics: React.FC = () => {
                         <tr key={sub.submissionId} className="hover:bg-[#1C1C22] transition-colors">
                           <td className="p-3.5 font-bold text-white">{sub.studentName}</td>
                           <td className="p-3.5 font-mono text-zinc-400">{sub.studentRegisterId}</td>
-                          <td className="p-3.5 font-semibold text-violet-300">{sub.taskTitle}</td>
+                          <td className="p-3.5 font-semibold text-indigo-300">{sub.taskTitle}</td>
                           <td className="p-3.5 text-zinc-400">
                             {new Date(sub.submittedAt).toLocaleDateString()} {new Date(sub.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </td>

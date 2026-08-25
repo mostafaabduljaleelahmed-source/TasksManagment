@@ -194,7 +194,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#24242B] bg-[#1E1E24] shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center border border-violet-400/30 overflow-hidden shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center border border-indigo-400/30 overflow-hidden shrink-0">
               {studentAvatarUrl ? (
                 <img src={studentAvatarUrl} alt={studentName} className="w-full h-full object-cover" />
               ) : (
@@ -203,7 +203,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
             </div>
             <div>
               <h2 className="text-sm sm:text-lg font-bold text-white flex items-center gap-2">
-                <Award className="w-4 h-4 sm:w-5 sm:h-5 text-violet-400" />
+                <Award className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" />
                 <span>{studentName}</span>
               </h2>
               <p className="text-[11px] sm:text-xs text-zinc-400">
@@ -221,7 +221,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
 
         {loading ? (
           <div className="flex-1 flex flex-col items-center justify-center">
-            <Loader2 className="w-10 h-10 animate-spin text-violet-500 mb-2" />
+            <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-2" />
             <p className="text-sm text-zinc-400">{t('loading')}</p>
           </div>
         ) : error ? (
@@ -308,9 +308,9 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                 <div className="w-full lg:w-96 bg-[#16161A] p-6 flex flex-col overflow-y-auto space-y-6">
                   {/* Detailed Student Metadata Card */}
                   <div className="p-4 bg-[#1F1F26] border border-[#2B2B36] rounded-xl space-y-2">
-                    <h4 className="text-xs font-bold text-violet-400 uppercase tracking-wider mb-2">{t('studentInfo')}</h4>
+                    <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">{t('studentInfo')}</h4>
                     <div className="flex items-center gap-3 pb-2 border-b border-[#2B2B36]">
-                      <div className="w-10 h-10 rounded-xl bg-violet-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0">
                         {selectedSub.studentAvatarUrl ? (
                           <img src={selectedSub.studentAvatarUrl} alt={selectedSub.studentName} className="w-full h-full object-cover" />
                         ) : (
@@ -366,7 +366,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                         max={maxGrade}
                         value={manualGrade}
                         onChange={(e) => setManualGrade(Number(e.target.value))}
-                        className="w-full bg-[#121215] border border-[#2B2B36] rounded-xl px-4 py-2.5 text-white font-bold text-base focus:outline-none focus:border-violet-500"
+                        className="w-full bg-[#121215] border border-[#2B2B36] rounded-xl px-4 py-2.5 text-white font-bold text-base focus:outline-none focus:border-indigo-500"
                         required
                       />
                     </div>
@@ -381,7 +381,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                         value={teacherFeedback}
                         onChange={(e) => setTeacherFeedback(e.target.value)}
                         placeholder="Write constructive feedback for the student..."
-                        className="w-full bg-[#121215] border border-[#2B2B36] rounded-xl p-3 text-xs text-zinc-200 focus:outline-none focus:border-violet-500 resize-none"
+                        className="w-full bg-[#121215] border border-[#2B2B36] rounded-xl p-3 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500 resize-none"
                       />
                     </div>
 
@@ -394,7 +394,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                         value={teacherNotes}
                         onChange={(e) => setTeacherNotes(e.target.value)}
                         placeholder="Private notes (visible only to teachers)..."
-                        className="w-full bg-[#121215] border border-[#2B2B36] rounded-xl p-3 text-xs text-zinc-400 focus:outline-none focus:border-violet-500 resize-none"
+                        className="w-full bg-[#121215] border border-[#2B2B36] rounded-xl p-3 text-xs text-zinc-400 focus:outline-none focus:border-indigo-500 resize-none"
                       />
                     </div>
 
@@ -437,7 +437,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                         type="button"
                         onClick={handleSaveAndNext}
                         disabled={saving}
-                        className="py-2.5 px-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-violet-950/40 transition-all disabled:opacity-50"
+                        className="py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-indigo-950/40 transition-all disabled:opacity-50"
                       >
                         {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                         Save & Next &rarr;

@@ -29,7 +29,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
     <div className={`flex flex-wrap items-center justify-between gap-3 py-1 ${className}`}>
       {/* Mobile Breadcrumb (Simplified single level) */}
       <div className="flex sm:hidden items-center gap-1.5 text-xs text-zinc-400 min-w-0 truncate">
-        <Home className="w-3.5 h-3.5 text-violet-400 shrink-0" />
+        <Home className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
         <ChevronRight className="w-3 h-3 text-zinc-600 shrink-0" />
         <span className="text-zinc-200 font-bold tracking-tight truncate">
           {lastItem?.label}
@@ -42,7 +42,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
           to="/dashboard"
           className="hover:text-white flex items-center gap-1.5 transition-colors p-1 rounded-md hover:bg-zinc-800/40"
         >
-          <Home className="w-3.5 h-3.5 text-violet-400" />
+          <Home className="w-3.5 h-3.5 text-indigo-400" />
           <span>Dashboard</span>
         </Link>
 
