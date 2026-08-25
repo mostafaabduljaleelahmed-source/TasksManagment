@@ -10,8 +10,9 @@ interface LeaderboardEntry {
   studentEmail: string;
   avatarUrl?: string | null;
   averageGrade: number;
+  completedTasks: number;
+  totalTasks: number;
   totalSubmissions: number;
-  rank: number;
 }
 
 export const Leaderboard: React.FC = () => {
@@ -31,7 +32,7 @@ export const Leaderboard: React.FC = () => {
     if (!user || !user.token) return;
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/leaderboard`, {
+      const response = await fetch(`${API_URL}/dashboard/leaderboard`, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       if (response.ok) {
@@ -94,7 +95,7 @@ export const Leaderboard: React.FC = () => {
                 <tr>
                   <th className="w-16 text-center">{lang === 'ar' ? 'الترتيب' : 'Rank'}</th>
                   <th>{lang === 'ar' ? 'الطالب' : 'Student'}</th>
-                  <th>{lang === 'ar' ? 'التسليمات المكتملة' : 'Completed Submissions'}</th>
+                  <th>{lang === 'ar' ? 'التكليفات المكتملة' : 'Tasks Completed'}</th>
                   <th className="text-right">{lang === 'ar' ? 'متوسط الدرجات' : 'Average Grade'}</th>
                 </tr>
               </thead>
@@ -120,9 +121,18 @@ export const Leaderboard: React.FC = () => {
                         <div className="font-semibold text-white">{entry.studentName}</div>
                         <div className="text-[11px] font-mono text-sage-500">{entry.studentEmail}</div>
                       </td>
-                      <td className="font-mono text-sage-300">{entry.totalSubmissions}</td>
+                      <td className="font-mono text-sage-300">
+                        {entry.totalTasks > 0 ? (
+                          <>
+                            <span className="text-white font-semibold">{entry.completedTasks}</span>
+                            <span className="text-sage-500"> / {entry.totalTasks}</span>
+                          </>
+                        ) : (
+                          <span className="text-sage-500">{lang === 'ar' ? 'لا تكليفات بعد' : 'No tasks yet'}</span>
+                        )}
+                      </td>
                       <td className="text-right font-mono font-bold text-xs text-primary-400">
-                        {entry.averageGrade != null ? `${entry.averageGrade.toFixed(1)}%` : 'N/A'}
+                        {entry.totalTasks > 0 ? `${entry.averageGrade.toFixed(1)}%` : 'N/A'}
                       </td>
                     </tr>
                   );

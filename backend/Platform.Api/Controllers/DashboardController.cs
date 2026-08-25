@@ -896,51 +896,9 @@ public class DashboardController : ControllerBase
             .SelectMany(s => s.Tasks)
             .ToListAsync(cancellationToken);
 
-        var leaderboard = new List<object>();
+        var ranked = _gradingCalculator.BuildLeaderboard(enrollments, submissions, assignedTasks);
 
-        foreach (var studentId in studentIds)
-        {
-            var studentObj = enrollments.FirstOrDefault(e => e.StudentId == studentId)?.Student;
-            if (studentObj == null) continue;
-
-            var studentSubs = submissions.Where(s => s.StudentId == studentId).ToList();
-            
-            // Filter assigned tasks for this student's specific enrolled course
-            var studentEnrolledCourseIds = enrollments.Where(e => e.StudentId == studentId).Select(e => e.CourseId).ToList();
-            var studentTasks = assignedTasks.Where(t => t.Session != null && studentEnrolledCourseIds.Contains(t.Session.CourseId)).ToList();
-            if (!studentTasks.Any()) studentTasks = assignedTasks;
-
-            double avgGrade = _gradingCalculator.CalculateStudentAverageGrade(studentTasks, studentSubs);
-
-            int completedTasks = studentTasks.Count(t => _gradingCalculator.GetHighestGradedSubmission(studentSubs.Where(s => s.TaskId == t.Id)) != null);
-            int totalSubmissions = studentSubs.Count;
-
-            leaderboard.Add(new
-            {
-                StudentId = studentObj.Id,
-                StudentName = studentObj.Name,
-                StudentRegisterId = studentObj.StudentId ?? "-",
-                AverageGrade = avgGrade,
-                CompletedTasks = completedTasks,
-                TotalSubmissions = totalSubmissions
-            });
-        }
-
-        var sortedByGrade = leaderboard
-            .OrderByDescending(x => ((dynamic)x).AverageGrade)
-            .ThenByDescending(x => ((dynamic)x).CompletedTasks)
-            .ToList();
-
-        var sortedByCompleted = leaderboard
-            .OrderByDescending(x => ((dynamic)x).CompletedTasks)
-            .ThenByDescending(x => ((dynamic)x).AverageGrade)
-            .ToList();
-
-        return Ok(new
-        {
-            ByGrade = sortedByGrade,
-            ByCompleted = sortedByCompleted
-        });
+        return Ok(ranked);
     }
 
     [HttpGet("student/{studentId}/breakdown")]
