@@ -60,12 +60,14 @@ public class CoursesController : ControllerBase
     public async Task<IActionResult> GetTeacherCourses(CancellationToken cancellationToken)
     {
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
         if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
         {
             return Unauthorized(new { message = "User not found." });
         }
 
-        var courses = await _courseService.GetTeacherCoursesAsync(userId, cancellationToken);
+        var courses = await _courseService.GetTeacherCoursesAsync(userId, role == "Admin", cancellationToken);
         return Ok(courses);
     }
 

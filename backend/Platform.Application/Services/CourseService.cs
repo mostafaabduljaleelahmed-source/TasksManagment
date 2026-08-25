@@ -83,7 +83,7 @@ public class CourseService : ICourseService
         };
     }
 
-    public async Task<List<CourseDto>> GetTeacherCoursesAsync(Guid teacherId, CancellationToken cancellationToken = default)
+    public async Task<List<CourseDto>> GetTeacherCoursesAsync(Guid teacherId, bool isAdmin = false, CancellationToken cancellationToken = default)
     {
         // Get courses where the user is either the primary teacher or a collaborator
         var courseIds = await _context.CourseTeachers
@@ -93,7 +93,7 @@ public class CourseService : ICourseService
 
         return await _context.Courses
             .Include(c => c.Teacher)
-            .Where(c => !c.IsArchived && (c.TeacherId == teacherId || courseIds.Contains(c.Id)))
+            .Where(c => !c.IsArchived && (isAdmin || c.TeacherId == teacherId || courseIds.Contains(c.Id)))
             .Select(c => new CourseDto
             {
                 Id = c.Id,
