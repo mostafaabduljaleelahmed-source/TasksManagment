@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { StudentGradeBreakdownModal } from '../components/StudentGradeBreakdownModal';
-import { Trophy, Search, RefreshCw } from 'lucide-react';
+import { Trophy, Search, RefreshCw, AlertCircle } from 'lucide-react';
 
 interface LeaderboardEntry {
   studentId: string;
@@ -21,6 +21,7 @@ export const Leaderboard: React.FC = () => {
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string } | null>(null);
 
@@ -31,16 +32,21 @@ export const Leaderboard: React.FC = () => {
   const fetchLeaderboard = async () => {
     if (!user || !user.token) return;
     setLoading(true);
+    setError(null);
     try {
       const response = await fetch(`${API_URL}/dashboard/leaderboard`, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
-      if (response.ok) {
-        const data = await response.json();
-        setLeaderboard(data);
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.message || `Failed to load leaderboard (${response.status})`);
       }
-    } catch (err) {
+      const data = await response.json();
+      setLeaderboard(Array.isArray(data) ? data : []);
+    } catch (err: any) {
       console.error('Error fetching leaderboard:', err);
+      setError(err.message || 'Failed to load leaderboard');
+      setLeaderboard([]);
     } finally {
       setLoading(false);
     }
@@ -82,12 +88,25 @@ export const Leaderboard: React.FC = () => {
         />
       </div>
 
+      {error && (
+        <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
       {/* Leaderboard Table */}
       <div className="academic-surface rounded-lg overflow-hidden border border-[#1E2519]">
         {loading ? (
           <div className="p-8 text-center text-xs text-sage-500">{lang === 'ar' ? 'جاري التحميل...' : 'Loading rankings...'}</div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-xs text-sage-400">{lang === 'ar' ? 'لا توجد نتائج' : 'No records found'}</div>
+          <div className="p-8 text-center text-xs text-sage-400">
+            {error
+              ? (lang === 'ar' ? 'تعذر تحميل البيانات، حاول تحديث الصفحة' : "Couldn't load data — try refreshing")
+              : leaderboard.length === 0
+                ? (lang === 'ar' ? 'لا يوجد طلاب مسجلون بعد' : 'No students enrolled yet')
+                : (lang === 'ar' ? 'لا توجد نتائج مطابقة للبحث' : 'No students match your search')}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="academic-table">
