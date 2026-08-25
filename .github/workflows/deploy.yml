@@ -40,6 +40,21 @@ jobs:
       - name: Run Unit Tests
         run: dotnet test backend/Platform.UnitTests/Platform.UnitTests.csproj --configuration Release
 
+      - name: Inject Production Secrets
+        shell: pwsh
+        env:
+          DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          $path = "backend/Platform.Api/appsettings.Production.json"
+          $json = Get-Content $path -Raw | ConvertFrom-Json
+          $json.ConnectionStrings.DefaultConnection = $env:DB_CONNECTION_STRING
+          if (-not $json.PSObject.Properties['Jwt']) {
+            $json | Add-Member -NotePropertyName Jwt -NotePropertyValue ([pscustomobject]@{})
+          }
+          $json.Jwt | Add-Member -NotePropertyName Secret -NotePropertyValue $env:JWT_SECRET -Force
+          $json | ConvertTo-Json -Depth 10 | Set-Content $path
+
       - name: Publish to MonsterASP via WebDeploy
         shell: pwsh
         env:

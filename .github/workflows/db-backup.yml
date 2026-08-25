@@ -1,0 +1,116 @@
+name: Database Backup & Restore Verification
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # daily at 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  backup:
+    name: Dump database and upload to object storage
+    runs-on: ubuntu-latest
+    outputs:
+      filename: ${{ steps.dump.outputs.filename }}
+    steps:
+      - name: Install PostgreSQL client tools
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Dump database (custom format)
+        id: dump
+        env:
+          PGCONNECT_TIMEOUT: '30'
+        run: |
+          FILENAME="backup-$(date -u +%Y%m%dT%H%M%SZ).dump"
+          pg_dump "${{ secrets.DB_CONNECTION_STRING_URI }}" -Fc -f "$FILENAME" --no-owner --no-privileges
+          echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
+          ls -lh "$FILENAME"
+
+      - name: Upload to R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: |
+          aws s3 cp "${{ steps.dump.outputs.filename }}" \
+            "s3://${{ secrets.R2_BUCKET }}/${{ steps.dump.outputs.filename }}" \
+            --endpoint-url "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+
+      - name: Keep only the last 30 backups
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: |
+          ENDPOINT="https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          aws s3 ls "s3://${{ secrets.R2_BUCKET }}/" --endpoint-url "$ENDPOINT" \
+            | awk '{print $4}' | grep '^backup-' | sort | head -n -30 \
+            | while read -r old; do
+                echo "Deleting old backup: $old"
+                aws s3 rm "s3://${{ secrets.R2_BUCKET }}/$old" --endpoint-url "$ENDPOINT"
+              done
+
+      - name: Upload dump as workflow artifact for the verify job
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-dump
+          path: ${{ steps.dump.outputs.filename }}
+          retention-days: 1
+
+  verify-restore:
+    name: Prove the backup actually restores
+    needs: backup
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: verify_local_pw
+          POSTGRES_DB: restore_check
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Install PostgreSQL client tools
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Download dump artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: db-dump
+
+      - name: Restore dump into a throwaway Postgres instance
+        env:
+          PGPASSWORD: verify_local_pw
+        run: |
+          FILENAME="${{ needs.backup.outputs.filename }}"
+          pg_restore -h localhost -U postgres -d restore_check --no-owner --no-privileges "$FILENAME"
+
+      - name: Verify restored data (row counts per table)
+        env:
+          PGPASSWORD: verify_local_pw
+        run: |
+          echo "Row counts in restored database:"
+          psql -h localhost -U postgres -d restore_check -t -A -F',' -c "
+            SELECT table_name, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I.%I', table_schema, table_name), false, true, '')))[1]::text::int AS row_count
+            FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+            ORDER BY table_name;
+          " | tee row_counts.csv
+
+          USERS_COUNT=$(grep '^Users,' row_counts.csv | cut -d, -f2)
+          if [ -z "$USERS_COUNT" ] || [ "$USERS_COUNT" -lt 1 ]; then
+            echo "::error::Restored Users table is empty or missing — backup is NOT trustworthy."
+            exit 1
+          fi
+
+          TABLE_COUNT=$(wc -l < row_counts.csv)
+          if [ "$TABLE_COUNT" -lt 1 ]; then
+            echo "::error::No tables found in restored database — backup is NOT trustworthy."
+            exit 1
+          fi
+
+          echo "Restore verified: $TABLE_COUNT tables present, Users has $USERS_COUNT row(s)."

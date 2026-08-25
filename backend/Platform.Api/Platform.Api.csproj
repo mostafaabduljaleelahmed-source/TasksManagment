@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -7,6 +7,7 @@
     <!-- Optimize memory footprint for 256MB RAM limit on shared hosting -->
     <ServerGarbageCollection>false</ServerGarbageCollection>
     <RetainVM>false</RetainVM>
+    <UserSecretsId>cc912b02-ea95-4a3b-8a93-3039390bf04f</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
