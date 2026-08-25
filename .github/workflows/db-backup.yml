@@ -31,7 +31,7 @@ jobs:
           which pg_dump
           pg_dump --version
           FILENAME="backup-$(date -u +%Y%m%dT%H%M%SZ).dump"
-          pg_dump "${{ secrets.DB_CONNECTION_STRING_URI }}" -Fc -f "$FILENAME" --no-owner --no-privileges
+          pg_dump "${{ secrets.DB_CONNECTION_STRING_URI }}" -Fc -f "$FILENAME" --no-owner --no-privileges --schema=public
           echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
           ls -lh "$FILENAME"
 
