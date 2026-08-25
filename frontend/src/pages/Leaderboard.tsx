@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { StudentGradeBreakdownModal } from '../components/StudentGradeBreakdownModal';
+import { LeaderboardPodium } from '../components/LeaderboardPodium';
 import { Trophy, Search, RefreshCw, AlertCircle } from 'lucide-react';
 
 interface LeaderboardEntry {
@@ -16,6 +17,38 @@ interface LeaderboardEntry {
   totalTasks: number;
   totalSubmissions: number;
 }
+
+const PodiumSkeleton: React.FC = () => (
+  <div className="flex items-end justify-center gap-3 sm:gap-6 py-6 px-2 animate-pulse">
+    {[2, 1, 3].map((rank) => (
+      <div key={rank} className="flex flex-col items-center gap-3">
+        <div
+          className={`rounded-full bg-[#1A2016] border border-[#212B1E] ${
+            rank === 1 ? 'w-20 h-20 sm:w-24 sm:h-24' : rank === 2 ? 'w-16 h-16 sm:w-20 sm:h-20' : 'w-14 h-14 sm:w-16 sm:h-16'
+          }`}
+        />
+        <div className="h-2.5 w-16 rounded bg-[#1A2016]" />
+        <div className={`w-20 sm:w-24 rounded-t-lg bg-[#12160F] border border-[#212B1E] ${rank === 1 ? 'h-16 sm:h-20' : rank === 2 ? 'h-11 sm:h-14' : 'h-8 sm:h-10'}`} />
+      </div>
+    ))}
+  </div>
+);
+
+const RowSkeleton: React.FC = () => (
+  <div className="divide-y divide-[#1E2519] animate-pulse">
+    {[...Array(4)].map((_, i) => (
+      <div key={i} className="flex items-center gap-3 px-4 py-3.5">
+        <div className="w-6 h-6 rounded bg-[#1A2016] shrink-0" />
+        <div className="w-9 h-9 rounded-full bg-[#1A2016] shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="h-2.5 w-32 rounded bg-[#1A2016]" />
+          <div className="h-1.5 w-full max-w-[240px] rounded-full bg-[#1A2016]" />
+        </div>
+        <div className="h-3 w-10 rounded bg-[#1A2016] shrink-0" />
+      </div>
+    ))}
+  </div>
+);
 
 export const Leaderboard: React.FC = () => {
   const { user } = useAuth();
@@ -54,10 +87,18 @@ export const Leaderboard: React.FC = () => {
     }
   };
 
+  const isSearching = searchQuery.trim().length > 0;
   const filtered = leaderboard.filter(e =>
     e.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     e.studentEmail.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // The podium always reflects the true, unfiltered top 3; searching switches to a flat
+  // ranked list instead of trying to show a partial podium.
+  const top3 = !isSearching ? leaderboard.slice(0, 3) : [];
+  const rest = isSearching ? filtered : filtered.slice(3);
+  const baseRank = isSearching ? 1 : 4;
+  const labelYou = lang === 'ar' ? 'أنت' : 'You';
 
   return (
     <div className="space-y-4 animate-fade-in max-w-7xl mx-auto px-2 sm:px-4 py-3">
@@ -97,10 +138,24 @@ export const Leaderboard: React.FC = () => {
         </div>
       )}
 
-      {/* Leaderboard Table */}
+      {/* Podium */}
+      {loading ? (
+        <PodiumSkeleton />
+      ) : (
+        !isSearching && top3.length > 0 && (
+          <LeaderboardPodium
+            top3={top3}
+            currentUserId={user?.id}
+            onSelect={(entry) => setSelectedStudent({ id: entry.studentId, name: entry.studentName })}
+            labelYou={labelYou}
+          />
+        )
+      )}
+
+      {/* Ranked list */}
       <div className="academic-surface rounded-lg overflow-hidden border border-[#1E2519]">
         {loading ? (
-          <div className="p-8 text-center text-xs text-sage-500">{lang === 'ar' ? 'جاري التحميل...' : 'Loading rankings...'}</div>
+          <RowSkeleton />
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-xs text-sage-400">
             {error
@@ -109,65 +164,75 @@ export const Leaderboard: React.FC = () => {
                 ? (lang === 'ar' ? 'لا يوجد طلاب مسجلون بعد' : 'No students enrolled yet')
                 : (lang === 'ar' ? 'لا توجد نتائج مطابقة للبحث' : 'No students match your search')}
           </div>
+        ) : rest.length === 0 ? (
+          <div className="p-6 text-center text-[11px] text-sage-500">
+            {lang === 'ar' ? 'بقية الترتيب ستظهر هنا' : 'The rest of the ranking will show up here'}
+          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="academic-table">
-              <thead>
-                <tr>
-                  <th className="w-16 text-center">{lang === 'ar' ? 'الترتيب' : 'Rank'}</th>
-                  <th>{lang === 'ar' ? 'الطالب' : 'Student'}</th>
-                  <th>{lang === 'ar' ? 'التكليفات المكتملة' : 'Tasks Completed'}</th>
-                  <th className="text-right">{lang === 'ar' ? 'إجمالي الدرجات' : 'Total Marks'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((entry, index) => {
-                  const rank = index + 1;
-                  return (
-                    <tr
-                      key={entry.studentId}
-                      onClick={() => setSelectedStudent({ id: entry.studentId, name: entry.studentName })}
-                      className="cursor-pointer"
-                    >
-                      <td className="text-center font-mono font-bold text-xs">
-                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded ${
-                          rank === 1 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
-                          rank === 2 ? 'bg-sage-300/20 text-sage-200 border border-sage-400/40' :
-                          rank === 3 ? 'bg-amber-700/20 text-amber-400 border border-amber-700/40' : 'text-sage-400'
-                        }`}>
-                          {rank}
+          <div className="divide-y divide-[#1E2519]">
+            {rest.map((entry, index) => {
+              const rank = baseRank + index;
+              const isYou = entry.studentId === user?.id;
+              const pct = entry.totalPossibleScore > 0 ? Math.min(100, (entry.totalScore / entry.totalPossibleScore) * 100) : 0;
+              const initials = entry.studentName.split(' ').map((n) => n[0]).join('').toUpperCase().substring(0, 2);
+
+              return (
+                <div
+                  key={entry.studentId}
+                  onClick={() => setSelectedStudent({ id: entry.studentId, name: entry.studentName })}
+                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-150 hover:bg-[#1A2016] hover:-translate-y-px ${
+                    index % 2 === 1 ? 'bg-white/[0.015]' : ''
+                  }`}
+                >
+                  <span className="w-6 text-center font-mono text-xs font-bold text-sage-500 shrink-0">{rank}</span>
+
+                  {entry.avatarUrl ? (
+                    <img src={entry.avatarUrl} alt={entry.studentName} className="w-9 h-9 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-primary-500/12 border border-primary-500/20 text-primary-300 font-bold text-xs flex items-center justify-center shrink-0">
+                      {initials}
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-semibold text-white text-sm truncate">{entry.studentName}</span>
+                      {isYou && (
+                        <span className="shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide bg-primary-500 text-[#06150E]">
+                          {labelYou}
                         </span>
-                      </td>
-                      <td>
-                        <div className="font-semibold text-white">{entry.studentName}</div>
-                        <div className="text-[11px] font-mono text-sage-500">{entry.studentEmail}</div>
-                      </td>
-                      <td className="font-mono text-sage-300">
-                        {entry.totalTasks > 0 ? (
-                          <>
-                            <span className="text-white font-semibold">{entry.completedTasks}</span>
-                            <span className="text-sage-500"> / {entry.totalTasks}</span>
-                          </>
-                        ) : (
-                          <span className="text-sage-500">{lang === 'ar' ? 'لا تكليفات بعد' : 'No tasks yet'}</span>
+                      )}
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <div className="h-1.5 flex-1 max-w-[240px] rounded-full bg-[#1A2016] overflow-hidden">
+                        {entry.totalTasks > 0 && (
+                          <div
+                            className="h-full rounded-full bg-primary-500 animate-bar-fill"
+                            style={{ width: `${pct}%` }}
+                          />
                         )}
-                      </td>
-                      <td className="text-right font-mono">
-                        {entry.totalTasks > 0 ? (
-                          <>
-                            <span className="font-bold text-sm text-primary-400">{entry.totalScore}</span>
-                            <span className="text-sage-500 text-xs"> / {entry.totalPossibleScore}</span>
-                            <span className="block text-[10px] text-sage-500">{entry.averageGrade.toFixed(1)}%</span>
-                          </>
-                        ) : (
-                          <span className="text-xs text-sage-500">N/A</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </div>
+                      <span className="font-mono text-[10px] text-sage-500 shrink-0">
+                        {entry.totalTasks > 0 ? `${entry.completedTasks}/${entry.totalTasks}` : (lang === 'ar' ? 'لا تكليفات' : 'no tasks')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    {entry.totalTasks > 0 ? (
+                      <>
+                        <div className="font-mono font-bold text-sm text-primary-400">
+                          {entry.totalScore}<span className="text-sage-500 text-xs">/{entry.totalPossibleScore}</span>
+                        </div>
+                        <div className="font-mono text-[10px] text-sage-500">{entry.averageGrade.toFixed(1)}%</div>
+                      </>
+                    ) : (
+                      <span className="text-xs text-sage-500">N/A</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
