@@ -128,7 +128,7 @@ export const TeacherStudents: React.FC = () => {
               placeholder={t('search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="saas-input pl-9 w-48 sm:w-64"
+              className="academic-input pl-9 w-48 sm:w-64"
             />
           </div>
 
@@ -314,7 +314,7 @@ export const TeacherStudents: React.FC = () => {
                   placeholder="e.g. TempPass123"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="saas-input font-mono"
+                  className="academic-input font-mono"
                 />
               </div>
 
@@ -322,14 +322,14 @@ export const TeacherStudents: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setResetStudent(null)}
-                  className="saas-button-secondary"
+                  className="academic-button-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={resetLoading}
-                  className="saas-button-primary"
+                  className="academic-button-primary"
                 >
                   {resetLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Reset Password'}
                 </button>

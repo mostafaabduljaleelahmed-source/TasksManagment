@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { GlobalSearchModal } from './GlobalSearchModal';
 import { APP_VERSION } from '../constants/version';
-import { Menu, Inbox } from 'lucide-react';
+import { Menu, Inbox, Search } from 'lucide-react';
 
 interface NavbarProps {
   onOpenMobileDrawer?: () => void;
@@ -16,6 +16,31 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (!user || (user.role !== 'Teacher' && user.role !== 'Admin')) {
+      setPendingCount(0);
+      return;
+    }
+    fetch(`${API_URL}/dashboard/teacher/pending-reviews?sortBy=newest`, {
+      headers: { Authorization: `Bearer ${user.token}` },
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setPendingCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => setPendingCount(0));
+  }, [user, location.pathname]);
 
   if (!user) return null;
 
@@ -63,6 +88,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
             {APP_VERSION}
           </span>
 
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="p-1.5 bg-[#151B28] hover:bg-[#1E2638] border border-[#232F45] text-slate-300 hover:text-white rounded transition-colors flex items-center justify-center cursor-pointer"
+            title="Search (Ctrl+K)"
+          >
+            <Search className="w-3.5 h-3.5" />
+          </button>
+
           {(user.role === 'Teacher' || user.role === 'Admin') && (
             <button
               onClick={() => navigate('/teacher/pending-reviews')}
@@ -70,7 +103,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
               title="Pending Reviews Queue"
             >
               <Inbox className="w-3.5 h-3.5" />
-              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-amber-500 rounded-full" />
+              {pendingCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-amber-500 rounded-full" />
+              )}
             </button>
           )}
 

@@ -79,7 +79,7 @@ export const CoursesList: React.FC = () => {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (!res.ok) throw new Error('Failed to archive course');
-      toast.success('Course group archived.');
+      toast.success('Course archived.');
       fetchCourses();
     } catch (err: any) {
       toast.error(err.message || 'Error archiving course');
@@ -114,7 +114,7 @@ export const CoursesList: React.FC = () => {
       setShowCreateModal(false);
       setNewCourseName('');
       setNewCourseDesc('');
-      toast.success(`Group '${data.name}' created successfully!`);
+      toast.success(`Course '${data.name}' created successfully!`);
     } catch (err: any) {
       setError(err.message);
       toast.error(err.message || 'Failed to create course');
@@ -150,7 +150,7 @@ export const CoursesList: React.FC = () => {
       setCourses((prev) => [data, ...prev]);
       setShowJoinModal(false);
       setJoinCode('');
-      toast.success(`Joined group '${data.name}' successfully!`);
+      toast.success(`Joined course '${data.name}' successfully!`);
     } catch (err: any) {
       setError(err.message);
       toast.error(err.message || 'Failed to join course');
@@ -173,10 +173,10 @@ export const CoursesList: React.FC = () => {
       }
 
       setCourses((prev) => prev.filter((c) => c.id !== courseToDelete.id));
-      toast.success(`Group '${courseToDelete.name}' deleted successfully.`);
+      toast.success(`Course '${courseToDelete.name}' deleted successfully.`);
       setCourseToDelete(null);
     } catch (err: any) {
-      toast.error(err.message || 'Error deleting group');
+      toast.error(err.message || 'Error deleting course');
     } finally {
       setDeleteLoading(false);
     }
@@ -210,7 +210,7 @@ export const CoursesList: React.FC = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to update course');
 
-      toast.success('Group settings updated!');
+      toast.success('Course settings updated!');
       setCourseToEdit(null);
       fetchCourses();
     } catch (err: any) {
@@ -229,7 +229,7 @@ export const CoursesList: React.FC = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to duplicate course');
 
-      toast.success('Group duplicated successfully!');
+      toast.success('Course duplicated successfully!');
       fetchCourses();
     } catch (err: any) {
       toast.error(err.message || 'Error duplicating course');
@@ -239,51 +239,47 @@ export const CoursesList: React.FC = () => {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F2937] pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1B2333] pb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">Teaching Groups</h1>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">My Courses</h1>
         </div>
 
         <div>
           {user?.role === 'Admin' ? (
             <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="saas-button-primary"
-              >
-                <Plus className="w-4 h-4" />
-                Create Course
-              </button>
-              <Link
-                to="/admin/users"
-                className="px-4 py-2.5 bg-[#1F2937] hover:bg-[#374151] text-zinc-200 border border-[#374151] rounded-xl text-xs font-semibold flex items-center gap-2 transition-all"
-              >
-                <Users className="w-4 h-4 text-violet-400" />
+              {courses.length > 0 && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="academic-button-primary"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Course
+                </button>
+              )}
+              <Link to="/admin/users" className="academic-button-secondary py-2.5 px-4">
+                <Users className="w-4 h-4 text-blue-400" />
                 User Management
               </Link>
-              <Link
-                to="/admin/settings"
-                className="px-4 py-2.5 bg-[#1F2937] hover:bg-[#374151] text-zinc-200 border border-[#374151] rounded-xl text-xs font-semibold flex items-center gap-2 transition-all"
-              >
-                <Settings className="w-4 h-4 text-violet-400" />
+              <Link to="/admin/settings" className="academic-button-secondary py-2.5 px-4">
+                <Settings className="w-4 h-4 text-blue-400" />
                 System Settings
               </Link>
             </div>
-          ) : user?.role === 'Teacher' ? (
+          ) : courses.length === 0 ? null : user?.role === 'Teacher' ? (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="saas-button-primary"
+              className="academic-button-primary"
             >
               <Plus className="w-4 h-4" />
-              Create Group
+              Create Course
             </button>
           ) : (
             <button
               onClick={() => setShowJoinModal(true)}
-              className="saas-button-primary"
+              className="academic-button-primary"
             >
               <Key className="w-4 h-4" />
-              Join Group
+              Join Course
             </button>
           )}
         </div>
@@ -304,14 +300,14 @@ export const CoursesList: React.FC = () => {
       ) : courses.length === 0 ? (
         <EmptyState
           icon={<BookOpen className="w-8 h-8 text-blue-400" />}
-          title="No Groups Found"
+          title="No Courses Found"
           description={
-            user?.role === 'Teacher'
-              ? "No teaching groups created yet. Create a group to invite your students."
-              : "You aren't enrolled in any group yet. Enter a group code from your teacher to join."
+            user?.role === 'Student'
+              ? "You aren't enrolled in any course yet. Enter a course code from your teacher to join."
+              : "No courses created yet. Create a course to invite your students."
           }
-          actionLabel={user?.role === 'Teacher' ? 'Create Group' : 'Join Group'}
-          onAction={() => (user?.role === 'Teacher' ? setShowCreateModal(true) : setShowJoinModal(true))}
+          actionLabel={user?.role === 'Student' ? 'Join Course' : 'Create Course'}
+          onAction={() => (user?.role === 'Student' ? setShowJoinModal(true) : setShowCreateModal(true))}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -319,7 +315,7 @@ export const CoursesList: React.FC = () => {
             <div
               key={course.id}
               onClick={() => navigate(`/course/${course.id}`)}
-              className="bg-[#111827] border border-[#1F2937] hover:border-blue-500/40 rounded-2xl p-6 cursor-pointer shadow-xl hover:bg-[#1A2234] transition-all group flex flex-col justify-between"
+              className="bg-[#121620] border border-[#1B2333] hover:border-blue-500/40 rounded-2xl p-6 cursor-pointer shadow-xl hover:bg-[#161C2A] transition-all group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-4 mb-3">
@@ -333,13 +329,13 @@ export const CoursesList: React.FC = () => {
                         e.preventDefault();
                         e.stopPropagation();
                         navigator.clipboard.writeText(course.courseCode);
-                        toast.success(`Copied group code '${course.courseCode}' to clipboard!`);
+                        toast.success(`Copied course code '${course.courseCode}' to clipboard!`);
                       }}
-                      title="Click to copy group code"
-                      className="text-[11px] bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-blue-400 font-mono font-bold py-1 px-2.5 rounded-lg cursor-pointer transition-colors flex items-center gap-1"
+                      title="Click to copy course code"
+                      className="text-[11px] bg-[#161C29] hover:bg-[#1E2638] border border-[#232F45] text-blue-400 font-mono font-bold py-1 px-2.5 rounded-lg cursor-pointer transition-colors flex items-center gap-1"
                     >
                       <span>{course.courseCode}</span>
-                      <span className="text-[10px] opacity-70">📋</span>
+                      <Copy className="w-3 h-3 opacity-70" />
                     </button>
                     {user?.role === 'Student' && (
                       <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
@@ -355,7 +351,7 @@ export const CoursesList: React.FC = () => {
                             handleOpenEditModal(course);
                           }}
                           className="p-1 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-lg transition-colors"
-                          title="Edit Group Settings"
+                          title="Edit Course Settings"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
@@ -366,7 +362,7 @@ export const CoursesList: React.FC = () => {
                             handleDuplicateCourse(course.id);
                           }}
                           className="p-1 hover:bg-violet-500/20 text-zinc-400 hover:text-violet-400 rounded-lg transition-colors"
-                          title="Duplicate Group"
+                          title="Duplicate Course"
                         >
                           <Copy className="w-4 h-4" />
                         </button>
@@ -377,7 +373,7 @@ export const CoursesList: React.FC = () => {
                             handleArchiveCourse(course.id);
                           }}
                           className="p-1 hover:bg-amber-500/20 text-zinc-400 hover:text-amber-400 rounded-lg transition-colors"
-                          title="Archive Group"
+                          title="Archive Course"
                         >
                           <Archive className="w-4 h-4" />
                         </button>
@@ -388,7 +384,7 @@ export const CoursesList: React.FC = () => {
                             setCourseToDelete(course);
                           }}
                           className="p-1 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors"
-                          title="Delete Group"
+                          title="Delete Course"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -402,13 +398,13 @@ export const CoursesList: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-center justify-between border-t border-[#1F2937] pt-4 mt-auto">
+              <div className="flex items-center justify-between border-t border-[#1B2333] pt-4 mt-auto">
                 <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-medium">
                   <Clock className="w-3.5 h-3.5" />
                   <span>{new Date(course.createdAt).toLocaleDateString()}</span>
                 </div>
                 <span className="text-xs font-bold text-blue-400 group-hover:translate-x-1 transition-transform">
-                  Open Group &rarr;
+                  Open Course &rarr;
                 </span>
               </div>
             </div>
@@ -419,22 +415,22 @@ export const CoursesList: React.FC = () => {
       {/* Create Course Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#111827] border-t sm:border border-[#1F2937] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+          <div className="bg-[#121620] border-t sm:border border-[#1B2333] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
             <div>
-              <h3 className="text-lg font-bold text-white">Create Teaching Group</h3>
+              <h3 className="text-lg font-bold text-white">Create Course</h3>
               <p className="text-xs text-zinc-400 mt-1">Set up a new programming class for your students.</p>
             </div>
 
             <form onSubmit={handleCreateCourse} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Group Name</label>
+                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Course Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Python Tuesday 12-2"
                   value={newCourseName}
                   onChange={(e) => setNewCourseName(e.target.value)}
-                  className="saas-input"
+                  className="academic-input"
                 />
               </div>
 
@@ -445,7 +441,7 @@ export const CoursesList: React.FC = () => {
                   placeholder="Short overview of syllabus topics..."
                   value={newCourseDesc}
                   onChange={(e) => setNewCourseDesc(e.target.value)}
-                  className="saas-input resize-none"
+                  className="academic-input resize-none"
                 />
               </div>
 
@@ -453,16 +449,16 @@ export const CoursesList: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="saas-button-secondary"
+                  className="academic-button-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createLoading}
-                  className="saas-button-primary"
+                  className="academic-button-primary"
                 >
-                  {createLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Group'}
+                  {createLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Course'}
                 </button>
               </div>
             </form>
@@ -473,22 +469,28 @@ export const CoursesList: React.FC = () => {
       {/* Join Course Modal */}
       {showJoinModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#111827] border-t sm:border border-[#1F2937] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+          <div className="bg-[#121620] border-t sm:border border-[#1B2333] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
             <div>
-              <h3 className="text-lg font-bold text-white">Join Group</h3>
-              <p className="text-xs text-zinc-400 mt-1">Enter the group code provided by your instructor.</p>
+              <h3 className="text-lg font-bold text-white">Join Course</h3>
+              <p className="text-xs text-zinc-400 mt-1">Enter the course code provided by your instructor.</p>
             </div>
 
             <form onSubmit={handleJoinCourse} className="space-y-4">
+              {error && (
+                <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-xs">
+                  {error}
+                </div>
+              )}
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Group Code</label>
+                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Course Code</label>
                 <input
                   type="text"
+                  dir="ltr"
                   required
-                  placeholder="e.g. CS101-ABC"
+                  placeholder="e.g. 7F2K9X"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value)}
-                  className="saas-input font-mono uppercase"
+                  className="academic-input font-mono uppercase text-left"
                 />
               </div>
 
@@ -496,16 +498,16 @@ export const CoursesList: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowJoinModal(false)}
-                  className="saas-button-secondary"
+                  className="academic-button-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={joinLoading}
-                  className="saas-button-primary"
+                  className="academic-button-primary"
                 >
-                  {joinLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Join Group'}
+                  {joinLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Join Course'}
                 </button>
               </div>
             </form>
@@ -517,21 +519,21 @@ export const CoursesList: React.FC = () => {
       {/* Edit Group Modal */}
       {courseToEdit && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#111827] border-t sm:border border-[#1F2937] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+          <div className="bg-[#121620] border-t sm:border border-[#1B2333] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
             <div>
-              <h3 className="text-lg font-bold text-white">Edit Group Settings</h3>
-              <p className="text-xs text-zinc-400 mt-1">Update group name, description, or join code.</p>
+              <h3 className="text-lg font-bold text-white">Edit Course Settings</h3>
+              <p className="text-xs text-zinc-400 mt-1">Update course name, description, or join code.</p>
             </div>
 
             <form onSubmit={handleEditCourse} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Group Name</label>
+                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Course Name</label>
                 <input
                   type="text"
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="saas-input"
+                  className="academic-input"
                 />
               </div>
 
@@ -539,10 +541,11 @@ export const CoursesList: React.FC = () => {
                 <label className="block text-xs font-bold text-zinc-300 mb-1.5">Join Code</label>
                 <input
                   type="text"
+                  dir="ltr"
                   required
                   value={editCode}
                   onChange={(e) => setEditCode(e.target.value)}
-                  className="saas-input font-mono uppercase"
+                  className="academic-input font-mono uppercase text-left"
                 />
               </div>
 
@@ -552,7 +555,7 @@ export const CoursesList: React.FC = () => {
                   rows={3}
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
-                  className="saas-input resize-none"
+                  className="academic-input resize-none"
                 />
               </div>
 
@@ -560,14 +563,14 @@ export const CoursesList: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setCourseToEdit(null)}
-                  className="saas-button-secondary"
+                  className="academic-button-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={editLoading}
-                  className="saas-button-primary"
+                  className="academic-button-primary"
                 >
                   {editLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
                 </button>
@@ -581,9 +584,9 @@ export const CoursesList: React.FC = () => {
       {courseToDelete && (
         <ConfirmModal
           isOpen={!!courseToDelete}
-          title="Delete Group"
-          message={`Are you sure you want to delete group '${courseToDelete.name}'? All assignments and student submissions will be permanently removed.`}
-          confirmText="Delete Group"
+          title="Delete Course"
+          message={`Are you sure you want to delete course '${courseToDelete.name}'? All assignments and student submissions will be permanently removed.`}
+          confirmText="Delete Course"
           danger
           loading={deleteLoading}
           onConfirm={handleDeleteCourse}

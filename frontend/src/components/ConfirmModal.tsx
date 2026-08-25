@@ -56,7 +56,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="saas-button-secondary min-h-[48px]"
+            className="academic-button-secondary min-h-[48px]"
           >
             {cancelText}
           </button>
@@ -64,7 +64,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className={`saas-button-primary min-h-[48px] px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 text-white transition-all cursor-pointer ${
+            className={`academic-button-primary min-h-[48px] px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 text-white transition-all cursor-pointer ${
               danger
                 ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-950/40 border border-rose-500/40'
                 : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-950/40 border border-indigo-500/40'

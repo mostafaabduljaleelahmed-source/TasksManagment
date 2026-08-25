@@ -26,3 +26,10 @@ temp_runs/
 # Generated Frontend Build Output
 backend/Platform.Api/wwwroot/
 
+# DB dumps / exports (may contain PII)
+*_dump.txt
+run_logs.zip
+
+# Impeccable design-skill local cache
+.impeccable/
+

@@ -24,9 +24,10 @@ export const Login: React.FC = () => {
   const [isResending, setIsResending] = useState(false);
   const [showResend, setShowResend] = useState(false);
 
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
   // Initialize Google Identity Services Script
   useEffect(() => {
-    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (!googleClientId) {
       return;
     }
@@ -125,28 +126,24 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#09090B] px-4 relative overflow-hidden">
-      {/* Background Gradients */}
-      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-violet-600/10 rounded-full blur-[128px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-blue-600/10 rounded-full blur-[128px] pointer-events-none" />
-
+    <div className="min-h-screen flex items-center justify-center bg-[#0B0E14] px-4 relative overflow-hidden">
       {/* Language Switcher */}
       <div className="absolute top-6 right-6 z-20">
         <button
           onClick={toggleLanguage}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1F1F24] hover:bg-[#2F2F37] border border-[#2F2F37] text-zinc-300 hover:text-white text-xs font-semibold rounded-xl transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#151B28] hover:bg-[#1E2638] border border-[#232F45] text-slate-300 hover:text-white text-xs font-semibold rounded-xl transition-colors"
         >
-          <Globe className="w-4 h-4 text-violet-400" />
+          <Globe className="w-4 h-4 text-blue-400" />
           <span>{lang === 'ar' ? 'English' : 'عربي'}</span>
         </button>
       </div>
 
-      <div className="w-full max-w-md bg-[#16161A] border border-[#24242B] rounded-2xl p-8 shadow-2xl relative z-10 backdrop-blur-3xl">
+      <div className="w-full max-w-md academic-surface rounded-2xl p-8 shadow-2xl relative z-10">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2 bg-gradient-to-r from-violet-400 via-purple-300 to-indigo-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">
             {t('welcome')}
           </h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-slate-400">
             {t('appName')} - {t('login')}
           </p>
         </div>
@@ -161,7 +158,7 @@ export const Login: React.FC = () => {
               <button
                 onClick={handleResendVerification}
                 disabled={isResending}
-                className="text-violet-400 hover:text-violet-300 font-semibold underline text-xs transition-colors"
+                className="text-blue-400 hover:text-blue-300 font-semibold underline text-xs transition-colors"
               >
                 {isResending ? 'Sending link...' : 'Resend Verification Email'}
               </button>
@@ -176,17 +173,21 @@ export const Login: React.FC = () => {
           </div>
         )}
 
-        {/* Google Sign In Button Container */}
-        <div className="mb-6">
-          <div id="googleSignInBtn" className="w-full min-h-[44px] flex justify-center"></div>
-        </div>
+        {googleClientId && (
+          <>
+            {/* Google Sign In Button Container */}
+            <div className="mb-6">
+              <div id="googleSignInBtn" className="w-full min-h-[44px] flex justify-center"></div>
+            </div>
 
-        <div className="relative flex items-center justify-center my-6">
-          <div className="border-t border-[#24242B] w-full" />
-          <span className="bg-[#16161A] px-3 text-[10px] uppercase font-bold text-zinc-500 tracking-wider absolute">
-            or continue with email
-          </span>
-        </div>
+            <div className="relative flex items-center justify-center my-6">
+              <div className="border-t border-[#1B2333] w-full" />
+              <span className="bg-[#121620] px-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider absolute">
+                or continue with email
+              </span>
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -199,7 +200,7 @@ export const Login: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full bg-[#111116] border border-[#272730] rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="academic-input pl-9 pr-3 py-2.5"
               />
             </div>
           </div>
@@ -207,7 +208,7 @@ export const Login: React.FC = () => {
           <div>
             <div className="flex justify-between items-center mb-1.5">
               <label className="block text-xs font-semibold text-slate-300">{t('password')}</label>
-              <Link to="/forgot-password" className="text-xs font-semibold text-indigo-400 hover:underline">
+              <Link to="/forgot-password" className="text-xs font-semibold text-blue-400 hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -219,7 +220,7 @@ export const Login: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-[#111116] border border-[#272730] rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="academic-input pl-9 pr-3 py-2.5"
               />
             </div>
           </div>
@@ -230,7 +231,7 @@ export const Login: React.FC = () => {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-[#2F2F37] bg-[#1F1F24] text-indigo-600 focus:ring-indigo-500"
+                className="rounded border-[#232F45] bg-[#151B28] text-blue-600 focus:ring-blue-500"
               />
               <span>Remember Me</span>
             </label>
@@ -239,7 +240,7 @@ export const Login: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl py-3 px-4 shadow-lg shadow-indigo-950/40 transition-all focus:outline-none disabled:opacity-50 text-xs cursor-pointer"
+            className="academic-button-primary w-full py-3 text-xs"
           >
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -252,12 +253,12 @@ export const Login: React.FC = () => {
           </button>
         </form>
 
-        <div className="mt-8 text-center border-t border-[#24242B] pt-6">
-          <p className="text-xs text-zinc-400">
+        <div className="mt-8 text-center border-t border-[#1B2333] pt-6">
+          <p className="text-xs text-slate-400">
             {t('register')}?{' '}
             <Link
               to="/register"
-              className="text-violet-400 hover:text-violet-300 font-bold transition-colors"
+              className="text-blue-400 hover:text-blue-300 font-bold transition-colors"
             >
               {t('register')}
             </Link>

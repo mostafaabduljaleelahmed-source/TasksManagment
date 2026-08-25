@@ -255,7 +255,7 @@ export const Settings: React.FC = () => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="saas-input"
+                  className="academic-input"
                   required
                 />
               </div>
@@ -266,7 +266,7 @@ export const Settings: React.FC = () => {
                   type="email"
                   value={user?.email || ''}
                   disabled
-                  className="saas-input text-zinc-500 cursor-not-allowed opacity-75"
+                  className="academic-input text-zinc-500 cursor-not-allowed opacity-75"
                 />
               </div>
 
@@ -278,7 +278,7 @@ export const Settings: React.FC = () => {
                     value={studentId}
                     onChange={(e) => setStudentId(e.target.value)}
                     placeholder="e.g. 202410928"
-                    className="saas-input font-mono"
+                    className="academic-input font-mono"
                   />
                 </div>
               )}
@@ -288,7 +288,7 @@ export const Settings: React.FC = () => {
               <button
                 type="submit"
                 disabled={savingProfile}
-                className="saas-button-primary min-h-[48px] w-full sm:w-auto"
+                className="academic-button-primary min-h-[48px] w-full sm:w-auto"
               >
                 {savingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {t('saveChanges')}
@@ -312,7 +312,7 @@ export const Settings: React.FC = () => {
                   type="password"
                   value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
-                  className="saas-input"
+                  className="academic-input"
                   required
                 />
               </div>
@@ -323,7 +323,7 @@ export const Settings: React.FC = () => {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="saas-input"
+                  className="academic-input"
                   required
                 />
               </div>
@@ -334,7 +334,7 @@ export const Settings: React.FC = () => {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="saas-input"
+                  className="academic-input"
                   required
                 />
               </div>

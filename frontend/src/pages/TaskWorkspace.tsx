@@ -878,14 +878,14 @@ export const TaskWorkspace: React.FC = () => {
                   setSelectedSubmission(null);
                   setMobileTab('editor');
                 }}
-                className="saas-button-primary min-h-[48px]"
+                className="academic-button-primary min-h-[48px]"
               >
                 Restore to Code Editor
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedSubmission(null)}
-                className="saas-button-secondary min-h-[48px]"
+                className="academic-button-secondary min-h-[48px]"
               >
                 Close
               </button>

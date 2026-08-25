@@ -151,7 +151,7 @@ export const AssignmentReview: React.FC = () => {
         <div className="flex items-center gap-3">
           <Link
             to={`/grading-workspace/${taskId}`}
-            className="saas-button-primary bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-xs"
+            className="academic-button-primary bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-xs"
           >
             <Code className="w-4 h-4" />
             Open 2-Panel Grading Workspace
@@ -163,7 +163,7 @@ export const AssignmentReview: React.FC = () => {
               placeholder={t('search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="saas-input pl-9 w-48 sm:w-64"
+              className="academic-input pl-9 w-48 sm:w-64"
             />
           </div>
         </div>
@@ -270,7 +270,7 @@ export const AssignmentReview: React.FC = () => {
 
                     <button
                       onClick={() => navigate(`/grading-workspace/${taskId}`)}
-                      className="saas-button-primary min-h-[48px] w-full mt-2"
+                      className="academic-button-primary min-h-[48px] w-full mt-2"
                     >
                       <FileCode className="w-4 h-4" />
                       Review & Grade Code
@@ -349,7 +349,7 @@ export const AssignmentReview: React.FC = () => {
                           <td className="px-4 py-3.5 text-center">
                             <button
                               onClick={() => navigate(`/grading-workspace/${taskId}`)}
-                              className="saas-button-primary"
+                              className="academic-button-primary"
                             >
                               <FileCode className="w-3.5 h-3.5" />
                               Review Code

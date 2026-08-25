@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { APP_VERSION } from '../constants/version';
 import {
@@ -25,6 +25,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { user, logout } = useAuth();
   const { t, lang, setLanguage } = useTranslation();
   const location = useLocation();
+  const [hasCourses, setHasCourses] = useState(true);
+
+  useEffect(() => {
+    if (!user || (user.role !== 'Teacher' && user.role !== 'Admin')) return;
+    fetch(`${API_URL}/courses/teacher`, { headers: { Authorization: `Bearer ${user.token}` } })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setHasCourses(Array.isArray(data) && data.length > 0))
+      .catch(() => setHasCourses(true));
+  }, [user]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -177,7 +186,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {renderNavItem('/leaderboard', t('leaderboard'), <Trophy className="w-3.5 h-3.5 text-slate-400" />)}
           {renderNavItem('/calendar', t('calendar'), <Calendar className="w-3.5 h-3.5 text-slate-400" />)}
 
-          {isTeacherOrAdmin && (
+          {isTeacherOrAdmin && hasCourses && (
             <>
               {!collapsed && (
                 <div className="text-[10px] font-bold font-mono uppercase tracking-wider text-slate-500 px-2 pt-3 mb-1 truncate">

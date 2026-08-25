@@ -26,9 +26,8 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        if (isOpen) onClose();
+      if (isOpen && e.key === 'Escape') {
+        onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -60,7 +59,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
                 type: 'Course',
                 title: c.name,
                 subtitle: `Code: ${c.courseCode}`,
-                link: `/courses/${c.id}`,
+                link: `/course/${c.id}`,
               });
             }
 
@@ -72,7 +71,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
                     type: 'Session',
                     title: s.title,
                     subtitle: `Course: ${c.name}`,
-                    link: `/courses/${c.id}`,
+                    link: `/course/${c.id}`,
                   });
                 }
                 if (s.tasks) {
@@ -83,7 +82,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
                         type: 'Task',
                         title: t.title,
                         subtitle: `Session: ${s.title}`,
-                        link: `/tasks/${t.id}`,
+                        link: `/task/${t.id}`,
                       });
                     }
                   });

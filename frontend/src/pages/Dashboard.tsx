@@ -179,35 +179,61 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="academic-table">
-            <thead>
-              <tr>
-                <th>{lang === 'ar' ? 'رمز المقرر' : 'Code'}</th>
-                <th>{lang === 'ar' ? 'اسم المقرر' : 'Course Name'}</th>
-                <th>{lang === 'ar' ? 'الطلاب المسجلون' : 'Enrolled Students'}</th>
-                <th className="text-right">{lang === 'ar' ? 'الإجراء' : 'Action'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {courses.map((course) => (
-                <tr key={course.id}>
-                  <td className="font-mono font-semibold text-blue-400">{course.courseCode}</td>
-                  <td className="font-semibold text-white">{course.name}</td>
-                  <td className="font-mono text-slate-300">{course.studentsCount}</td>
-                  <td className="text-right">
-                    <button
-                      onClick={() => navigate(`/course/${course.id}`)}
-                      className="academic-button-secondary py-1 px-3"
-                    >
-                      <span>{lang === 'ar' ? 'تفاصيل المقرر' : 'View Course'}</span>
-                    </button>
-                  </td>
+        {loading ? (
+          <div className="p-6 text-center text-xs text-slate-500">
+            {lang === 'ar' ? 'جاري التحميل...' : 'Loading courses...'}
+          </div>
+        ) : courses.length === 0 ? (
+          <div className="p-6 text-center text-xs text-slate-400 space-y-2">
+            <BookOpen className="w-6 h-6 mx-auto text-slate-600" />
+            <p className="font-semibold text-slate-300">
+              {lang === 'ar' ? 'لا توجد مقررات بعد' : 'No courses yet'}
+            </p>
+            <p className="text-slate-500">
+              {user?.role === 'Student'
+                ? (lang === 'ar' ? 'أدخل رمز المقرر من معلمك للانضمام.' : "Enter a course code from your teacher to join.")
+                : (lang === 'ar' ? 'أنشئ مقررك الأول لدعوة طلابك.' : 'Create your first course to invite students.')}
+            </p>
+            <button
+              onClick={() => navigate('/')}
+              className="academic-button-primary mx-auto mt-1"
+            >
+              {user?.role === 'Student'
+                ? (lang === 'ar' ? 'الانضمام إلى مقرر' : 'Join Course')
+                : (lang === 'ar' ? 'إنشاء مقرر' : 'Create Course')}
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="academic-table">
+              <thead>
+                <tr>
+                  <th>{lang === 'ar' ? 'رمز المقرر' : 'Code'}</th>
+                  <th>{lang === 'ar' ? 'اسم المقرر' : 'Course Name'}</th>
+                  <th>{lang === 'ar' ? 'الطلاب المسجلون' : 'Enrolled Students'}</th>
+                  <th className="text-right">{lang === 'ar' ? 'الإجراء' : 'Action'}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {courses.map((course) => (
+                  <tr key={course.id}>
+                    <td className="font-mono font-semibold text-blue-400">{course.courseCode}</td>
+                    <td className="font-semibold text-white">{course.name}</td>
+                    <td className="font-mono text-slate-300">{course.studentsCount}</td>
+                    <td className="text-right">
+                      <button
+                        onClick={() => navigate(`/course/${course.id}`)}
+                        className="academic-button-secondary py-1 px-3"
+                      >
+                        <span>{lang === 'ar' ? 'تفاصيل المقرر' : 'View Course'}</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
