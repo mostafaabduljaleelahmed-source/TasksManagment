@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Platform.Api.Controllers;
 using Platform.Application.Common.Interfaces;
 using Platform.Application.Features.Dashboard.Dtos;
 using Platform.Application.Features.Submissions.Dtos;
@@ -176,5 +177,63 @@ public class LeaderboardGradingIntegrationTests
         Assert.Equal(1, entry.CompletedTasks);
         Assert.Equal(90, entry.TotalScore);
         Assert.Equal(90.0, entry.AverageGrade);
+    }
+
+    [Fact]
+    public async Task GetLeaderboard_PeriodFilter_OnlyCountsSubmissionsWithinTheWindow()
+    {
+        // Goes through the real DashboardController.GetLeaderboard endpoint (not a re-implemented
+        // query) since the period filter lives there.
+        var dbName = Guid.NewGuid().ToString();
+
+        var teacher = new User { Id = Guid.NewGuid(), Name = "Teacher", Email = "teacher@test.com", Role = UserRole.Teacher, PasswordHash = "hash" };
+        var student = new User { Id = Guid.NewGuid(), Name = "Nadia", Email = "nadia@test.com", Role = UserRole.Student, PasswordHash = "hash" };
+        var course = new Course { Id = Guid.NewGuid(), Name = "CS101", CourseCode = "CS101", TeacherId = teacher.Id, Teacher = teacher, IsArchived = false };
+        var session = new Session { Id = Guid.NewGuid(), CourseId = course.Id, Course = course, Title = "Week 1", IsUnlocked = true };
+        var oldTask = new ProgrammingTask { Id = Guid.NewGuid(), SessionId = session.Id, Session = session, Title = "Old Task", MaxGrade = 50, Deadline = DateTime.UtcNow.AddDays(-40) };
+        var recentTask = new ProgrammingTask { Id = Guid.NewGuid(), SessionId = session.Id, Session = session, Title = "Recent Task", MaxGrade = 50, Deadline = DateTime.UtcNow.AddDays(7) };
+
+        using (var seedContext = new ApplicationDbContext(MakeOptions(dbName)))
+        {
+            seedContext.Users.AddRange(teacher, student);
+            seedContext.Courses.Add(course);
+            seedContext.Sessions.Add(session);
+            seedContext.ProgrammingTasks.AddRange(oldTask, recentTask);
+            seedContext.Enrollments.Add(new Enrollment { StudentId = student.Id, Student = student, CourseId = course.Id, Course = course });
+            seedContext.Submissions.Add(new Submission
+            {
+                Id = Guid.NewGuid(), TaskId = oldTask.Id, Task = oldTask, StudentId = student.Id, Student = student,
+                Grade = 50, Status = SubmissionStatus.Graded, IsReviewed = true, AttemptNumber = 1,
+                SubmittedAt = DateTime.UtcNow.AddDays(-20), // outside the 7-day window, inside the 30-day one
+            });
+            seedContext.Submissions.Add(new Submission
+            {
+                Id = Guid.NewGuid(), TaskId = recentTask.Id, Task = recentTask, StudentId = student.Id, Student = student,
+                Grade = 40, Status = SubmissionStatus.Graded, IsReviewed = true, AttemptNumber = 1,
+                SubmittedAt = DateTime.UtcNow.AddDays(-1), // inside every window
+            });
+            await seedContext.SaveChangesAsync();
+        }
+
+        using var context = new ApplicationDbContext(MakeOptions(dbName));
+        var controller = new DashboardController(context, new GradingCalculator());
+
+        async Task<LeaderboardEntryDto> Fetch(string? period)
+        {
+            var result = await controller.GetLeaderboard(course.Id, period, default);
+            var ok = Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
+            var list = Assert.IsAssignableFrom<System.Collections.Generic.IEnumerable<LeaderboardEntryDto>>(ok.Value);
+            return list.Single();
+        }
+
+        var week = await Fetch("week");
+        Assert.Equal(40, week.TotalScore); // only the recent task's 40 counts
+        Assert.Equal(100, week.TotalPossibleScore); // denominator stays the full assigned set
+
+        var month = await Fetch("month");
+        Assert.Equal(90, month.TotalScore); // both submissions fall inside 30 days
+
+        var all = await Fetch(null);
+        Assert.Equal(90, all.TotalScore);
     }
 }

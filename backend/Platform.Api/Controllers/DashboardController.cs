@@ -871,7 +871,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("leaderboard")]
-    public async Task<IActionResult> GetLeaderboard([FromQuery] Guid? courseId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetLeaderboard([FromQuery] Guid? courseId, [FromQuery] string? period, CancellationToken cancellationToken)
     {
         IQueryable<Enrollment> enrollmentsQuery = _context.Enrollments.Include(e => e.Student);
         if (courseId.HasValue)
@@ -886,6 +886,22 @@ public class DashboardController : ControllerBase
             .Include(s => s.Task)
             .Where(s => studentIds.Contains(s.StudentId))
             .ToListAsync(cancellationToken);
+
+        // Period scoping: "week"/"month" only count marks from submissions graded within that
+        // window, using SubmittedAt (the only timestamp actually recorded per attempt). The
+        // denominator (total possible marks) intentionally stays the full assigned-task set in
+        // every view, so "12/300 this week" reads as "progress made this week toward the whole
+        // course", not a shifting, incomparable scale between periods.
+        if (string.Equals(period, "week", StringComparison.OrdinalIgnoreCase))
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-7);
+            submissions = submissions.Where(s => s.SubmittedAt >= cutoff).ToList();
+        }
+        else if (string.Equals(period, "month", StringComparison.OrdinalIgnoreCase))
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-30);
+            submissions = submissions.Where(s => s.SubmittedAt >= cutoff).ToList();
+        }
 
         var targetCourseIds = courseId.HasValue
             ? new List<Guid> { courseId.Value }

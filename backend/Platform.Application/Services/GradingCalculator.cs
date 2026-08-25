@@ -107,9 +107,16 @@ public class GradingCalculator : IGradingCalculator
         }
 
         return entries
-            .OrderByDescending(e => e.AverageGrade)
+            // Ranked by raw total marks earned -- the "total marks" metric this leaderboard is
+            // meant to show -- not the percentage, which can disagree with it once students are
+            // compared across courses with different total possible marks (the global, no-
+            // courseId view). CompletedTasks/TotalTasks break ties on equal marks; StudentName is
+            // the final stable tiebreaker so genuinely tied students render in a predictable
+            // (alphabetical) order rather than shuffling between requests.
+            .OrderByDescending(e => e.TotalScore)
             .ThenByDescending(e => e.CompletedTasks)
             .ThenByDescending(e => e.TotalTasks)
+            .ThenBy(e => e.StudentName, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 

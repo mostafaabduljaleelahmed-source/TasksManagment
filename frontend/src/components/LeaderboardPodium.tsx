@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Crown } from 'lucide-react';
+import { Crown, Flame } from 'lucide-react';
 import { useCountUp } from '../hooks/useCountUp';
+import type { RankedEntry } from '../utils/leaderboardRanking';
 
 export interface PodiumEntry {
   studentId: string;
@@ -23,6 +24,7 @@ interface TierConfig {
   baseHeight: string;
   entrance: string;
   float: string;
+  order: string;
 }
 
 const TIERS: Record<1 | 2 | 3, TierConfig> = {
@@ -32,10 +34,11 @@ const TIERS: Record<1 | 2 | 3, TierConfig> = {
     glow: 'shadow-[0_0_28px_-6px_rgba(217,130,46,0.55)]',
     base: 'bg-accent-500/15 border-accent-500/40',
     baseText: 'text-accent-300',
-    avatarSize: 'w-20 h-20 sm:w-24 sm:h-24',
+    avatarSize: 'w-16 h-16 sm:w-24 sm:h-24',
     baseHeight: 'h-16 sm:h-20',
     entrance: 'animate-podium-center',
     float: 'animate-float',
+    order: 'sm:order-2',
   },
   2: {
     ring: 'border-sage-300/60',
@@ -43,10 +46,11 @@ const TIERS: Record<1 | 2 | 3, TierConfig> = {
     glow: 'shadow-[0_0_18px_-6px_rgba(199,209,190,0.4)]',
     base: 'bg-sage-500/10 border-sage-400/30',
     baseText: 'text-sage-200',
-    avatarSize: 'w-16 h-16 sm:w-20 sm:h-20',
+    avatarSize: 'w-14 h-14 sm:w-20 sm:h-20',
     baseHeight: 'h-11 sm:h-14',
     entrance: 'animate-podium-left',
     float: 'animate-float-delayed',
+    order: 'sm:order-1',
   },
   3: {
     ring: 'border-accent-800/60',
@@ -54,10 +58,11 @@ const TIERS: Record<1 | 2 | 3, TierConfig> = {
     glow: 'shadow-[0_0_18px_-6px_rgba(150,85,28,0.4)]',
     base: 'bg-accent-900/30 border-accent-800/40',
     baseText: 'text-accent-500',
-    avatarSize: 'w-14 h-14 sm:w-16 sm:h-16',
+    avatarSize: 'w-11 h-11 sm:w-16 sm:h-16',
     baseHeight: 'h-8 sm:h-10',
     entrance: 'animate-podium-right',
     float: 'animate-float',
+    order: 'sm:order-3',
   },
 };
 
@@ -105,28 +110,31 @@ const Avatar: React.FC<{ entry: PodiumEntry; sizeClass: string }> = ({ entry, si
       className={`${sizeClass} rounded-full object-cover`}
     />
   ) : (
-    <div className={`${sizeClass} rounded-full bg-primary-500/15 border border-primary-500/25 text-primary-300 font-bold flex items-center justify-center text-lg sm:text-xl`}>
+    <div className={`${sizeClass} rounded-full bg-primary-500/15 border border-primary-500/25 text-primary-300 font-bold flex items-center justify-center text-base sm:text-xl`}>
       {initials}
     </div>
   );
 };
 
 interface PodiumCardProps {
-  entry: PodiumEntry;
-  rank: 1 | 2 | 3;
+  ranked: RankedEntry<PodiumEntry>;
+  slot: 1 | 2 | 3;
   isYou: boolean;
   onSelect: () => void;
   labelYou: string;
+  persistenceThreshold: number;
 }
 
-const PodiumCard: React.FC<PodiumCardProps> = ({ entry, rank, isYou, onSelect, labelYou }) => {
-  const tier = TIERS[rank];
+const PodiumCard: React.FC<PodiumCardProps> = ({ ranked, slot, isYou, onSelect, labelYou, persistenceThreshold }) => {
+  const { entry, rank, tiedWith } = ranked;
+  const tier = TIERS[slot];
   const score = useCountUp(entry.totalScore);
+  const isPersistent = entry.completedTasks >= persistenceThreshold;
 
   return (
-    <div className={`flex flex-col items-center ${tier.entrance} ${rank === 1 ? 'order-2' : rank === 2 ? 'order-1' : 'order-3'}`}>
+    <div className={`flex flex-col items-center ${tier.entrance} ${tier.order}`}>
       <div className={`relative ${tier.float}`}>
-        {rank === 1 && (
+        {slot === 1 && (
           <>
             <Crown className="w-6 h-6 sm:w-7 sm:h-7 text-accent-400 absolute -top-6 left-1/2 -translate-x-1/2 animate-crown" />
             <Confetti />
@@ -144,21 +152,31 @@ const PodiumCard: React.FC<PodiumCardProps> = ({ entry, rank, isYou, onSelect, l
           className={`group relative rounded-full border-2 ${tier.ring} ${tier.glow} p-1 transition-transform duration-200 hover:scale-105 active:scale-95 cursor-pointer`}
           style={{ ['--ring-color' as any]: tier.ringVar }}
         >
-          <div className={rank === 1 ? 'animate-ring-pulse rounded-full' : ''}>
+          <div className={slot === 1 ? 'animate-ring-pulse rounded-full' : ''}>
             <Avatar entry={entry} sizeClass={tier.avatarSize} />
           </div>
         </button>
       </div>
 
-      <p className={`mt-3 font-bold text-white truncate max-w-[7rem] sm:max-w-[9rem] text-center ${rank === 1 ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'}`}>
-        {entry.studentName}
-      </p>
+      <div className="mt-3 flex items-center gap-1 max-w-[7rem] sm:max-w-[9rem]">
+        <p className={`font-bold text-white truncate text-center ${slot === 1 ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'}`}>
+          {entry.studentName}
+        </p>
+        {isPersistent && <Flame className="w-3 h-3 text-accent-400 shrink-0" aria-label="Persistence badge" />}
+      </div>
+      {tiedWith.length > 0 && (
+        <p className="text-[9px] text-sage-500 text-center max-w-[7rem] sm:max-w-[9rem] truncate">
+          = {tiedWith[0].studentName}{tiedWith.length > 1 ? ` +${tiedWith.length - 1}` : ''}
+        </p>
+      )}
       <p className="font-mono text-[11px] text-sage-500 mt-0.5">
         {entry.totalTasks > 0 ? `${entry.completedTasks}/${entry.totalTasks} tasks` : 'No tasks yet'}
       </p>
 
-      <div className={`mt-2 flex flex-col items-center justify-end rounded-t-lg border border-b-0 ${tier.base} w-20 sm:w-24 ${tier.baseHeight} pt-2 pb-1`}>
-        <span className={`font-mono font-black text-lg sm:text-xl ${tier.baseText}`}>{rank}</span>
+      <div className={`mt-2 flex flex-col items-center justify-end rounded-t-lg border border-b-0 ${tier.base} w-16 sm:w-24 ${tier.baseHeight} pt-2 pb-1`}>
+        <span className={`font-mono font-black text-base sm:text-xl ${tier.baseText}`}>
+          {tiedWith.length > 0 ? `=${rank}` : rank}
+        </span>
         <span className="font-mono text-[10px] sm:text-xs text-white font-bold">
           {entry.totalTasks > 0 ? Math.round(score) : '—'}
           {entry.totalTasks > 0 && <span className="text-sage-500">/{entry.totalPossibleScore}</span>}
@@ -169,25 +187,27 @@ const PodiumCard: React.FC<PodiumCardProps> = ({ entry, rank, isYou, onSelect, l
 };
 
 interface LeaderboardPodiumProps {
-  top3: PodiumEntry[];
+  top3: RankedEntry<PodiumEntry>[];
   currentUserId?: string;
   onSelect: (entry: PodiumEntry) => void;
   labelYou: string;
+  persistenceThreshold: number;
 }
 
-export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ top3, currentUserId, onSelect, labelYou }) => {
+export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ top3, currentUserId, onSelect, labelYou, persistenceThreshold }) => {
   if (top3.length === 0) return null;
 
   return (
-    <div className="flex items-end justify-center gap-3 sm:gap-6 py-6 px-2">
-      {top3.map((entry, idx) => (
+    <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:justify-center sm:gap-6 py-6 px-2">
+      {top3.map((ranked, idx) => (
         <PodiumCard
-          key={entry.studentId}
-          entry={entry}
-          rank={(idx + 1) as 1 | 2 | 3}
-          isYou={entry.studentId === currentUserId}
-          onSelect={() => onSelect(entry)}
+          key={ranked.entry.studentId}
+          ranked={ranked}
+          slot={(idx + 1) as 1 | 2 | 3}
+          isYou={ranked.entry.studentId === currentUserId}
+          onSelect={() => onSelect(ranked.entry)}
           labelYou={labelYou}
+          persistenceThreshold={persistenceThreshold}
         />
       ))}
     </div>
