@@ -27,10 +27,10 @@ export const CourseCertificateModal: React.FC<CourseCertificateModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div className="bg-[#0D0D12] border border-[#2B2B36] rounded-3xl max-w-3xl w-full p-6 space-y-6 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+      <div className="bg-[#0A0D0A] border border-[#37452E] rounded-3xl max-w-3xl w-full p-6 space-y-6 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
         {/* Header Action Bar */}
-        <div className="flex items-center justify-between border-b border-[#1F1F26] pb-4">
-          <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs">
+        <div className="flex items-center justify-between border-b border-[#1A2016] pb-4">
+          <div className="flex items-center gap-2 text-primary-400 font-bold text-xs">
             <Award className="w-5 h-5 text-amber-400" />
             <span>Verified Official Certificate</span>
           </div>
@@ -42,7 +42,7 @@ export const CourseCertificateModal: React.FC<CourseCertificateModalProps> = ({
               <Printer className="w-4 h-4" />
               Print / Save PDF
             </button>
-            <button onClick={onClose} className="text-zinc-500 hover:text-white p-1">
+            <button onClick={onClose} className="text-sage-500 hover:text-white p-1">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -51,7 +51,7 @@ export const CourseCertificateModal: React.FC<CourseCertificateModalProps> = ({
         {/* Printable Certificate Template */}
         <div
           id="printable-certificate"
-          className="bg-gradient-to-br from-[#13131A] via-[#1A1A24] to-[#0F0F16] border-4 border-amber-500/40 rounded-2xl p-10 text-center space-y-6 relative overflow-hidden shadow-2xl"
+          className="bg-gradient-to-br from-[#12160F] via-[#1A2016] to-[#12160F] border-4 border-amber-500/40 rounded-2xl p-10 text-center space-y-6 relative overflow-hidden shadow-2xl"
         >
           {/* Decorative Corner Accents */}
           <div className="absolute top-0 left-0 w-24 h-24 border-t-4 border-l-4 border-amber-400/60 rounded-tl-2xl pointer-events-none" />
@@ -67,7 +67,7 @@ export const CourseCertificateModal: React.FC<CourseCertificateModalProps> = ({
           <div className="space-y-1">
             <h2 className="text-xs uppercase font-extrabold tracking-widest text-amber-400">Private Programming Academy</h2>
             <h1 className="text-3xl font-serif font-black text-white tracking-wide">CERTIFICATE OF COMPLETION</h1>
-            <p className="text-xs text-zinc-400 uppercase tracking-wider">This is to certify that</p>
+            <p className="text-xs text-sage-400 uppercase tracking-wider">This is to certify that</p>
           </div>
 
           {/* Student Name */}
@@ -77,7 +77,7 @@ export const CourseCertificateModal: React.FC<CourseCertificateModalProps> = ({
             </h2>
           </div>
 
-          <p className="text-xs text-zinc-300 max-w-lg mx-auto leading-relaxed">
+          <p className="text-xs text-sage-300 max-w-lg mx-auto leading-relaxed">
             has successfully fulfilled all curriculum requirements, coding assignments, and examinations for the course:
           </p>
 
@@ -87,14 +87,14 @@ export const CourseCertificateModal: React.FC<CourseCertificateModalProps> = ({
           </div>
 
           {/* Footer Metadata & Verification */}
-          <div className="pt-6 grid grid-cols-3 items-end border-t border-[#2A2A38] text-xs text-zinc-400">
+          <div className="pt-6 grid grid-cols-3 items-end border-t border-[#37452E] text-xs text-sage-400">
             <div className="text-left space-y-1">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Issued On</span>
-              <p className="font-bold text-zinc-200">{completionDate}</p>
+              <span className="text-[10px] text-sage-500 uppercase font-bold block">Issued On</span>
+              <p className="font-bold text-sage-200">{completionDate}</p>
             </div>
 
             <div className="text-center space-y-1">
-              <div className="w-20 h-20 bg-white p-1 mx-auto rounded-lg shadow-md border border-zinc-300">
+              <div className="w-20 h-20 bg-white p-1 mx-auto rounded-lg shadow-md border border-sage-300">
                 {/* QR Code Placeholder Preview */}
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://jatask.runasp.net/verify/${verificationCode}`}
@@ -102,11 +102,11 @@ export const CourseCertificateModal: React.FC<CourseCertificateModalProps> = ({
                   className="w-full h-full object-contain"
                 />
               </div>
-              <span className="text-[9px] font-mono text-zinc-400 block">{verificationCode}</span>
+              <span className="text-[9px] font-mono text-sage-400 block">{verificationCode}</span>
             </div>
 
             <div className="text-right space-y-1">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Authorized Instructor</span>
+              <span className="text-[10px] text-sage-500 uppercase font-bold block">Authorized Instructor</span>
               <p className="font-bold text-amber-400 font-serif">{instructorName}</p>
               <div className="w-28 border-b border-amber-500/40 ml-auto pt-1" />
             </div>

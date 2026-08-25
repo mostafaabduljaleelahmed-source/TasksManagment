@@ -84,7 +84,7 @@ export const TeacherPendingReviews: React.FC = () => {
   return (
     <div className="space-y-4 animate-fade-in max-w-7xl mx-auto px-2 sm:px-4 py-3">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1B2333] pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E2519] pb-3">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
@@ -94,7 +94,7 @@ export const TeacherPendingReviews: React.FC = () => {
               {pendingQueue.length} {lang === 'ar' ? 'في الانتظار' : 'Pending'}
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-sage-400 mt-0.5">
             {lang === 'ar'
               ? 'سجل التقييم اليدوي المستمر لتكاليف الطلاب المعلقة'
               : 'Continuous manual review and feedback work queue'}
@@ -124,7 +124,7 @@ export const TeacherPendingReviews: React.FC = () => {
       {/* Filter & Search Toolbar */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
-          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+          <Search className="w-3.5 h-3.5 text-sage-500 absolute left-3 top-2.5" />
           <input
             type="text"
             placeholder={lang === 'ar' ? 'البحث باسم الطالب أو المهمة...' : 'Search student or task...'}
@@ -147,10 +147,10 @@ export const TeacherPendingReviews: React.FC = () => {
       </div>
 
       {/* Queue Work Table */}
-      <div className="academic-surface rounded-lg overflow-hidden border border-[#1B2333]">
+      <div className="academic-surface rounded-lg overflow-hidden border border-[#1E2519]">
         {loading ? (
-          <div className="p-8 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
-            <RefreshCw className="w-4 h-4 animate-spin text-blue-400" />
+          <div className="p-8 text-center text-sage-500 text-xs flex items-center justify-center gap-2">
+            <RefreshCw className="w-4 h-4 animate-spin text-primary-400" />
             <span>{lang === 'ar' ? 'جاري تحميل قائمة التقييم...' : 'Loading evaluation queue...'}</span>
           </div>
         ) : fetchError ? (
@@ -162,12 +162,12 @@ export const TeacherPendingReviews: React.FC = () => {
             </button>
           </div>
         ) : filteredQueue.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 space-y-2">
+          <div className="p-12 text-center text-sage-500 space-y-2">
             <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-400/80" />
-            <p className="text-xs font-semibold text-slate-300">
+            <p className="text-xs font-semibold text-sage-300">
               {lang === 'ar' ? 'لا توجد تسليمات معلقة للتقييم' : 'Evaluation Queue Clear'}
             </p>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-sage-500">
               {lang === 'ar' ? 'جميع تسليمات الطلاب تم تقييمها بنجاح' : 'All submitted student tasks have been evaluated'}
             </p>
           </div>
@@ -188,14 +188,14 @@ export const TeacherPendingReviews: React.FC = () => {
                 {filteredQueue.map((item) => (
                   <tr key={item.submissionId}>
                     <td>
-                      <div className="font-semibold text-slate-100">{item.studentName}</div>
-                      <div className="text-[11px] font-mono text-slate-500">ID: {item.studentRegisterId || '-'}</div>
+                      <div className="font-semibold text-sage-100">{item.studentName}</div>
+                      <div className="text-[11px] font-mono text-sage-500">ID: {item.studentRegisterId || '-'}</div>
                     </td>
                     <td>
-                      <div className="font-medium text-slate-200">{item.taskTitle}</div>
+                      <div className="font-medium text-sage-200">{item.taskTitle}</div>
                     </td>
                     <td>
-                      <span className="px-2 py-0.5 text-[11px] font-mono font-medium bg-[#161C29] text-slate-300 border border-[#232F45] rounded">
+                      <span className="px-2 py-0.5 text-[11px] font-mono font-medium bg-[#1A2016] text-sage-300 border border-[#37452E] rounded">
                         {item.groupName}
                       </span>
                     </td>
@@ -204,7 +204,7 @@ export const TeacherPendingReviews: React.FC = () => {
                         #{item.attemptNumber}
                       </span>
                     </td>
-                    <td className="text-slate-400 text-xs font-mono">
+                    <td className="text-sage-400 text-xs font-mono">
                       {new Date(item.submittedAt).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', {
                         month: 'short',
                         day: 'numeric',

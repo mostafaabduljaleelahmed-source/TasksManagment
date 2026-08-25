@@ -36,8 +36,8 @@ const AdminDatabaseHealth = lazy(() => import('./pages/AdminDatabaseHealth').the
 const CalendarPage = lazy(() => import('./pages/CalendarPage').then(m => ({ default: m.CalendarPage })));
 
 const PageLoader = () => (
-  <div className="min-h-screen bg-[#0B0F19] flex flex-col items-center justify-center text-zinc-500">
-    <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
+  <div className="min-h-screen bg-[#0A0D0A] flex flex-col items-center justify-center text-sage-500">
+    <Loader2 className="w-8 h-8 animate-spin text-primary-500 mb-2" />
     <p className="text-xs">Loading page...</p>
   </div>
 );
@@ -47,8 +47,8 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0B0F19] flex flex-col items-center justify-center text-zinc-500">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
+      <div className="min-h-screen bg-[#0A0D0A] flex flex-col items-center justify-center text-sage-500">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500 mb-2" />
         <p className="text-xs">Authenticating session...</p>
       </div>
     );
@@ -66,8 +66,8 @@ const TeacherRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center text-zinc-500">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-2" />
+      <div className="min-h-screen bg-[#070907] flex flex-col items-center justify-center text-sage-500">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500 mb-2" />
       </div>
     );
   }
@@ -84,8 +84,8 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center text-zinc-500">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-2" />
+      <div className="min-h-screen bg-[#070907] flex flex-col items-center justify-center text-sage-500">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500 mb-2" />
       </div>
     );
   }

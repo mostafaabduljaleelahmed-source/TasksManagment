@@ -102,27 +102,27 @@ export const CourseMembers: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Header Breadcrumb & Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F1F26] pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1A2016] pb-6">
           <div>
             <Link
               to={`/course/${courseId}`}
-              className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-400 hover:text-indigo-300 mb-2 transition-colors"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-primary-400 hover:text-primary-300 mb-2 transition-colors"
             >
               {isRtl ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
               {t('courses')} / {data?.courseName || 'Course'}
             </Link>
             <h1 className="text-2xl font-extrabold text-white flex items-center gap-3">
-              <Users className="w-6 h-6 text-indigo-500" />
-              Student Management: <span className="text-indigo-400">{data?.courseName}</span>
+              <Users className="w-6 h-6 text-primary-500" />
+              Student Management: <span className="text-primary-400">{data?.courseName}</span>
             </h1>
-            <p className="text-xs text-zinc-400 mt-1">Course Code: <span className="font-mono text-zinc-200">{data?.courseCode}</span></p>
+            <p className="text-xs text-sage-400 mt-1">Course Code: <span className="font-mono text-sage-200">{data?.courseCode}</span></p>
           </div>
         </div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-3" />
-            <p className="text-sm text-zinc-400">Loading student roster...</p>
+            <Loader2 className="w-10 h-10 animate-spin text-primary-500 mb-3" />
+            <p className="text-sm text-sage-400">Loading student roster...</p>
           </div>
         ) : error || !data ? (
           <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-center">
@@ -131,13 +131,13 @@ export const CourseMembers: React.FC = () => {
         ) : (
           <div className="space-y-8">
             {/* Instructor Section Card */}
-            <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl">
-              <h2 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <School className="w-4 h-4 text-indigo-400" />
+            <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl">
+              <h2 className="text-xs font-bold text-primary-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <School className="w-4 h-4 text-primary-400" />
                 {t('instructor')}
               </h2>
-              <div className="flex items-center gap-4 bg-[#1A1A20] p-4 border border-[#292933] rounded-xl">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-600 text-white font-bold text-lg flex items-center justify-center border border-indigo-400/30 overflow-hidden shadow-md">
+              <div className="flex items-center gap-4 bg-[#1A2016] p-4 border border-[#212B1E] rounded-xl">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary-600 to-primary-600 text-white font-bold text-lg flex items-center justify-center border border-primary-400/30 overflow-hidden shadow-md">
                   {data.teacher.avatarUrl ? (
                     <img src={data.teacher.avatarUrl} alt={data.teacher.name} className="w-full h-full object-cover" />
                   ) : (
@@ -147,51 +147,51 @@ export const CourseMembers: React.FC = () => {
                 <div>
                   <h3 className="text-base font-bold text-white flex items-center gap-2">
                     {data.teacher.name}
-                    <span className="bg-indigo-500/20 text-indigo-300 text-[10px] px-2 py-0.5 rounded-md font-bold uppercase border border-indigo-500/30">
+                    <span className="bg-primary-500/20 text-primary-300 text-[10px] px-2 py-0.5 rounded-md font-bold uppercase border border-primary-500/30">
                       {t('teacher')}
                     </span>
                   </h3>
-                  <p className="text-xs text-zinc-400 mt-0.5">{data.teacher.email}</p>
+                  <p className="text-xs text-sage-400 mt-0.5">{data.teacher.email}</p>
                 </div>
               </div>
             </div>
 
             {/* Student Roster Section */}
-            <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
+            <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl space-y-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-base font-bold text-white flex items-center gap-2">
-                    <GraduationCap className="w-5 h-5 text-indigo-400" />
+                    <GraduationCap className="w-5 h-5 text-primary-400" />
                     Enrolled Students ({filteredStudents.length})
                   </h2>
-                  <p className="text-xs text-zinc-400">Click any student to view detailed submissions, grades, and teacher actions.</p>
+                  <p className="text-xs text-sage-400">Click any student to view detailed submissions, grades, and teacher actions.</p>
                 </div>
 
                 {/* Filter and Search Bar */}
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="relative">
-                    <Search className={`w-4 h-4 text-zinc-400 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
+                    <Search className={`w-4 h-4 text-sage-400 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
                     <input
                       type="text"
                       placeholder="Search by name, ID, email..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className={`bg-[#1A1A20] border border-[#292933] rounded-xl text-xs text-white py-2 ${isRtl ? 'pr-9 pl-4' : 'pl-9 pr-4'} focus:outline-none focus:border-indigo-500 w-48 sm:w-64`}
+                      className={`bg-[#1A2016] border border-[#212B1E] rounded-xl text-xs text-white py-2 ${isRtl ? 'pr-9 pl-4' : 'pl-9 pr-4'} focus:outline-none focus:border-primary-500 w-48 sm:w-64`}
                     />
                   </div>
 
-                  <div className="flex items-center gap-2 bg-[#1A1A20] border border-[#292933] px-3 py-1.5 rounded-xl text-xs">
-                    <Filter className="w-3.5 h-3.5 text-indigo-400" />
+                  <div className="flex items-center gap-2 bg-[#1A2016] border border-[#212B1E] px-3 py-1.5 rounded-xl text-xs">
+                    <Filter className="w-3.5 h-3.5 text-primary-400" />
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="bg-transparent text-zinc-300 focus:outline-none cursor-pointer font-bold"
+                      className="bg-transparent text-sage-300 focus:outline-none cursor-pointer font-bold"
                     >
-                      <option value="All" className="bg-[#1A1A20]">All Students</option>
-                      <option value="Pending" className="bg-[#1A1A20]">Pending Students</option>
-                      <option value="Missing" className="bg-[#1A1A20]">Missing Submissions</option>
-                      <option value="HighestGrade" className="bg-[#1A1A20]">Highest Grades</option>
-                      <option value="LowestGrade" className="bg-[#1A1A20]">Lowest Grades</option>
+                      <option value="All" className="bg-[#1A2016]">All Students</option>
+                      <option value="Pending" className="bg-[#1A2016]">Pending Students</option>
+                      <option value="Missing" className="bg-[#1A2016]">Missing Submissions</option>
+                      <option value="HighestGrade" className="bg-[#1A2016]">Highest Grades</option>
+                      <option value="LowestGrade" className="bg-[#1A2016]">Lowest Grades</option>
                     </select>
                   </div>
                 </div>
@@ -200,7 +200,7 @@ export const CourseMembers: React.FC = () => {
               {/* Roster Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[#1A1A20] text-zinc-400 uppercase font-semibold border-b border-[#292933]">
+                  <thead className="bg-[#1A2016] text-sage-400 uppercase font-semibold border-b border-[#212B1E]">
                     <tr>
                       <th className="px-4 py-3">Student</th>
                       <th className="px-4 py-3">Student ID</th>
@@ -212,10 +212,10 @@ export const CourseMembers: React.FC = () => {
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#24242B]">
+                  <tbody className="divide-y divide-[#212B1E]">
                     {filteredStudents.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="px-4 py-8 text-center text-zinc-500">
+                        <td colSpan={8} className="px-4 py-8 text-center text-sage-500">
                           No students match the criteria.
                         </td>
                       </tr>
@@ -224,11 +224,11 @@ export const CourseMembers: React.FC = () => {
                         <tr
                           key={student.studentId}
                           onClick={() => setSelectedStudent(student)}
-                          className="hover:bg-[#18181E] cursor-pointer transition-colors group"
+                          className="hover:bg-[#1A2016] cursor-pointer transition-colors group"
                         >
                           {/* Student Profile & Email */}
                           <td className="px-4 py-3.5 font-medium text-white flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center justify-center border border-indigo-400/30 overflow-hidden shrink-0">
+                            <div className="w-9 h-9 rounded-xl bg-primary-600 text-white font-bold text-xs flex items-center justify-center border border-primary-400/30 overflow-hidden shrink-0">
                               {student.avatarUrl ? (
                                 <img src={student.avatarUrl} alt={student.name} className="w-full h-full object-cover" />
                               ) : (
@@ -236,13 +236,13 @@ export const CourseMembers: React.FC = () => {
                               )}
                             </div>
                             <div>
-                              <div className="font-bold text-white group-hover:text-indigo-300 transition-colors">{student.name}</div>
-                              <div className="text-[11px] text-zinc-400">{student.email}</div>
+                              <div className="font-bold text-white group-hover:text-primary-300 transition-colors">{student.name}</div>
+                              <div className="text-[11px] text-sage-400">{student.email}</div>
                             </div>
                           </td>
 
                           {/* Student ID */}
-                          <td className="px-4 py-3.5 font-mono text-zinc-300">{student.studentRegisterId}</td>
+                          <td className="px-4 py-3.5 font-mono text-sage-300">{student.studentRegisterId}</td>
 
                           {/* Average Grade */}
                           <td className="px-4 py-3.5">
@@ -273,7 +273,7 @@ export const CourseMembers: React.FC = () => {
                           </td>
 
                           {/* Last Activity */}
-                          <td className="px-4 py-3.5 text-zinc-400 font-mono text-[11px]">
+                          <td className="px-4 py-3.5 text-sage-400 font-mono text-[11px]">
                             {student.lastActivity ? new Date(student.lastActivity).toLocaleDateString() : 'N/A'}
                           </td>
 
@@ -284,7 +284,7 @@ export const CourseMembers: React.FC = () => {
                                 e.stopPropagation();
                                 setSelectedStudent(student);
                               }}
-                              className="px-3 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 font-bold rounded-lg text-xs transition-colors flex items-center gap-1 ml-auto"
+                              className="px-3 py-1 bg-primary-600/20 hover:bg-primary-600/40 border border-primary-500/30 text-primary-300 font-bold rounded-lg text-xs transition-colors flex items-center gap-1 ml-auto"
                             >
                               <Eye className="w-3.5 h-3.5" /> View Details
                             </button>

@@ -113,8 +113,8 @@ export const TeacherAnalytics: React.FC = () => {
   return (
     <div className="pb-16 relative overflow-hidden space-y-8">
       {/* Background ambient lighting */}
-      <div className="absolute top-20 right-0 w-96 h-96 bg-indigo-600/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-600/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-20 right-0 w-96 h-96 bg-primary-600/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary-600/5 rounded-full blur-3xl pointer-events-none" />
         {/* Header with Filter */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -124,12 +124,12 @@ export const TeacherAnalytics: React.FC = () => {
             </h1>
           </div>
 
-          <div className="flex items-center gap-3 bg-[#16161A] border border-[#24242B] p-2 rounded-xl">
-            <Filter className="w-4 h-4 text-zinc-400" />
+          <div className="flex items-center gap-3 bg-[#12160F] border border-[#212B1E] p-2 rounded-xl">
+            <Filter className="w-4 h-4 text-sage-400" />
             <select
               value={selectedCourseId}
               onChange={handleCourseChange}
-              className="bg-[#1F1F24] border border-[#2F2F37] text-white text-xs font-semibold rounded-lg px-3 py-2 focus:outline-none"
+              className="bg-[#1A2016] border border-[#37452E] text-white text-xs font-semibold rounded-lg px-3 py-2 focus:outline-none"
             >
               <option value="">{t('allGroups')}</option>
               {courses.map((c) => (
@@ -158,42 +158,42 @@ export const TeacherAnalytics: React.FC = () => {
           <>
             {/* Top Key Metrics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-                <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400 w-fit mb-3">
+              <div className="bg-[#12160F] border border-[#212B1E] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
+                <div className="p-2.5 bg-primary-500/10 border border-primary-500/20 rounded-xl text-primary-400 w-fit mb-3">
                   <BookOpen className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-3xs text-zinc-400 uppercase tracking-wider block font-semibold">Total Groups</span>
+                  <span className="text-3xs text-sage-400 uppercase tracking-wider block font-semibold">Total Groups</span>
                   <span className="text-2xl font-black text-white mt-1 block">{analyticsData.totalCourses}</span>
                 </div>
               </div>
 
-              <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-                <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400 w-fit mb-3">
+              <div className="bg-[#12160F] border border-[#212B1E] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
+                <div className="p-2.5 bg-primary-500/10 border border-primary-500/20 rounded-xl text-primary-400 w-fit mb-3">
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-3xs text-slate-400 uppercase tracking-wider block font-semibold">Total Students</span>
-                  <span className="text-2xl font-black text-slate-100 mt-1 block">{analyticsData.totalStudents}</span>
+                  <span className="text-3xs text-sage-400 uppercase tracking-wider block font-semibold">Total Students</span>
+                  <span className="text-2xl font-black text-sage-100 mt-1 block">{analyticsData.totalStudents}</span>
                 </div>
               </div>
 
-              <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
+              <div className="bg-[#12160F] border border-[#212B1E] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
                 <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 w-fit mb-3">
                   <Award className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-3xs text-zinc-400 uppercase tracking-wider block font-semibold">Class Avg Grade</span>
+                  <span className="text-3xs text-sage-400 uppercase tracking-wider block font-semibold">Class Avg Grade</span>
                   <span className="text-2xl font-black text-emerald-400 mt-1 block">{analyticsData.overallAverageGrade}%</span>
                 </div>
               </div>
 
-              <div className="bg-[#16161A] border border-[#24242B] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
+              <div className="bg-[#12160F] border border-[#212B1E] p-5 rounded-2xl shadow-xl flex flex-col justify-between">
                 <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 w-fit mb-3">
                   <Clock className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-3xs text-zinc-400 uppercase tracking-wider block font-semibold">Total Submissions</span>
+                  <span className="text-3xs text-sage-400 uppercase tracking-wider block font-semibold">Total Submissions</span>
                   <span className="text-2xl font-black text-amber-400 mt-1 block">{analyticsData.totalSubmissions}</span>
                 </div>
               </div>
@@ -202,53 +202,53 @@ export const TeacherAnalytics: React.FC = () => {
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Submission Trend */}
-              <div className="bg-[#16161A] border border-[#24242B] rounded-2xl p-6 shadow-xl">
+              <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-400" />
                     <h3 className="text-lg font-bold text-white">7-Day Submission Velocity</h3>
                   </div>
-                  <span className="text-xs text-zinc-400">Submissions per day</span>
+                  <span className="text-xs text-sage-400">Submissions per day</span>
                 </div>
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={analyticsData.submissionTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="subGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
-                          <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                          <stop offset="5%" stopColor="#1FA971" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#1FA971" stopOpacity={0.0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#24242B" />
-                      <XAxis dataKey="date" stroke="#71717A" tick={{ fontSize: 11 }} />
-                      <YAxis stroke="#71717A" tick={{ fontSize: 11 }} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#212B1E" />
+                      <XAxis dataKey="date" stroke="#7C8A72" tick={{ fontSize: 11 }} />
+                      <YAxis stroke="#7C8A72" tick={{ fontSize: 11 }} />
                       <Tooltip
-                        contentStyle={{ backgroundColor: '#1A1A22', borderColor: '#2F2F37', borderRadius: '12px', color: '#FFF' }}
+                        contentStyle={{ backgroundColor: '#1A2016', borderColor: '#37452E', borderRadius: '12px', color: '#FFF' }}
                         formatter={(val: any) => [`${val} submissions`, 'Volume']}
                       />
-                      <Area type="monotone" dataKey="submissions" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#subGradient)" />
+                      <Area type="monotone" dataKey="submissions" stroke="#1FA971" strokeWidth={3} fillOpacity={1} fill="url(#subGradient)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
               {/* Hardest Assignments */}
-              <div className="bg-[#16161A] border border-[#24242B] rounded-2xl p-6 shadow-xl">
+              <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="w-5 h-5 text-amber-400" />
                     <h3 className="text-lg font-bold text-white">Most Challenging Tasks</h3>
                   </div>
-                  <span className="text-xs text-zinc-400">Lowest average grade</span>
+                  <span className="text-xs text-sage-400">Lowest average grade</span>
                 </div>
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={analyticsData.difficultTasks} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#24242B" />
-                      <XAxis dataKey="taskTitle" stroke="#71717A" tick={{ fontSize: 10 }} />
-                      <YAxis stroke="#71717A" tick={{ fontSize: 11 }} domain={[0, 100]} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#212B1E" />
+                      <XAxis dataKey="taskTitle" stroke="#7C8A72" tick={{ fontSize: 10 }} />
+                      <YAxis stroke="#7C8A72" tick={{ fontSize: 11 }} domain={[0, 100]} />
                       <Tooltip
-                        contentStyle={{ backgroundColor: '#1A1A22', borderColor: '#2F2F37', borderRadius: '12px', color: '#FFF' }}
+                        contentStyle={{ backgroundColor: '#1A2016', borderColor: '#37452E', borderRadius: '12px', color: '#FFF' }}
                         formatter={(val: any) => [`${val}%`, 'Average Grade']}
                       />
                       <Bar dataKey="averageGrade" radius={[6, 6, 0, 0]}>
@@ -263,7 +263,7 @@ export const TeacherAnalytics: React.FC = () => {
             </div>
 
             {/* Pending Reviews Table */}
-            <div className="bg-[#16161A] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Clock className="w-5 h-5 text-amber-400" />
@@ -282,8 +282,8 @@ export const TeacherAnalytics: React.FC = () => {
                 />
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-zinc-300">
-                    <thead className="bg-[#1F1F24] border-b border-[#2F2F37] text-zinc-400 uppercase tracking-wider font-semibold">
+                  <table className="w-full text-left text-xs text-sage-300">
+                    <thead className="bg-[#1A2016] border-b border-[#37452E] text-sage-400 uppercase tracking-wider font-semibold">
                       <tr>
                         <th className="p-3.5 rounded-l-xl">Student Name</th>
                         <th className="p-3.5">Registration ID</th>
@@ -293,20 +293,20 @@ export const TeacherAnalytics: React.FC = () => {
                         <th className="p-3.5 text-right rounded-r-xl">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#24242B]">
+                    <tbody className="divide-y divide-[#212B1E]">
                       {analyticsData.pendingReviews.map((sub) => (
-                        <tr key={sub.submissionId} className="hover:bg-[#1C1C22] transition-colors">
+                        <tr key={sub.submissionId} className="hover:bg-[#1A2016] transition-colors">
                           <td className="p-3.5 font-bold text-white">{sub.studentName}</td>
-                          <td className="p-3.5 font-mono text-zinc-400">{sub.studentRegisterId}</td>
-                          <td className="p-3.5 font-semibold text-indigo-300">{sub.taskTitle}</td>
-                          <td className="p-3.5 text-zinc-400">
+                          <td className="p-3.5 font-mono text-sage-400">{sub.studentRegisterId}</td>
+                          <td className="p-3.5 font-semibold text-primary-300">{sub.taskTitle}</td>
+                          <td className="p-3.5 text-sage-400">
                             {new Date(sub.submittedAt).toLocaleDateString()} {new Date(sub.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </td>
-                          <td className="p-3.5 text-zinc-400">Attempt #{sub.attemptNumber}</td>
+                          <td className="p-3.5 text-sage-400">Attempt #{sub.attemptNumber}</td>
                           <td className="p-3.5 text-right">
                             <button
                               onClick={() => navigate(`/grading-workspace/${sub.taskId}`)}
-                              className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white rounded-lg font-semibold shadow-md transition-all ml-auto flex items-center gap-1.5 cursor-pointer"
+                              className="px-3.5 py-1.5 bg-primary-600 hover:bg-primary-500 active:scale-[0.98] text-white rounded-lg font-semibold shadow-md transition-all ml-auto flex items-center gap-1.5 cursor-pointer"
                             >
                               <FileCode className="w-3.5 h-3.5" />
                               Evaluate

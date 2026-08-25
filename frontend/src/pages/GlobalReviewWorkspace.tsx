@@ -149,7 +149,7 @@ export const GlobalReviewWorkspace: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="h-[80vh] flex items-center justify-center text-slate-400 text-xs">
+      <div className="h-[80vh] flex items-center justify-center text-sage-400 text-xs">
         {lang === 'ar' ? 'جاري فتح بيئة التقييم...' : 'Loading evaluation console...'}
       </div>
     );
@@ -182,26 +182,26 @@ export const GlobalReviewWorkspace: React.FC = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-60px)] flex flex-col -m-3 sm:-m-6 select-none bg-[#07090E]">
+    <div className="h-[calc(100vh-60px)] flex flex-col -m-3 sm:-m-6 select-none bg-[#070907]">
       {/* Top Header Console Bar */}
-      <div className="h-11 bg-[#0E121A] border-b border-[#1B2333] px-3 flex items-center justify-between shrink-0">
+      <div className="h-11 bg-[#12160F] border-b border-[#1E2519] px-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate('/teacher/pending-reviews')}
-            className="text-slate-400 hover:text-white text-xs font-semibold flex items-center gap-1 shrink-0"
+            className="text-sage-400 hover:text-white text-xs font-semibold flex items-center gap-1 shrink-0"
           >
             {isRtl ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
             <span>{lang === 'ar' ? 'القائمة' : 'Exit Queue'}</span>
           </button>
-          <div className="h-4 w-px bg-[#1B2333]" />
+          <div className="h-4 w-px bg-[#1E2519]" />
           <div className="min-w-0 truncate">
             <span className="text-xs font-bold text-white">{currentItem.studentName}</span>
-            <span className="text-[11px] font-mono text-slate-400 ml-2">({currentItem.groupName})</span>
+            <span className="text-[11px] font-mono text-sage-400 ml-2">({currentItem.groupName})</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs font-mono text-slate-400">
+          <span className="text-xs font-mono text-sage-400">
             {currentIndex + 1} / {queue.length}
           </span>
           <button
@@ -226,10 +226,10 @@ export const GlobalReviewWorkspace: React.FC = () => {
       {/* Main IDE Split Console View */}
       <div className="flex-1 min-h-0 flex flex-col md:flex-row">
         {/* Left: Code Viewer Panel */}
-        <div className="flex-1 min-h-0 flex flex-col border-r border-[#1B2333]">
-          <div className="h-8 bg-[#0F131C] border-b border-[#1B2333] px-3 flex items-center justify-between shrink-0">
-            <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5">
-              <Code className="w-3.5 h-3.5 text-blue-400" />
+        <div className="flex-1 min-h-0 flex flex-col border-r border-[#1E2519]">
+          <div className="h-8 bg-[#12160F] border-b border-[#1E2519] px-3 flex items-center justify-between shrink-0">
+            <span className="text-[11px] font-mono text-sage-400 flex items-center gap-1.5">
+              <Code className="w-3.5 h-3.5 text-primary-400" />
               <span>solution.{(currentItem.language || 'cpp').toLowerCase() === 'c++' ? 'cpp' : (currentItem.language || 'cpp').toLowerCase()}</span>
             </span>
             <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.2 rounded">
@@ -254,17 +254,17 @@ export const GlobalReviewWorkspace: React.FC = () => {
         </div>
 
         {/* Right: Evaluation Controls Panel */}
-        <div className="w-full md:w-96 bg-[#0E121A] flex flex-col shrink-0 border-t md:border-t-0 border-[#1B2333]">
+        <div className="w-full md:w-96 bg-[#12160F] flex flex-col shrink-0 border-t md:border-t-0 border-[#1E2519]">
           <div className="p-4 space-y-4 flex-1 overflow-y-auto">
             {/* Task Info Header */}
-            <div className="bg-[#151B28] p-3 rounded border border-[#232F45] space-y-1">
+            <div className="bg-[#1A2016] p-3 rounded border border-[#37452E] space-y-1">
               <h3 className="text-xs font-bold text-white truncate">{currentItem.taskTitle}</h3>
-              <p className="text-[11px] text-slate-400 line-clamp-2">{currentItem.description || 'No task description.'}</p>
+              <p className="text-[11px] text-sage-400 line-clamp-2">{currentItem.description || 'No task description.'}</p>
             </div>
 
             {/* Score Box */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-sage-400 block">
                 {lang === 'ar' ? 'الدرجة المستحقة' : 'Assigned Score'}
               </label>
               <div className="flex items-center gap-2">
@@ -276,13 +276,13 @@ export const GlobalReviewWorkspace: React.FC = () => {
                   onChange={(e) => setGradeInput(e.target.value)}
                   className="academic-input font-mono text-base font-bold text-white text-center w-24"
                 />
-                <span className="text-sm font-mono text-slate-400">/ {currentItem.maxGrade}</span>
+                <span className="text-sm font-mono text-sage-400">/ {currentItem.maxGrade}</span>
               </div>
             </div>
 
             {/* Presets */}
-            <div className="space-y-2 pt-2 border-t border-[#1B2333]">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+            <div className="space-y-2 pt-2 border-t border-[#1E2519]">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-sage-400 block">
                 {lang === 'ar' ? 'قوالب الملاحظات التوجيهية' : 'Feedback Presets'}
               </label>
               <div className="space-y-1.5">
@@ -292,8 +292,8 @@ export const GlobalReviewWorkspace: React.FC = () => {
                     onClick={() => handleApplyPreset(preset)}
                     className={`w-full text-left p-2 rounded text-xs border transition-colors ${
                       activePreset === preset.id
-                        ? 'bg-blue-600/20 border-blue-500 text-blue-200 font-semibold'
-                        : 'bg-[#151B28] border-[#232F45] text-slate-300 hover:border-slate-600'
+                        ? 'bg-primary-600/20 border-primary-500 text-primary-200 font-semibold'
+                        : 'bg-[#1A2016] border-[#37452E] text-sage-300 hover:border-sage-600'
                     }`}
                   >
                     {preset.label}
@@ -303,8 +303,8 @@ export const GlobalReviewWorkspace: React.FC = () => {
             </div>
 
             {/* Manual Feedback */}
-            <div className="space-y-1.5 pt-2 border-t border-[#1B2333]">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+            <div className="space-y-1.5 pt-2 border-t border-[#1E2519]">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-sage-400 block">
                 {lang === 'ar' ? 'ملاحظات المدرس' : 'Teacher Notes & Feedback'}
               </label>
               <textarea

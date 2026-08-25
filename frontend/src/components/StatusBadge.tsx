@@ -30,7 +30,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 }) => {
   const normalized = (status || '').toLowerCase().trim();
 
-  let colorStyle = 'bg-zinc-800 text-zinc-400 border-zinc-700';
+  let colorStyle = 'bg-sage-800 text-sage-400 border-sage-700';
   let IconComponent: React.ComponentType<{ className?: string }> = Circle;
   let label = status;
 
@@ -90,13 +90,13 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       break;
 
     case 'draft':
-      colorStyle = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30';
+      colorStyle = 'bg-primary-500/10 text-primary-400 border-primary-500/30';
       IconComponent = FileEdit;
       label = 'Draft';
       break;
 
     default:
-      colorStyle = 'bg-zinc-800/80 text-zinc-300 border-zinc-700/60';
+      colorStyle = 'bg-sage-800/80 text-sage-300 border-sage-700/60';
       IconComponent = Circle;
       break;
   }

@@ -179,7 +179,7 @@ export const UserManagement: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-              <Users className="w-6 h-6 text-indigo-400" />
+              <Users className="w-6 h-6 text-primary-400" />
               User & Instructor Management
             </h1>
           </div>
@@ -187,7 +187,7 @@ export const UserManagement: React.FC = () => {
           {activeTab === 'Teachers' && (
             <button
               onClick={() => setShowCreateTeacher(true)}
-              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-indigo-950/40 cursor-pointer"
+              className="px-4 py-2.5 bg-primary-600 hover:bg-primary-500 active:scale-[0.98] text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-primary-950/40 cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
               Create Teacher Account
@@ -196,14 +196,14 @@ export const UserManagement: React.FC = () => {
         </div>
 
         {/* Tab & Search Control Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#121215] p-3 rounded-2xl border border-[#24242B]">
-          <div className="flex items-center gap-2 bg-[#1A1A20] p-1 rounded-xl border border-[#292933]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#12160F] p-3 rounded-2xl border border-[#212B1E]">
+          <div className="flex items-center gap-2 bg-[#1A2016] p-1 rounded-xl border border-[#212B1E]">
             <button
               onClick={() => setActiveTab('Teachers')}
               className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
                 activeTab === 'Teachers'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-zinc-400 hover:text-white'
+                  ? 'bg-primary-600 text-white shadow-md'
+                  : 'text-sage-400 hover:text-white'
               }`}
             >
               <Users className="w-3.5 h-3.5" />
@@ -213,8 +213,8 @@ export const UserManagement: React.FC = () => {
               onClick={() => setActiveTab('Students')}
               className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
                 activeTab === 'Students'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-zinc-400 hover:text-white'
+                  ? 'bg-primary-600 text-white shadow-md'
+                  : 'text-sage-400 hover:text-white'
               }`}
             >
               <GraduationCap className="w-3.5 h-3.5" />
@@ -224,19 +224,19 @@ export const UserManagement: React.FC = () => {
 
           {/* Search Box */}
           <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-sage-500 absolute left-3 top-2.5" />
             <input
               type="text"
               placeholder={`Search ${activeTab.toLowerCase()} by name or email...`}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#1A2016] border border-[#212B1E] rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-sage-500 focus:outline-none focus:border-primary-500"
             />
           </div>
         </div>
 
         {/* Users Table */}
-        <div className="bg-[#121215] border border-[#24242B] rounded-2xl overflow-hidden shadow-xl">
+        <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl overflow-hidden shadow-xl">
           {loading ? (
             <div className="p-6 space-y-3">
               <TableRowSkeleton />
@@ -255,7 +255,7 @@ export const UserManagement: React.FC = () => {
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-[#17171C] border-b border-[#24242B] text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
+                    <tr className="bg-[#12160F] border-b border-[#212B1E] text-[11px] font-bold text-sage-400 uppercase tracking-wider">
                       <th className="py-3.5 px-4">User</th>
                       <th className="py-3.5 px-4">Role / Identifier</th>
                       <th className="py-3.5 px-4">Status</th>
@@ -263,22 +263,22 @@ export const UserManagement: React.FC = () => {
                       <th className="py-3.5 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#1F1F26] text-xs text-zinc-300 font-medium">
+                  <tbody className="divide-y divide-[#1A2016] text-xs text-sage-300 font-medium">
                     {filteredUsers.map((u) => (
-                      <tr key={u.id} className="hover:bg-[#16161B] transition-colors">
+                      <tr key={u.id} className="hover:bg-[#1A2016] transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-600 to-primary-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden">
                               {u.avatarUrl ? <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" /> : u.name[0]}
                             </div>
                             <div>
                               <p className="font-bold text-white">{u.name}</p>
-                              <p className="text-[10px] text-zinc-400 font-mono">{u.email}</p>
+                              <p className="text-[10px] text-sage-400 font-mono">{u.email}</p>
                             </div>
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
-                          <span className="px-2.5 py-1 bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-lg text-[10px] font-bold font-mono">
+                          <span className="px-2.5 py-1 bg-primary-500/10 text-primary-300 border border-primary-500/20 rounded-lg text-[10px] font-bold font-mono">
                             {u.role === 'Student' && u.studentId ? `ID: ${u.studentId}` : u.role}
                           </span>
                         </td>
@@ -293,14 +293,14 @@ export const UserManagement: React.FC = () => {
                             </span>
                           )}
                         </td>
-                        <td className="py-3.5 px-4 text-zinc-400 text-[11px]">
+                        <td className="py-3.5 px-4 text-sage-400 text-[11px]">
                           {new Date(u.joinedAt).toLocaleDateString()}
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleViewProfile(u)}
-                              className="p-1.5 bg-[#1F1F26] hover:bg-[#2A2A34] text-zinc-300 rounded-lg transition-all"
+                              className="p-1.5 bg-[#1A2016] hover:bg-[#212B1E] text-sage-300 rounded-lg transition-all"
                               title="View Profile Details"
                             >
                               <Eye className="w-3.5 h-3.5" />
@@ -341,15 +341,15 @@ export const UserManagement: React.FC = () => {
               {/* Mobile Cards */}
               <div className="block md:hidden space-y-3">
                 {filteredUsers.map((u) => (
-                  <div key={u.id} className="p-4 bg-[#16161B] border border-[#24242B] rounded-xl space-y-3">
+                  <div key={u.id} className="p-4 bg-[#1A2016] border border-[#212B1E] rounded-xl space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden">
+                        <div className="w-9 h-9 rounded-full bg-primary-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden">
                           {u.avatarUrl ? <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" /> : u.name[0]}
                         </div>
                         <div>
                           <p className="font-bold text-white text-xs">{u.name}</p>
-                          <p className="text-[10px] text-zinc-400 font-mono">{u.email}</p>
+                          <p className="text-[10px] text-sage-400 font-mono">{u.email}</p>
                         </div>
                       </div>
                       {u.isDisabled ? (
@@ -358,10 +358,10 @@ export const UserManagement: React.FC = () => {
                         <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[10px] font-bold">Active</span>
                       )}
                     </div>
-                    <div className="flex items-center justify-between text-xs pt-2 border-t border-[#24242B]">
-                      <span className="text-zinc-400 font-mono text-[10px]">{u.role === 'Student' && u.studentId ? `ID: ${u.studentId}` : u.role}</span>
+                    <div className="flex items-center justify-between text-xs pt-2 border-t border-[#212B1E]">
+                      <span className="text-sage-400 font-mono text-[10px]">{u.role === 'Student' && u.studentId ? `ID: ${u.studentId}` : u.role}</span>
                       <div className="flex items-center gap-1.5">
-                        <button onClick={() => handleViewProfile(u)} className="p-1.5 bg-[#1F1F26] text-zinc-300 rounded-lg">
+                        <button onClick={() => handleViewProfile(u)} className="p-1.5 bg-[#1A2016] text-sage-300 rounded-lg">
                           <Eye className="w-3.5 h-3.5" />
                         </button>
                         <button onClick={() => setResetTargetUser(u)} className="p-1.5 bg-amber-500/10 text-amber-400 rounded-lg">
@@ -385,50 +385,50 @@ export const UserManagement: React.FC = () => {
       {/* Create Teacher Modal */}
       {showCreateTeacher && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#121215] border border-[#2B2B36] rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-[#1F1F26] pb-4">
+          <div className="bg-[#12160F] border border-[#37452E] rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-[#1A2016] pb-4">
               <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-indigo-400" />
+                <UserPlus className="w-5 h-5 text-primary-400" />
                 Provision Teacher Account
               </h3>
-              <button onClick={() => setShowCreateTeacher(false)} className="text-zinc-500 hover:text-white">
+              <button onClick={() => setShowCreateTeacher(false)} className="text-sage-500 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateTeacherSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Full Name</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Full Name</label>
                 <input
                   type="text"
                   value={teacherName}
                   onChange={(e) => setTeacherName(e.target.value)}
                   placeholder="e.g. Dr. Alexander Wright"
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#1A2016] border border-[#212B1E] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Email Address</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Email Address</label>
                 <input
                   type="email"
                   value={teacherEmail}
                   onChange={(e) => setTeacherEmail(e.target.value)}
                   placeholder="e.g. wright@academy.com"
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#1A2016] border border-[#212B1E] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Initial Password</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Initial Password</label>
                 <input
                   type="password"
                   value={teacherPassword}
                   onChange={(e) => setTeacherPassword(e.target.value)}
                   placeholder="Set account password"
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#1A2016] border border-[#212B1E] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500"
                   required
                 />
               </div>
@@ -437,14 +437,14 @@ export const UserManagement: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowCreateTeacher(false)}
-                  className="px-4 py-2 bg-[#1A1A20] hover:bg-[#252530] text-zinc-300 font-bold rounded-xl text-xs"
+                  className="px-4 py-2 bg-[#1A2016] hover:bg-[#212B1E] text-sage-300 font-bold rounded-xl text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={creatingTeacher}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all cursor-pointer"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-500 active:scale-[0.98] text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all cursor-pointer"
                 >
                   {creatingTeacher ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                   Create Teacher
@@ -458,26 +458,26 @@ export const UserManagement: React.FC = () => {
       {/* Reset Password Modal */}
       {resetTargetUser && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#121215] border border-[#2B2B36] rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#1F1F26] pb-4">
+          <div className="bg-[#12160F] border border-[#37452E] rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#1A2016] pb-4">
               <h3 className="text-base font-extrabold text-white flex items-center gap-2">
                 <KeyRound className="w-5 h-5 text-amber-400" />
                 Reset Password for {resetTargetUser.name}
               </h3>
-              <button onClick={() => setResetTargetUser(null)} className="text-zinc-500 hover:text-white">
+              <button onClick={() => setResetTargetUser(null)} className="text-sage-500 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">New Password</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">New Password</label>
                 <input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password (min 6 chars)"
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-[#1A2016] border border-[#212B1E] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
                   required
                 />
               </div>
@@ -486,7 +486,7 @@ export const UserManagement: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setResetTargetUser(null)}
-                  className="px-4 py-2 bg-[#1A1A20] hover:bg-[#252530] text-zinc-300 font-bold rounded-xl text-xs"
+                  className="px-4 py-2 bg-[#1A2016] hover:bg-[#212B1E] text-sage-300 font-bold rounded-xl text-xs"
                 >
                   Cancel
                 </button>
@@ -507,36 +507,36 @@ export const UserManagement: React.FC = () => {
       {/* View Details Modal */}
       {viewUser && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#121215] border border-[#2B2B36] rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#1F1F26] pb-4">
+          <div className="bg-[#12160F] border border-[#37452E] rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#1A2016] pb-4">
               <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-                <Eye className="w-5 h-5 text-indigo-400" />
+                <Eye className="w-5 h-5 text-primary-400" />
                 {viewUser.name}'s Profile
               </h3>
-              <button onClick={() => setViewUser(null)} className="text-zinc-500 hover:text-white">
+              <button onClick={() => setViewUser(null)} className="text-sage-500 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="flex items-center gap-4 p-3 bg-[#17171C] rounded-xl">
-                <div className="w-12 h-12 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-base overflow-hidden">
+              <div className="flex items-center gap-4 p-3 bg-[#12160F] rounded-xl">
+                <div className="w-12 h-12 rounded-full bg-primary-600 text-white font-bold flex items-center justify-center text-base overflow-hidden">
                   {viewUser.avatarUrl ? <img src={viewUser.avatarUrl} alt={viewUser.name} className="w-full h-full object-cover" /> : viewUser.name[0]}
                 </div>
                 <div>
                   <h4 className="font-bold text-white text-sm">{viewUser.name}</h4>
-                  <p className="text-zinc-400 font-mono">{viewUser.email}</p>
+                  <p className="text-sage-400 font-mono">{viewUser.email}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-[#1A1A20] rounded-xl border border-[#292933]">
-                  <span className="text-[10px] text-zinc-500 uppercase font-bold">Role</span>
-                  <p className="font-bold text-indigo-400">{viewUser.role}</p>
+                <div className="p-3 bg-[#1A2016] rounded-xl border border-[#212B1E]">
+                  <span className="text-[10px] text-sage-500 uppercase font-bold">Role</span>
+                  <p className="font-bold text-primary-400">{viewUser.role}</p>
                 </div>
 
-                <div className="p-3 bg-[#1A1A20] rounded-xl border border-[#292933]">
-                  <span className="text-[10px] text-zinc-500 uppercase font-bold">Joined Date</span>
+                <div className="p-3 bg-[#1A2016] rounded-xl border border-[#212B1E]">
+                  <span className="text-[10px] text-sage-500 uppercase font-bold">Joined Date</span>
                   <p className="font-bold text-white">{new Date(viewUser.joinedAt).toLocaleDateString()}</p>
                 </div>
               </div>
@@ -545,7 +545,7 @@ export const UserManagement: React.FC = () => {
             <div className="flex justify-end pt-2">
               <button
                 onClick={() => setViewUser(null)}
-                className="px-4 py-2 bg-[#1A1A20] hover:bg-[#252530] text-zinc-300 font-bold rounded-xl text-xs"
+                className="px-4 py-2 bg-[#1A2016] hover:bg-[#212B1E] text-sage-300 font-bold rounded-xl text-xs"
               >
                 Close
               </button>

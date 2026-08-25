@@ -67,19 +67,19 @@ export const CodeDiffViewer: React.FC<CodeDiffViewerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 dir-rtl" dir="rtl">
-      <div className="w-full max-w-5xl h-[85vh] bg-[#111827] border border-[#1F2937] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-full max-w-5xl h-[85vh] bg-[#12160F] border border-[#212B1E] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F2937] bg-[#1A2234]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#212B1E] bg-[#1E2519]">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl">
+            <div className="p-2 bg-primary-500/10 border border-primary-500/20 text-primary-400 rounded-xl">
               <FileDiff className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 مقارنة الفروقات بين المحاولات (Diff View)
               </h3>
-              <p className="text-xs text-zinc-400 mt-0.5">
+              <p className="text-xs text-sage-400 mt-0.5">
                 مقارنة المحاولة #{oldAttemptNumber} مع المحاولة الأخيرة #{newAttemptNumber}
               </p>
             </div>
@@ -95,14 +95,14 @@ export const CodeDiffViewer: React.FC<CodeDiffViewerProps> = ({
               </span>
             </div>
 
-            <button onClick={onClose} className="p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 transition-colors">
+            <button onClick={onClose} className="p-2 text-sage-400 hover:text-white rounded-xl hover:bg-sage-800 transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Diff Code Container */}
-        <div className="flex-1 overflow-y-auto p-4 bg-[#0B0F19] font-mono text-xs leading-relaxed space-y-0.5">
+        <div className="flex-1 overflow-y-auto p-4 bg-[#0A0D0A] font-mono text-xs leading-relaxed space-y-0.5">
           {diffLines.map((line, idx) => (
             <div
               key={idx}
@@ -111,13 +111,13 @@ export const CodeDiffViewer: React.FC<CodeDiffViewerProps> = ({
                   ? 'bg-emerald-500/15 text-emerald-300 border-r-2 border-emerald-400'
                   : line.type === 'removed'
                   ? 'bg-rose-500/15 text-rose-300 border-r-2 border-rose-400 line-through opacity-75'
-                  : 'text-zinc-300 hover:bg-[#111827]'
+                  : 'text-sage-300 hover:bg-[#12160F]'
               }`}
             >
-              <div className="w-12 text-zinc-600 text-left shrink-0 select-none text-[10px] pl-2 font-mono">
+              <div className="w-12 text-sage-600 text-left shrink-0 select-none text-[10px] pl-2 font-mono">
                 {line.oldLineNumber || ''}
               </div>
-              <div className="w-12 text-zinc-600 text-left shrink-0 select-none text-[10px] pl-2 font-mono border-l border-[#1F2937] ml-2">
+              <div className="w-12 text-sage-600 text-left shrink-0 select-none text-[10px] pl-2 font-mono border-l border-[#212B1E] ml-2">
                 {line.newLineNumber || ''}
               </div>
               <div className="w-6 text-center shrink-0 font-bold">

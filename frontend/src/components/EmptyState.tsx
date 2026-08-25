@@ -15,17 +15,17 @@ interface EmptyStateProps {
 
 const defaultPresets: Record<EmptyStateVariant, { icon: React.ReactNode; title: string; description: string }> = {
   general: {
-    icon: <FolderOpen className="w-8 h-8 text-indigo-400" />,
+    icon: <FolderOpen className="w-8 h-8 text-primary-400" />,
     title: 'No Data Found',
     description: 'There are currently no items available to display here.',
   },
   tasks: {
-    icon: <Inbox className="w-8 h-8 text-indigo-400" />,
+    icon: <Inbox className="w-8 h-8 text-primary-400" />,
     title: 'No Tasks Yet',
     description: 'You are all caught up! No pending assignments or tasks available right now.',
   },
   students: {
-    icon: <Users className="w-8 h-8 text-blue-400" />,
+    icon: <Users className="w-8 h-8 text-primary-400" />,
     title: 'No Students Enrolled',
     description: 'No students have been enrolled in this course or classroom yet.',
   },
@@ -40,7 +40,7 @@ const defaultPresets: Record<EmptyStateVariant, { icon: React.ReactNode; title: 
     description: 'Scores will appear here once students begin submitting tasks.',
   },
   search: {
-    icon: <Search className="w-8 h-8 text-zinc-400" />,
+    icon: <Search className="w-8 h-8 text-sage-400" />,
     title: 'No Results Found',
     description: 'We could not find anything matching your search criteria. Try adjusting your filter.',
   },
@@ -67,22 +67,22 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
-      className={`bg-[#16161A]/80 border border-[#24242B] backdrop-blur-md rounded-2xl p-8 sm:p-10 text-center flex flex-col items-center justify-center max-w-md mx-auto space-y-4 my-6 shadow-xl transition-all duration-300 hover:border-indigo-500/30 ${className}`}
+      className={`animate-fade-in-scale bg-[#12160F]/80 border border-[#212B1E] backdrop-blur-md rounded-xl p-8 sm:p-10 text-center flex flex-col items-center justify-center max-w-md mx-auto space-y-4 my-6 shadow-field-md transition-all duration-300 hover:border-primary-500/30 ${className}`}
     >
-      <div className="p-4 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl shadow-inner relative group">
-        <div className="absolute inset-0 rounded-2xl bg-indigo-500/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="p-4 bg-primary-600/10 border border-primary-500/20 rounded-xl relative group">
+        <div className="absolute inset-0 rounded-xl bg-primary-500/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="relative z-10">{displayIcon}</div>
       </div>
 
       <div className="space-y-1">
         <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">{displayTitle}</h3>
-        <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xs mx-auto">{displayDescription}</p>
+        <p className="text-xs sm:text-sm text-sage-400 leading-relaxed max-w-xs mx-auto">{displayDescription}</p>
       </div>
 
       {actionLabel && onAction && (
         <button
           onClick={onAction}
-          className="mt-2 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-semibold text-xs py-2.5 px-5 rounded-xl shadow-lg shadow-emerald-950/40 border border-emerald-400/30 transition-all duration-200 cursor-pointer"
+          className="academic-button-primary mt-2 py-2.5 px-5"
         >
           {actionLabel}
         </button>

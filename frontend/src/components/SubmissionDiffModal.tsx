@@ -35,29 +35,29 @@ export const SubmissionDiffModal: React.FC<SubmissionDiffModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div className="bg-[#121215] border border-[#2B2B36] rounded-2xl max-w-5xl w-full h-[85vh] p-6 flex flex-col space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
+      <div className="bg-[#12160F] border border-[#37452E] rounded-2xl max-w-5xl w-full h-[85vh] p-6 flex flex-col space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#1F1F26] pb-4">
-          <div className="flex items-center gap-2 text-indigo-400 font-extrabold text-sm">
+        <div className="flex items-center justify-between border-b border-[#1A2016] pb-4">
+          <div className="flex items-center gap-2 text-primary-400 font-extrabold text-sm">
             <ArrowLeftRight className="w-5 h-5" />
             <span>Code Attempt Comparison Diff</span>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={handleDownload}
-              className="px-3.5 py-1.5 bg-[#1F1F26] hover:bg-[#2A2A34] border border-[#2B2B36] rounded-xl text-xs font-semibold text-zinc-200 transition-all flex items-center gap-2"
+              className="px-3.5 py-1.5 bg-[#1A2016] hover:bg-[#212B1E] border border-[#37452E] rounded-xl text-xs font-semibold text-sage-200 transition-all flex items-center gap-2"
             >
-              <Download className="w-4 h-4 text-indigo-400" />
+              <Download className="w-4 h-4 text-primary-400" />
               Download Code
             </button>
-            <button onClick={onClose} className="text-zinc-500 hover:text-white p-1">
+            <button onClick={onClose} className="text-sage-500 hover:text-white p-1">
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Diff Labels */}
-        <div className="grid grid-cols-2 gap-4 text-xs font-bold text-zinc-400 px-2">
+        <div className="grid grid-cols-2 gap-4 text-xs font-bold text-sage-400 px-2">
           <div className="flex items-center gap-2">
             <Code className="w-4 h-4 text-amber-400" />
             <span>{originalTitle}</span>
@@ -69,7 +69,7 @@ export const SubmissionDiffModal: React.FC<SubmissionDiffModalProps> = ({
         </div>
 
         {/* Monaco Diff Editor Workspace */}
-        <div className="flex-1 border border-[#262632] rounded-xl overflow-hidden bg-[#09090B]">
+        <div className="flex-1 border border-[#1E2519] rounded-xl overflow-hidden bg-[#070907]">
           <DiffEditor
             original={originalCode}
             modified={modifiedCode}

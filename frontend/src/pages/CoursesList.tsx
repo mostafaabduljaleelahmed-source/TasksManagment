@@ -239,9 +239,12 @@ export const CoursesList: React.FC = () => {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1B2333] pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1E2519] pb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">My Courses</h1>
+          <span className="field-label text-primary-400">
+            {courses.length > 0 ? `${courses.length} active` : 'Workspace'}
+          </span>
+          <h1 className="text-3xl font-bold text-white tracking-tight mt-1">My Courses</h1>
         </div>
 
         <div>
@@ -257,11 +260,11 @@ export const CoursesList: React.FC = () => {
                 </button>
               )}
               <Link to="/admin/users" className="academic-button-secondary py-2.5 px-4">
-                <Users className="w-4 h-4 text-blue-400" />
+                <Users className="w-4 h-4 text-primary-400" />
                 User Management
               </Link>
               <Link to="/admin/settings" className="academic-button-secondary py-2.5 px-4">
-                <Settings className="w-4 h-4 text-blue-400" />
+                <Settings className="w-4 h-4 text-primary-400" />
                 System Settings
               </Link>
             </div>
@@ -299,7 +302,7 @@ export const CoursesList: React.FC = () => {
         </div>
       ) : courses.length === 0 ? (
         <EmptyState
-          icon={<BookOpen className="w-8 h-8 text-blue-400" />}
+          icon={<BookOpen className="w-8 h-8 text-primary-400" />}
           title="No Courses Found"
           description={
             user?.role === 'Student'
@@ -311,17 +314,23 @@ export const CoursesList: React.FC = () => {
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.map((course) => (
+          {courses.map((course, idx) => (
             <div
               key={course.id}
               onClick={() => navigate(`/course/${course.id}`)}
-              className="bg-[#121620] border border-[#1B2333] hover:border-blue-500/40 rounded-2xl p-6 cursor-pointer shadow-xl hover:bg-[#161C2A] transition-all group flex flex-col justify-between"
+              style={{ animationDelay: `${Math.min(idx, 8) * 0.05}s` }}
+              className="animate-rise-in bg-[#12160F] border border-[#1E2519] hover:border-primary-500/40 rounded-xl p-6 cursor-pointer shadow-field-md hover:shadow-field-glow hover:-translate-y-0.5 hover:bg-[#1A2016] transition-all group flex flex-col justify-between"
             >
               <div>
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <h3 className="text-lg font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors">
-                    {course.name}
-                  </h3>
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-md bg-primary-500/12 border border-primary-500/25 text-primary-400 font-bold text-sm flex items-center justify-center shrink-0">
+                      {course.name.trim().charAt(0).toUpperCase() || '?'}
+                    </div>
+                    <h3 className="text-base font-bold text-white tracking-tight group-hover:text-primary-400 transition-colors truncate">
+                      {course.name}
+                    </h3>
+                  </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
@@ -332,7 +341,7 @@ export const CoursesList: React.FC = () => {
                         toast.success(`Copied course code '${course.courseCode}' to clipboard!`);
                       }}
                       title="Click to copy course code"
-                      className="text-[11px] bg-[#161C29] hover:bg-[#1E2638] border border-[#232F45] text-blue-400 font-mono font-bold py-1 px-2.5 rounded-lg cursor-pointer transition-colors flex items-center gap-1"
+                      className="text-[11px] bg-[#1A2016] hover:bg-[#212B1E] border border-[#37452E] text-primary-400 font-mono font-bold py-1 px-2.5 rounded-lg cursor-pointer transition-colors flex items-center gap-1"
                     >
                       <span>{course.courseCode}</span>
                       <Copy className="w-3 h-3 opacity-70" />
@@ -350,7 +359,7 @@ export const CoursesList: React.FC = () => {
                             e.stopPropagation();
                             handleOpenEditModal(course);
                           }}
-                          className="p-1 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-lg transition-colors"
+                          className="p-1 hover:bg-primary-500/20 text-sage-400 hover:text-primary-400 rounded-lg transition-colors"
                           title="Edit Course Settings"
                         >
                           <Edit className="w-4 h-4" />
@@ -361,7 +370,7 @@ export const CoursesList: React.FC = () => {
                             e.stopPropagation();
                             handleDuplicateCourse(course.id);
                           }}
-                          className="p-1 hover:bg-indigo-500/20 text-zinc-400 hover:text-indigo-400 rounded-lg transition-colors"
+                          className="p-1 hover:bg-primary-500/20 text-sage-400 hover:text-primary-400 rounded-lg transition-colors"
                           title="Duplicate Course"
                         >
                           <Copy className="w-4 h-4" />
@@ -372,7 +381,7 @@ export const CoursesList: React.FC = () => {
                             e.stopPropagation();
                             handleArchiveCourse(course.id);
                           }}
-                          className="p-1 hover:bg-amber-500/20 text-zinc-400 hover:text-amber-400 rounded-lg transition-colors"
+                          className="p-1 hover:bg-amber-500/20 text-sage-400 hover:text-amber-400 rounded-lg transition-colors"
                           title="Archive Course"
                         >
                           <Archive className="w-4 h-4" />
@@ -383,7 +392,7 @@ export const CoursesList: React.FC = () => {
                             e.stopPropagation();
                             setCourseToDelete(course);
                           }}
-                          className="p-1 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors"
+                          className="p-1 hover:bg-red-500/20 text-sage-400 hover:text-red-400 rounded-lg transition-colors"
                           title="Delete Course"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -393,17 +402,17 @@ export const CoursesList: React.FC = () => {
                   </div>
                 </div>
 
-                <p className="text-zinc-400 text-xs leading-relaxed line-clamp-3 mb-6 min-h-[3rem]">
+                <p className="text-sage-400 text-xs leading-relaxed line-clamp-3 mb-6 min-h-[3rem]">
                   {course.description || 'No description provided.'}
                 </p>
               </div>
 
-              <div className="flex items-center justify-between border-t border-[#1B2333] pt-4 mt-auto">
-                <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-medium">
+              <div className="flex items-center justify-between border-t border-[#1E2519] pt-4 mt-auto">
+                <div className="flex items-center gap-2 text-[11px] text-sage-500 font-medium">
                   <Clock className="w-3.5 h-3.5" />
                   <span>{new Date(course.createdAt).toLocaleDateString()}</span>
                 </div>
-                <span className="text-xs font-bold text-blue-400 group-hover:translate-x-1 transition-transform">
+                <span className="text-xs font-bold text-primary-400 group-hover:translate-x-1 transition-transform">
                   Open Course &rarr;
                 </span>
               </div>
@@ -415,15 +424,15 @@ export const CoursesList: React.FC = () => {
       {/* Create Course Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#121620] border-t sm:border border-[#1B2333] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+          <div className="bg-[#12160F] border-t sm:border border-[#1E2519] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
             <div>
               <h3 className="text-lg font-bold text-white">Create Course</h3>
-              <p className="text-xs text-zinc-400 mt-1">Set up a new programming class for your students.</p>
+              <p className="text-xs text-sage-400 mt-1">Set up a new programming class for your students.</p>
             </div>
 
             <form onSubmit={handleCreateCourse} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Course Name</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Course Name</label>
                 <input
                   type="text"
                   required
@@ -435,7 +444,7 @@ export const CoursesList: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Description (Optional)</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Description (Optional)</label>
                 <textarea
                   rows={3}
                   placeholder="Short overview of syllabus topics..."
@@ -469,10 +478,10 @@ export const CoursesList: React.FC = () => {
       {/* Join Course Modal */}
       {showJoinModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#121620] border-t sm:border border-[#1B2333] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+          <div className="bg-[#12160F] border-t sm:border border-[#1E2519] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
             <div>
               <h3 className="text-lg font-bold text-white">Join Course</h3>
-              <p className="text-xs text-zinc-400 mt-1">Enter the course code provided by your instructor.</p>
+              <p className="text-xs text-sage-400 mt-1">Enter the course code provided by your instructor.</p>
             </div>
 
             <form onSubmit={handleJoinCourse} className="space-y-4">
@@ -482,7 +491,7 @@ export const CoursesList: React.FC = () => {
                 </div>
               )}
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Course Code</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Course Code</label>
                 <input
                   type="text"
                   dir="ltr"
@@ -519,15 +528,15 @@ export const CoursesList: React.FC = () => {
       {/* Edit Group Modal */}
       {courseToEdit && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#121620] border-t sm:border border-[#1B2333] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+          <div className="bg-[#12160F] border-t sm:border border-[#1E2519] rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
             <div>
               <h3 className="text-lg font-bold text-white">Edit Course Settings</h3>
-              <p className="text-xs text-zinc-400 mt-1">Update course name, description, or join code.</p>
+              <p className="text-xs text-sage-400 mt-1">Update course name, description, or join code.</p>
             </div>
 
             <form onSubmit={handleEditCourse} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Course Name</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Course Name</label>
                 <input
                   type="text"
                   required
@@ -538,7 +547,7 @@ export const CoursesList: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Join Code</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Join Code</label>
                 <input
                   type="text"
                   dir="ltr"
@@ -550,7 +559,7 @@ export const CoursesList: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Description</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Description</label>
                 <textarea
                   rows={3}
                   value={editDesc}

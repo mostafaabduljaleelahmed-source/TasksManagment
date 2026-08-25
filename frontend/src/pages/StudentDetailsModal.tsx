@@ -189,12 +189,12 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4">
-      <div className="w-full sm:max-w-6xl h-[94vh] sm:h-[90vh] bg-[#16161A] border-t sm:border border-[#24242B] rounded-t-3xl sm:rounded-2xl flex flex-col shadow-2xl overflow-hidden relative">
+      <div className="w-full sm:max-w-6xl h-[94vh] sm:h-[90vh] bg-[#12160F] border-t sm:border border-[#212B1E] rounded-t-3xl sm:rounded-2xl flex flex-col shadow-2xl overflow-hidden relative">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#24242B] bg-[#1E1E24] shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#212B1E] bg-[#1E2519] shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center border border-indigo-400/30 overflow-hidden shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-primary-600 to-primary-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center border border-primary-400/30 overflow-hidden shrink-0">
               {studentAvatarUrl ? (
                 <img src={studentAvatarUrl} alt={studentName} className="w-full h-full object-cover" />
               ) : (
@@ -203,17 +203,17 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
             </div>
             <div>
               <h2 className="text-sm sm:text-lg font-bold text-white flex items-center gap-2">
-                <Award className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" />
+                <Award className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400" />
                 <span>{studentName}</span>
               </h2>
-              <p className="text-[11px] sm:text-xs text-zinc-400">
+              <p className="text-[11px] sm:text-xs text-sage-400">
                 {studentRegisterId} | {taskTitle}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-[#2F2F37] text-zinc-400 hover:text-white rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-2 hover:bg-[#37452E] text-sage-400 hover:text-white rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -221,8 +221,8 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
 
         {loading ? (
           <div className="flex-1 flex flex-col items-center justify-center">
-            <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-2" />
-            <p className="text-sm text-zinc-400">{t('loading')}</p>
+            <Loader2 className="w-10 h-10 animate-spin text-primary-500 mb-2" />
+            <p className="text-sm text-sage-400">{t('loading')}</p>
           </div>
         ) : error ? (
           <div className="flex-1 flex items-center justify-center p-6 text-red-400">
@@ -232,12 +232,12 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
           <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
             {/* Main Content Pane */}
             {selectedSub ? (
-              <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden bg-[#16161A]">
+              <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden bg-[#12160F]">
                 {/* Submitted Code & Execution Console Pane */}
-                <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-[#1F2937] min-h-[300px] lg:min-h-0">
-                  <div className="px-4 py-2 border-b border-[#1F2937] bg-[#111827] flex items-center justify-between">
-                    <span className="text-xs font-bold text-zinc-300 flex items-center gap-2">
-                      <Code className="w-4 h-4 text-blue-400" />
+                <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-[#212B1E] min-h-[300px] lg:min-h-0">
+                  <div className="px-4 py-2 border-b border-[#212B1E] bg-[#12160F] flex items-center justify-between">
+                    <span className="text-xs font-bold text-sage-300 flex items-center gap-2">
+                      <Code className="w-4 h-4 text-primary-400" />
                       {t('submittedCode')}
                     </span>
                     <button
@@ -253,7 +253,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url);
                       }}
-                      className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/40 text-blue-300 text-xs font-bold rounded-xl transition-colors flex items-center gap-1 min-h-[38px]"
+                      className="px-3 py-1.5 bg-primary-600/20 hover:bg-primary-600/40 border border-primary-500/40 text-primary-300 text-xs font-bold rounded-xl transition-colors flex items-center gap-1 min-h-[38px]"
                     >
                       <Download className="w-4 h-4" />
                       Download
@@ -279,14 +279,14 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                       }}
                     />
                   </div>
-                  <div className="h-2/5 border-t border-[#1F2937] bg-[#0D1117] p-4 overflow-y-auto flex flex-col space-y-3 font-mono text-xs">
+                  <div className="h-2/5 border-t border-[#212B1E] bg-[#12160F] p-4 overflow-y-auto flex flex-col space-y-3 font-mono text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+                      <span className="text-xs font-bold text-sage-300 uppercase tracking-wider flex items-center gap-2">
                         <span>🖥️</span> Console Output (stdout)
                       </span>
                     </div>
 
-                    <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-zinc-200 whitespace-pre-wrap font-mono min-h-[60px]">
+                    <div className="bg-[#12160F] border border-[#212B1E] rounded-xl p-3 text-sage-200 whitespace-pre-wrap font-mono min-h-[60px]">
                       {selectedSub.consoleOutput || 'Standard output is empty.'}
                     </div>
 
@@ -305,12 +305,12 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                 </div>
 
                 {/* Manual Review & Feedback Controls Panel */}
-                <div className="w-full lg:w-96 bg-[#16161A] p-6 flex flex-col overflow-y-auto space-y-6">
+                <div className="w-full lg:w-96 bg-[#12160F] p-6 flex flex-col overflow-y-auto space-y-6">
                   {/* Detailed Student Metadata Card */}
-                  <div className="p-4 bg-[#1F1F26] border border-[#2B2B36] rounded-xl space-y-2">
-                    <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">{t('studentInfo')}</h4>
-                    <div className="flex items-center gap-3 pb-2 border-b border-[#2B2B36]">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="p-4 bg-[#1A2016] border border-[#37452E] rounded-xl space-y-2">
+                    <h4 className="text-xs font-bold text-primary-400 uppercase tracking-wider mb-2">{t('studentInfo')}</h4>
+                    <div className="flex items-center gap-3 pb-2 border-b border-[#37452E]">
+                      <div className="w-10 h-10 rounded-xl bg-primary-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0">
                         {selectedSub.studentAvatarUrl ? (
                           <img src={selectedSub.studentAvatarUrl} alt={selectedSub.studentName} className="w-full h-full object-cover" />
                         ) : (
@@ -319,13 +319,13 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                       </div>
                       <div>
                         <div className="text-sm font-bold text-white">{selectedSub.studentName}</div>
-                        <div className="text-xs text-zinc-400">{t('studentId')}: {selectedSub.studentRegisterId}</div>
+                        <div className="text-xs text-sage-400">{t('studentId')}: {selectedSub.studentRegisterId}</div>
                       </div>
                     </div>
-                    <div className="text-xs text-zinc-300 pt-1 space-y-1">
-                      <div><strong className="text-zinc-400">{t('groupName')}:</strong> {selectedSub.courseName}</div>
-                      <div><strong className="text-zinc-400">{t('taskTitle')}:</strong> {selectedSub.taskTitle}</div>
-                      <div><strong className="text-zinc-400">{t('attemptNumber')}:</strong> #{selectedSub.attemptNumber}</div>
+                    <div className="text-xs text-sage-300 pt-1 space-y-1">
+                      <div><strong className="text-sage-400">{t('groupName')}:</strong> {selectedSub.courseName}</div>
+                      <div><strong className="text-sage-400">{t('taskTitle')}:</strong> {selectedSub.taskTitle}</div>
+                      <div><strong className="text-sage-400">{t('attemptNumber')}:</strong> #{selectedSub.attemptNumber}</div>
                     </div>
                   </div>
 
@@ -333,7 +333,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                   <form onSubmit={handleSaveReview} className="space-y-4">
                     {submissions.length > 1 && (
                       <div>
-                        <label className="block text-xs font-extrabold uppercase tracking-wider text-zinc-400 mb-2">
+                        <label className="block text-xs font-extrabold uppercase tracking-wider text-sage-400 mb-2">
                           Select Attempt
                         </label>
                         <div className="flex gap-2 overflow-x-auto pb-1">
@@ -344,8 +344,8 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                               onClick={() => handleSelectSubmission(sub)}
                               className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 border transition-all ${
                                 selectedSub?.id === sub.id
-                                  ? 'bg-blue-600 text-white border-blue-400'
-                                  : 'bg-[#1A1A20] text-zinc-400 border-[#292933]'
+                                  ? 'bg-primary-600 text-white border-primary-400'
+                                  : 'bg-[#1A2016] text-sage-400 border-[#212B1E]'
                               }`}
                             >
                               Attempt #{sub.attemptNumber} ({sub.grade ?? 0}/{maxGrade})
@@ -356,7 +356,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                     )}
 
                     <div>
-                      <label className="block text-xs font-bold text-zinc-300 mb-1.5 flex items-center gap-1.5">
+                      <label className="block text-xs font-bold text-sage-300 mb-1.5 flex items-center gap-1.5">
                         <Award className="w-4 h-4 text-amber-400" />
                         {t('grade')} (0 - {maxGrade})
                       </label>
@@ -366,14 +366,14 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                         max={maxGrade}
                         value={manualGrade}
                         onChange={(e) => setManualGrade(Number(e.target.value))}
-                        className="w-full bg-[#121215] border border-[#2B2B36] rounded-xl px-4 py-2.5 text-white font-bold text-base focus:outline-none focus:border-indigo-500"
+                        className="w-full bg-[#12160F] border border-[#37452E] rounded-xl px-4 py-2.5 text-white font-bold text-base focus:outline-none focus:border-primary-500"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-zinc-300 mb-1.5 flex items-center gap-1.5">
-                        <MessageSquare className="w-4 h-4 text-sky-400" />
+                      <label className="block text-xs font-bold text-sage-300 mb-1.5 flex items-center gap-1.5">
+                        <MessageSquare className="w-4 h-4 text-secondary-400" />
                         {t('teacherFeedback')}
                       </label>
                       <textarea
@@ -381,12 +381,12 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                         value={teacherFeedback}
                         onChange={(e) => setTeacherFeedback(e.target.value)}
                         placeholder="Write constructive feedback for the student..."
-                        className="w-full bg-[#121215] border border-[#2B2B36] rounded-xl p-3 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500 resize-none"
+                        className="w-full bg-[#12160F] border border-[#37452E] rounded-xl p-3 text-xs text-sage-200 focus:outline-none focus:border-primary-500 resize-none"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-zinc-400 mb-1.5">
+                      <label className="block text-xs font-bold text-sage-400 mb-1.5">
                         Private Instructor Notes (Internal Only)
                       </label>
                       <textarea
@@ -394,7 +394,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                         value={teacherNotes}
                         onChange={(e) => setTeacherNotes(e.target.value)}
                         placeholder="Private notes (visible only to teachers)..."
-                        className="w-full bg-[#121215] border border-[#2B2B36] rounded-xl p-3 text-xs text-zinc-400 focus:outline-none focus:border-indigo-500 resize-none"
+                        className="w-full bg-[#12160F] border border-[#37452E] rounded-xl p-3 text-xs text-sage-400 focus:outline-none focus:border-primary-500 resize-none"
                       />
                     </div>
 
@@ -404,7 +404,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                         <button
                           type="button"
                           onClick={onPrevious}
-                          className="py-2.5 px-3 bg-[#1F1F26] hover:bg-[#2B2B36] border border-[#2B2B36] text-zinc-300 font-semibold rounded-xl text-xs flex items-center justify-center gap-1 transition-all"
+                          className="py-2.5 px-3 bg-[#1A2016] hover:bg-[#37452E] border border-[#37452E] text-sage-300 font-semibold rounded-xl text-xs flex items-center justify-center gap-1 transition-all"
                         >
                           &larr; Previous
                         </button>
@@ -416,7 +416,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                         <button
                           type="button"
                           onClick={onNext}
-                          className="py-2.5 px-3 bg-[#1F1F26] hover:bg-[#2B2B36] border border-[#2B2B36] text-zinc-300 font-semibold rounded-xl text-xs flex items-center justify-center gap-1 transition-all"
+                          className="py-2.5 px-3 bg-[#1A2016] hover:bg-[#37452E] border border-[#37452E] text-sage-300 font-semibold rounded-xl text-xs flex items-center justify-center gap-1 transition-all"
                         >
                           Next &rarr;
                         </button>
@@ -427,7 +427,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                       <button
                         type="submit"
                         disabled={saving}
-                        className="py-2.5 px-3 bg-[#1F1F26] hover:bg-[#2B2B36] border border-[#2B2B36] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+                        className="py-2.5 px-3 bg-[#1A2016] hover:bg-[#37452E] border border-[#37452E] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
                       >
                         {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                         Save
@@ -437,7 +437,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                         type="button"
                         onClick={handleSaveAndNext}
                         disabled={saving}
-                        className="py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-indigo-950/40 transition-all disabled:opacity-50"
+                        className="py-2.5 px-3 bg-gradient-to-r from-primary-600 to-primary-600 hover:from-primary-500 hover:to-primary-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-primary-950/40 transition-all disabled:opacity-50"
                       >
                         {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                         Save & Next &rarr;
@@ -447,7 +447,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">
+              <div className="flex-1 flex items-center justify-center text-sage-500 text-sm">
                 Select a submission attempt from the sidebar to inspect code.
               </div>
             )}

@@ -190,17 +190,17 @@ export const Settings: React.FC = () => {
       </div>
 
         {/* Profile Picture & Info Form */}
-        <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
-          <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-            <User className="w-5 h-5 text-indigo-400" />
+        <section className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl space-y-6">
+          <div className="flex items-center gap-3 border-b border-[#1A2016] pb-4">
+            <User className="w-5 h-5 text-primary-400" />
             <h2 className="text-base font-bold text-white">{t('personalInfo')}</h2>
           </div>
 
           <form onSubmit={handleSaveProfile} className="space-y-6">
             {/* Profile Avatar Upload / Remove */}
-            <div className="flex flex-col sm:flex-row items-center gap-6 pb-4 border-b border-[#1F1F26]">
+            <div className="flex flex-col sm:flex-row items-center gap-6 pb-4 border-b border-[#1A2016]">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-2xl bg-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center border-2 border-indigo-500/40 overflow-hidden shadow-xl">
+                <div className="w-24 h-24 rounded-2xl bg-primary-600 text-white font-extrabold text-2xl flex items-center justify-center border-2 border-primary-500/40 overflow-hidden shadow-xl">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={user?.name} className="w-full h-full object-cover" />
                   ) : (
@@ -218,7 +218,7 @@ export const Settings: React.FC = () => {
 
               <div className="flex flex-col sm:items-start items-center gap-2">
                 <h3 className="text-sm font-bold text-white">{t('profilePicture')}</h3>
-                <p className="text-xs text-zinc-400 text-center sm:text-left">Supports PNG, JPG, or GIF (Max 2MB).</p>
+                <p className="text-xs text-sage-400 text-center sm:text-left">Supports PNG, JPG, or GIF (Max 2MB).</p>
                 <div className="flex items-center gap-3 mt-1">
                   <input
                     type="file"
@@ -230,7 +230,7 @@ export const Settings: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3.5 py-1.5 bg-[#1F1F26] hover:bg-[#2A2A34] border border-[#2B2B36] rounded-xl text-xs font-semibold text-zinc-200 transition-all"
+                    className="px-3.5 py-1.5 bg-[#1A2016] hover:bg-[#212B1E] border border-[#37452E] rounded-xl text-xs font-semibold text-sage-200 transition-all"
                   >
                     {avatarUrl ? t('replacePicture') : t('uploadPicture')}
                   </button>
@@ -250,7 +250,7 @@ export const Settings: React.FC = () => {
 
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">{t('fullName')}</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">{t('fullName')}</label>
                 <input
                   type="text"
                   value={name}
@@ -261,18 +261,18 @@ export const Settings: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">{t('email')}</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">{t('email')}</label>
                 <input
                   type="email"
                   value={user?.email || ''}
                   disabled
-                  className="academic-input text-zinc-500 cursor-not-allowed opacity-75"
+                  className="academic-input text-sage-500 cursor-not-allowed opacity-75"
                 />
               </div>
 
               {user?.role === 'Student' && (
                 <div>
-                  <label className="block text-xs font-bold text-zinc-300 mb-1.5">{t('studentId')}</label>
+                  <label className="block text-xs font-bold text-sage-300 mb-1.5">{t('studentId')}</label>
                   <input
                     type="text"
                     value={studentId}
@@ -298,16 +298,16 @@ export const Settings: React.FC = () => {
         </section>
 
         {/* Change Password Form */}
-        <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
-          <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-            <Lock className="w-5 h-5 text-indigo-400" />
+        <section className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl space-y-6">
+          <div className="flex items-center gap-3 border-b border-[#1A2016] pb-4">
+            <Lock className="w-5 h-5 text-primary-400" />
             <h2 className="text-base font-bold text-white">{t('changePassword')}</h2>
           </div>
 
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">{t('currentPassword')}</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">{t('currentPassword')}</label>
                 <input
                   type="password"
                   value={oldPassword}
@@ -318,7 +318,7 @@ export const Settings: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">{t('newPassword')}</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">{t('newPassword')}</label>
                 <input
                   type="password"
                   value={newPassword}
@@ -329,7 +329,7 @@ export const Settings: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">{t('confirmPassword')}</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">{t('confirmPassword')}</label>
                 <input
                   type="password"
                   value={confirmPassword}
@@ -345,7 +345,7 @@ export const Settings: React.FC = () => {
               <button
                 type="submit"
                 disabled={savingPassword}
-                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-indigo-950/40 transition-all disabled:opacity-50 cursor-pointer"
+                className="px-5 py-2.5 bg-primary-600 hover:bg-primary-500 active:scale-[0.98] text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-primary-950/40 transition-all disabled:opacity-50 cursor-pointer"
               >
                 {savingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                 {t('updatePassword')}
@@ -355,89 +355,89 @@ export const Settings: React.FC = () => {
         </section>
 
         {/* Preferences Section: Language & Theme */}
-        <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
-          <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-            <Globe className="w-5 h-5 text-indigo-400" />
+        <section className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl space-y-6">
+          <div className="flex items-center gap-3 border-b border-[#1A2016] pb-4">
+            <Globe className="w-5 h-5 text-primary-400" />
             <h2 className="text-base font-bold text-white">{t('preferences')}</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Language Preference */}
-            <div className="p-4 bg-[#1A1A20] border border-[#292933] rounded-xl space-y-3">
+            <div className="p-4 bg-[#1A2016] border border-[#212B1E] rounded-xl space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-indigo-400" />
+                  <Globe className="w-4 h-4 text-primary-400" />
                   {lang === 'ar' ? 'لغة العرض' : 'Display Language'}
                 </span>
-                <span className="text-[10px] uppercase font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
+                <span className="text-[10px] uppercase font-bold text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded">
                   {lang.toUpperCase()}
                 </span>
               </div>
-              <p className="text-xs text-zinc-400">Choose your preferred interface language. Arabic enables RTL layout.</p>
+              <p className="text-xs text-sage-400">Choose your preferred interface language. Arabic enables RTL layout.</p>
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <button
                   type="button"
                   onClick={() => setLanguage('en')}
                   className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                     lang === 'en'
-                      ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
-                      : 'bg-[#121215] border-[#292933] text-zinc-400 hover:text-white'
+                      ? 'bg-primary-600/20 border-primary-500 text-primary-300'
+                      : 'bg-[#12160F] border-[#212B1E] text-sage-400 hover:text-white'
                   }`}
                 >
                   English (LTR)
-                  {lang === 'en' && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
+                  {lang === 'en' && <CheckCircle2 className="w-3.5 h-3.5 text-primary-400" />}
                 </button>
                 <button
                   type="button"
                   onClick={() => setLanguage('ar')}
                   className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                     lang === 'ar'
-                      ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
-                      : 'bg-[#121215] border-[#292933] text-zinc-400 hover:text-white'
+                      ? 'bg-primary-600/20 border-primary-500 text-primary-300'
+                      : 'bg-[#12160F] border-[#212B1E] text-sage-400 hover:text-white'
                   }`}
                 >
                   العربية (RTL)
-                  {lang === 'ar' && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
+                  {lang === 'ar' && <CheckCircle2 className="w-3.5 h-3.5 text-primary-400" />}
                 </button>
               </div>
             </div>
 
             {/* Theme Preference */}
-            <div className="p-4 bg-[#1A1A20] border border-[#292933] rounded-xl space-y-3">
+            <div className="p-4 bg-[#1A2016] border border-[#212B1E] rounded-xl space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white flex items-center gap-2">
-                  <Palette className="w-4 h-4 text-indigo-400" />
+                  <Palette className="w-4 h-4 text-primary-400" />
                   {lang === 'ar' ? 'مظهر الواجهة' : 'Interface Theme'}
                 </span>
-                <span className="text-[10px] uppercase font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
+                <span className="text-[10px] uppercase font-bold text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded">
                   {theme.toUpperCase()}
                 </span>
               </div>
-              <p className="text-xs text-zinc-400">Select visual theme palette for comfortable code review.</p>
+              <p className="text-xs text-sage-400">Select visual theme palette for comfortable code review.</p>
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <button
                   type="button"
                   onClick={() => setTheme('dark')}
                   className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                     theme === 'dark'
-                      ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
-                      : 'bg-[#121215] border-[#292933] text-zinc-400 hover:text-white'
+                      ? 'bg-primary-600/20 border-primary-500 text-primary-300'
+                      : 'bg-[#12160F] border-[#212B1E] text-sage-400 hover:text-white'
                   }`}
                 >
                   Dark Zinc
-                  {theme === 'dark' && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
+                  {theme === 'dark' && <CheckCircle2 className="w-3.5 h-3.5 text-primary-400" />}
                 </button>
                 <button
                   type="button"
                   onClick={() => setTheme('midnight')}
                   className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                     theme === 'midnight'
-                      ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
-                      : 'bg-[#121215] border-[#292933] text-zinc-400 hover:text-white'
+                      ? 'bg-primary-600/20 border-primary-500 text-primary-300'
+                      : 'bg-[#12160F] border-[#212B1E] text-sage-400 hover:text-white'
                   }`}
                 >
                   Midnight Obsidian
-                  {theme === 'midnight' && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
+                  {theme === 'midnight' && <CheckCircle2 className="w-3.5 h-3.5 text-primary-400" />}
                 </button>
               </div>
             </div>
@@ -445,19 +445,19 @@ export const Settings: React.FC = () => {
         </section>
 
         {/* Email Notifications Settings Section */}
-        <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
-          <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-            <Mail className="w-5 h-5 text-indigo-400" />
+        <section className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl space-y-6">
+          <div className="flex items-center gap-3 border-b border-[#1A2016] pb-4">
+            <Mail className="w-5 h-5 text-primary-400" />
             <h2 className="text-base font-bold text-white">Email Notifications</h2>
           </div>
 
-          <div className="p-4 bg-[#1A1A20] border border-[#292933] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-4 bg-[#1A2016] border border-[#212B1E] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <span className="text-xs font-bold text-white flex items-center gap-2">
-                <Bell className="w-4 h-4 text-indigo-400" />
+                <Bell className="w-4 h-4 text-primary-400" />
                 Notification Emails
               </span>
-              <p className="text-xs text-zinc-400 leading-relaxed max-w-xl">
+              <p className="text-xs text-sage-400 leading-relaxed max-w-xl">
                 Receive automated emails when new assignments are published, grades are released, teacher feedback is added, or security password reset requests occur.
               </p>
             </div>
@@ -490,7 +490,7 @@ export const Settings: React.FC = () => {
               className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
                 emailNotificationsEnabled
                   ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25'
-                  : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white'
+                  : 'bg-sage-800 border-sage-700 text-sage-400 hover:text-white'
               }`}
             >
               {savingNotifications ? (
@@ -502,7 +502,7 @@ export const Settings: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <BellOff className="w-4 h-4 text-zinc-400" />
+                  <BellOff className="w-4 h-4 text-sage-400" />
                   Disabled
                 </>
               )}
@@ -512,12 +512,12 @@ export const Settings: React.FC = () => {
 
         {/* Delete My Account Section - For Students & Teachers Only (Hidden for Admin) */}
         {user?.role !== 'Admin' && (
-          <section className="bg-[#121215] border border-red-500/20 rounded-2xl p-6 shadow-xl space-y-4">
+          <section className="bg-[#12160F] border border-red-500/20 rounded-2xl p-6 shadow-xl space-y-4">
             <div className="flex items-center gap-3 border-b border-red-500/20 pb-4">
               <Trash2 className="w-5 h-5 text-red-400" />
               <h2 className="text-base font-bold text-red-400">Delete Account</h2>
             </div>
-            <p className="text-xs text-zinc-400 leading-relaxed">
+            <p className="text-xs text-sage-400 leading-relaxed">
               Permanently remove your account and erase your profile settings. This action is irreversible.
             </p>
             <div className="pt-2">

@@ -109,15 +109,15 @@ export const TeacherProfile: React.FC = () => {
     <div className="space-y-8">
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-3" />
-          <p className="text-sm text-zinc-400">{t('loading')}</p>
+          <Loader2 className="w-10 h-10 animate-spin text-primary-500 mb-3" />
+          <p className="text-sm text-sage-400">{t('loading')}</p>
         </div>
       ) : (
           <div className="space-y-8">
             {/* Header Banner Card */}
-            <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-8 shadow-xl flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
+            <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-8 shadow-xl flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-2xl bg-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center border-2 border-indigo-500/40 overflow-hidden shadow-xl">
+                <div className="w-24 h-24 rounded-2xl bg-primary-600 text-white font-extrabold text-2xl flex items-center justify-center border-2 border-primary-500/40 overflow-hidden shadow-xl">
                   {data?.avatarUrl ? (
                     <img src={data.avatarUrl} alt={data.name} className="w-full h-full object-cover" />
                   ) : (
@@ -133,14 +133,14 @@ export const TeacherProfile: React.FC = () => {
               <div className="flex-1 text-center md:text-right space-y-1">
                 <h1 className="text-2xl font-extrabold text-white flex items-center justify-center md:justify-start gap-2">
                   {data?.name}
-                  <span className="bg-indigo-500/20 text-indigo-300 text-xs px-2.5 py-0.5 rounded-lg font-bold border border-indigo-500/30">
+                  <span className="bg-primary-500/20 text-primary-300 text-xs px-2.5 py-0.5 rounded-lg font-bold border border-primary-500/30">
                     {t('teacher')}
                   </span>
                 </h1>
-                <p className="text-xs text-zinc-400">{data?.email}</p>
+                <p className="text-xs text-sage-400">{data?.email}</p>
                 <div className="flex items-center justify-center md:justify-start gap-3 pt-2">
-                  <label className="px-3 py-1.5 bg-[#1F1F26] hover:bg-[#2B2B36] border border-[#2B2B36] rounded-xl text-xs text-zinc-300 hover:text-white cursor-pointer transition-colors flex items-center gap-1.5">
-                    <Camera className="w-3.5 h-3.5 text-indigo-400" />
+                  <label className="px-3 py-1.5 bg-[#1A2016] hover:bg-[#37452E] border border-[#37452E] rounded-xl text-xs text-sage-300 hover:text-white cursor-pointer transition-colors flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-primary-400" />
                     <span>{t('uploadPhoto')}</span>
                     <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
                   </label>
@@ -159,32 +159,32 @@ export const TeacherProfile: React.FC = () => {
 
             {/* Teacher Key Metrics Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-5 shadow-lg space-y-1">
-                <div className="flex items-center justify-between text-zinc-400">
+              <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-5 shadow-lg space-y-1">
+                <div className="flex items-center justify-between text-sage-400">
                   <span className="text-xs font-semibold">{t('myCourses')}</span>
-                  <BookOpen className="w-4 h-4 text-indigo-400" />
+                  <BookOpen className="w-4 h-4 text-primary-400" />
                 </div>
                 <div className="text-2xl font-black text-white">{data?.coursesCount}</div>
               </div>
 
-              <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-5 shadow-lg space-y-1">
-                <div className="flex items-center justify-between text-zinc-400">
+              <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-5 shadow-lg space-y-1">
+                <div className="flex items-center justify-between text-sage-400">
                   <span className="text-xs font-semibold">{t('totalStudentsTaught')}</span>
-                  <Users className="w-4 h-4 text-sky-400" />
+                  <Users className="w-4 h-4 text-secondary-400" />
                 </div>
                 <div className="text-2xl font-black text-white">{data?.totalStudents}</div>
               </div>
 
-              <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-5 shadow-lg space-y-1">
-                <div className="flex items-center justify-between text-zinc-400">
+              <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-5 shadow-lg space-y-1">
+                <div className="flex items-center justify-between text-sage-400">
                   <span className="text-xs font-semibold">{t('assignedTasks')}</span>
                   <FileText className="w-4 h-4 text-emerald-400" />
                 </div>
                 <div className="text-2xl font-black text-white">{data?.totalAssignments}</div>
               </div>
 
-              <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-5 shadow-lg space-y-1">
-                <div className="flex items-center justify-between text-zinc-400">
+              <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-5 shadow-lg space-y-1">
+                <div className="flex items-center justify-between text-sage-400">
                   <span className="text-xs font-semibold">{t('averageGrade')}</span>
                   <Award className="w-4 h-4 text-amber-400" />
                 </div>
@@ -193,21 +193,21 @@ export const TeacherProfile: React.FC = () => {
             </div>
 
             {/* Courses List Section */}
-            <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl space-y-4">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <School className="w-5 h-5 text-indigo-400" />
+                <School className="w-5 h-5 text-primary-400" />
                 {t('myCourses')}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {data?.courses.map((course) => (
-                  <div key={course.id} className="p-4 bg-[#1A1A20] border border-[#292933] rounded-xl flex items-center justify-between">
+                  <div key={course.id} className="p-4 bg-[#1A2016] border border-[#212B1E] rounded-xl flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-white text-sm">{course.name}</h3>
-                      <p className="text-xs text-zinc-400 mt-1">{t('courseCode')}: {course.courseCode}</p>
+                      <p className="text-xs text-sage-400 mt-1">{t('courseCode')}: {course.courseCode}</p>
                     </div>
                     <Link
                       to={`/course/${course.id}/members`}
-                      className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-semibold transition-colors"
+                      className="px-3 py-1.5 bg-primary-600/20 hover:bg-primary-600/30 text-primary-300 border border-primary-500/30 rounded-xl text-xs font-semibold transition-colors"
                     >
                       {t('members')}
                     </Link>

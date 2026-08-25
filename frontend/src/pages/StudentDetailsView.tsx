@@ -195,12 +195,12 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="w-full max-w-6xl h-[92vh] bg-[#16161A] border border-[#24242B] rounded-2xl flex flex-col shadow-2xl overflow-hidden relative">
+      <div className="w-full max-w-6xl h-[92vh] bg-[#12160F] border border-[#212B1E] rounded-2xl flex flex-col shadow-2xl overflow-hidden relative">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#24242B] bg-[#1E1E24]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#212B1E] bg-[#1E2519]">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-600 text-white font-extrabold text-base flex items-center justify-center border border-indigo-400/30 overflow-hidden shrink-0 shadow-md">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-primary-600 to-primary-600 text-white font-extrabold text-base flex items-center justify-center border border-primary-400/30 overflow-hidden shrink-0 shadow-md">
               {student.avatarUrl ? (
                 <img src={student.avatarUrl} alt={student.name} className="w-full h-full object-cover" />
               ) : (
@@ -210,11 +210,11 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
             <div>
               <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
                 {student.name}
-                <span className="bg-indigo-500/20 text-indigo-300 text-xs px-2.5 py-0.5 rounded-full font-bold border border-indigo-500/30">
+                <span className="bg-primary-500/20 text-primary-300 text-xs px-2.5 py-0.5 rounded-full font-bold border border-primary-500/30">
                   Student ID: {student.studentRegisterId}
                 </span>
               </h2>
-              <p className="text-xs text-zinc-400 mt-0.5">{student.email} • Group: {courseName}</p>
+              <p className="text-xs text-sage-400 mt-0.5">{student.email} • Group: {courseName}</p>
             </div>
           </div>
 
@@ -233,7 +233,7 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
                 </button>
                 <button
                   onClick={() => setShowNotifyModal(true)}
-                  className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-primary-600/20 hover:bg-primary-600/30 border border-primary-500/40 text-primary-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
                   title="Send Notification"
                 >
                   <Bell className="w-3.5 h-3.5" />
@@ -261,7 +261,7 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
             )}
             <button
               onClick={onClose}
-              className="p-2 hover:bg-[#2F2F37] text-zinc-400 hover:text-white rounded-lg transition-colors ml-2"
+              className="p-2 hover:bg-[#37452E] text-sage-400 hover:text-white rounded-lg transition-colors ml-2"
             >
               <X className="w-5 h-5" />
             </button>
@@ -269,39 +269,39 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-[#16161A]">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-[#12160F]">
           {/* Left Metadata & Metrics Summary Sidebar */}
-          <div className="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-[#24242B] bg-[#121215] p-6 space-y-6 overflow-y-auto shrink-0">
+          <div className="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-[#212B1E] bg-[#12160F] p-6 space-y-6 overflow-y-auto shrink-0">
             <div>
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 mb-4">Academic Overview</h3>
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-sage-400 mb-4">Academic Overview</h3>
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#1A1A20] border border-[#292933] rounded-xl p-3 text-center">
-                  <span className="text-[10px] text-zinc-500 font-bold block uppercase">Avg Grade</span>
+                <div className="bg-[#1A2016] border border-[#212B1E] rounded-xl p-3 text-center">
+                  <span className="text-[10px] text-sage-500 font-bold block uppercase">Avg Grade</span>
                   <span className="text-xl font-extrabold text-amber-400">{student.averageGrade}%</span>
                 </div>
-                <div className="bg-[#1A1A20] border border-[#292933] rounded-xl p-3 text-center">
-                  <span className="text-[10px] text-zinc-500 font-bold block uppercase">Progress</span>
-                  <span className="text-xl font-extrabold text-indigo-400">{student.progressPercentage}%</span>
+                <div className="bg-[#1A2016] border border-[#212B1E] rounded-xl p-3 text-center">
+                  <span className="text-[10px] text-sage-500 font-bold block uppercase">Progress</span>
+                  <span className="text-xl font-extrabold text-primary-400">{student.progressPercentage}%</span>
                 </div>
               </div>
             </div>
 
             {/* Task Stats Breakdown */}
             <div className="space-y-2">
-              <h4 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 mb-2">Assignment Breakdown</h4>
-              <div className="flex items-center justify-between p-2.5 bg-[#1A1A20] border border-[#292933] rounded-xl text-xs">
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-sage-400 mb-2">Assignment Breakdown</h4>
+              <div className="flex items-center justify-between p-2.5 bg-[#1A2016] border border-[#212B1E] rounded-xl text-xs">
                 <span className="text-emerald-400 font-bold flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Completed
                 </span>
                 <span className="font-mono font-bold text-white">{student.completedTasks}</span>
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-[#1A1A20] border border-[#292933] rounded-xl text-xs">
+              <div className="flex items-center justify-between p-2.5 bg-[#1A2016] border border-[#212B1E] rounded-xl text-xs">
                 <span className="text-amber-400 font-bold flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5" /> Pending
                 </span>
                 <span className="font-mono font-bold text-white">{student.pendingTasks}</span>
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-[#1A1A20] border border-[#292933] rounded-xl text-xs">
+              <div className="flex items-center justify-between p-2.5 bg-[#1A2016] border border-[#212B1E] rounded-xl text-xs">
                 <span className="text-red-400 font-bold flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5" /> Missing
                 </span>
@@ -310,24 +310,24 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
             </div>
 
             {/* Activity Timestamp */}
-            <div className="pt-4 border-t border-[#1F1F26] text-xs text-zinc-400 space-y-1">
+            <div className="pt-4 border-t border-[#1A2016] text-xs text-sage-400 space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Last Activity:</span>
-                <span className="font-mono text-zinc-300">
+                <span className="text-sage-500">Last Activity:</span>
+                <span className="font-mono text-sage-300">
                   {student.lastActivity ? new Date(student.lastActivity).toLocaleDateString() : 'N/A'}
                 </span>
               </div>
             </div>
 
             {/* Submissions List Selector */}
-            <div className="space-y-2 pt-2 border-t border-[#1F1F26]">
-              <h4 className="text-xs font-extrabold uppercase tracking-wider text-zinc-400 mb-2">Submission Attempts</h4>
+            <div className="space-y-2 pt-2 border-t border-[#1A2016]">
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-sage-400 mb-2">Submission Attempts</h4>
               {loading ? (
-                <div className="flex items-center gap-2 text-xs text-zinc-500 py-2">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" /> Loading submissions...
+                <div className="flex items-center gap-2 text-xs text-sage-500 py-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary-400" /> Loading submissions...
                 </div>
               ) : submissions.length === 0 ? (
-                <p className="text-xs text-zinc-500 italic">No code submissions recorded yet.</p>
+                <p className="text-xs text-sage-500 italic">No code submissions recorded yet.</p>
               ) : (
                 <div className="space-y-1.5 max-h-48 overflow-y-auto">
                   {submissions.map((sub) => (
@@ -336,8 +336,8 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
                       onClick={() => setSelectedSub(sub)}
                       className={`w-full text-left p-2.5 rounded-xl border text-xs transition-all flex items-center justify-between ${
                         selectedSub?.id === sub.id
-                          ? 'bg-indigo-600/20 border-indigo-500 text-white font-bold'
-                          : 'bg-[#1A1A20] border-[#292933] text-zinc-400 hover:text-white'
+                          ? 'bg-primary-600/20 border-primary-500 text-white font-bold'
+                          : 'bg-[#1A2016] border-[#212B1E] text-sage-400 hover:text-white'
                       }`}
                     >
                       <span className="truncate max-w-[140px]">{sub.taskTitle}</span>
@@ -351,12 +351,12 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
 
           {/* Right Main Pane: Code Viewer, Feedback & Grading Link */}
           {selectedSub ? (
-            <div className="flex-1 flex flex-col overflow-hidden bg-[#16161A]">
-              <div className="px-5 py-3 border-b border-[#24242B] bg-[#1E1E24] flex items-center justify-between">
+            <div className="flex-1 flex flex-col overflow-hidden bg-[#12160F]">
+              <div className="px-5 py-3 border-b border-[#212B1E] bg-[#1E2519] flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-bold text-white">
-                  <FileCode className="w-4 h-4 text-indigo-400" />
+                  <FileCode className="w-4 h-4 text-primary-400" />
                   <span>{selectedSub.taskTitle}</span>
-                  <span className="text-zinc-500 font-normal"> Attempt #{selectedSub.attemptNumber}</span>
+                  <span className="text-sage-500 font-normal"> Attempt #{selectedSub.attemptNumber}</span>
                 </div>
                 {user?.role === 'Teacher' && (
                   <button
@@ -364,7 +364,7 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
                       onClose();
                       navigate(`/review-submission/${selectedSub.id}?mode=review`);
                     }}
-                    className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs transition-all flex items-center gap-1 shadow-md"
+                    className="px-3 py-1 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-lg text-xs transition-all flex items-center gap-1 shadow-md"
                   >
                     <Award className="w-3.5 h-3.5" />
                     مراجعة التسليم &rarr;
@@ -373,7 +373,7 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
               </div>
 
               {/* Monaco Code Viewer */}
-              <div className="flex-1 relative overflow-hidden bg-[#0B0F19]" dir="ltr" style={{ direction: 'ltr' }}>
+              <div className="flex-1 relative overflow-hidden bg-[#0A0D0A]" dir="ltr" style={{ direction: 'ltr' }}>
                 <Editor
                   height="100%"
                   width="100%"
@@ -396,20 +396,20 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
 
               {/* Teacher Feedback Panel */}
               {selectedSub.teacherFeedback && (
-                <div className="p-4 bg-[#121215] border-t border-[#24242B] space-y-1 text-xs">
-                  <span className="font-bold text-purple-400 flex items-center gap-1.5">
+                <div className="p-4 bg-[#12160F] border-t border-[#212B1E] space-y-1 text-xs">
+                  <span className="font-bold text-secondary-400 flex items-center gap-1.5">
                     <MessageSquare className="w-3.5 h-3.5" /> Teacher Feedback
                   </span>
-                  <p className="text-zinc-300 italic bg-[#1A1A20] border border-[#292933] p-3 rounded-xl">
+                  <p className="text-sage-300 italic bg-[#1A2016] border border-[#212B1E] p-3 rounded-xl">
                     "{selectedSub.teacherFeedback}"
                   </p>
                 </div>
               )}
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs p-8 space-y-2">
-              <Code className="w-8 h-8 text-zinc-600 mb-1" />
-              <p className="font-bold text-zinc-400">No Submission Selected</p>
+            <div className="flex-1 flex flex-col items-center justify-center text-sage-500 text-xs p-8 space-y-2">
+              <Code className="w-8 h-8 text-sage-600 mb-1" />
+              <p className="font-bold text-sage-400">No Submission Selected</p>
               <p>Select a submission attempt from the sidebar to inspect the student's code and feedback.</p>
             </div>
           )}
@@ -418,26 +418,26 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
         {/* Modal: Send Notification to Student */}
         {showNotifyModal && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md bg-[#16161A] border border-[#24242B] rounded-2xl p-6 shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-[#24242B] pb-3">
+            <div className="w-full max-w-md bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-[#212B1E] pb-3">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-indigo-400" />
+                  <Bell className="w-4 h-4 text-primary-400" />
                   Send Notification to {student.name}
                 </h3>
-                <button onClick={() => setShowNotifyModal(false)} className="text-zinc-400 hover:text-white">
+                <button onClick={() => setShowNotifyModal(false)} className="text-sage-400 hover:text-white">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <form onSubmit={handleSendNotification} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-zinc-300 mb-1.5">Message</label>
+                  <label className="block text-xs font-bold text-sage-300 mb-1.5">Message</label>
                   <textarea
                     rows={4}
                     value={notifyMsg}
                     onChange={(e) => setNotifyMsg(e.target.value)}
                     placeholder="Type notice message for student..."
-                    className="w-full bg-[#121215] border border-[#2B2B36] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#12160F] border border-[#37452E] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-primary-500"
                     required
                   />
                 </div>
@@ -446,14 +446,14 @@ export const StudentDetailsView: React.FC<StudentDetailsViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowNotifyModal(false)}
-                    className="px-4 py-2 bg-[#1F1F26] text-zinc-300 hover:text-white font-bold text-xs rounded-xl"
+                    className="px-4 py-2 bg-[#1A2016] text-sage-300 hover:text-white font-bold text-xs rounded-xl"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={sendingNotify}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 disabled:opacity-50"
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 disabled:opacity-50"
                   >
                     {sendingNotify ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bell className="w-3.5 h-3.5" />}
                     Send Notification

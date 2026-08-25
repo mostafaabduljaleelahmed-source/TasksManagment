@@ -107,26 +107,26 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
 
   return (
     <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-start justify-center pt-20 px-4">
-      <div className="bg-[#121215] border border-[#2B2B36] rounded-2xl max-w-xl w-full p-4 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
+      <div className="bg-[#12160F] border border-[#37452E] rounded-2xl max-w-xl w-full p-4 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 bg-[#1A1A20] border border-[#2B2B36] rounded-xl px-4 py-3">
-          <Search className="w-5 h-5 text-indigo-400 shrink-0" />
+        <div className="flex items-center gap-3 bg-[#1A2016] border border-[#37452E] rounded-xl px-4 py-3">
+          <Search className="w-5 h-5 text-primary-400 shrink-0" />
           <input
             type="text"
             autoFocus
             placeholder="Search courses, sessions, programming tasks..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none"
+            className="w-full bg-transparent text-sm text-white placeholder-sage-500 focus:outline-none"
           />
           {searching ? (
-            <Loader2 className="w-4 h-4 text-indigo-400 animate-spin shrink-0" />
+            <Loader2 className="w-4 h-4 text-primary-400 animate-spin shrink-0" />
           ) : query ? (
-            <button onClick={() => setQuery('')} className="text-zinc-500 hover:text-white">
+            <button onClick={() => setQuery('')} className="text-sage-500 hover:text-white">
               <X className="w-4 h-4" />
             </button>
           ) : (
-            <span className="text-[10px] uppercase font-bold text-zinc-500 bg-[#252530] px-2 py-0.5 rounded">
+            <span className="text-[10px] uppercase font-bold text-sage-500 bg-[#212B1E] px-2 py-0.5 rounded">
               ESC
             </span>
           )}
@@ -135,7 +135,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
         {/* Results List */}
         <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
           {query.trim() && !searching && results.length === 0 && (
-            <p className="text-xs text-zinc-500 text-center py-8">No results found matching "{query}".</p>
+            <p className="text-xs text-sage-500 text-center py-8">No results found matching "{query}".</p>
           )}
 
           {results.map((item) => (
@@ -145,23 +145,23 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
                 navigate(item.link);
                 onClose();
               }}
-              className="p-3 bg-[#17171C] hover:bg-[#1E1E26] border border-[#22222A] rounded-xl flex items-center justify-between cursor-pointer transition-all group"
+              className="p-3 bg-[#12160F] hover:bg-[#1E2519] border border-[#212B1E] rounded-xl flex items-center justify-between cursor-pointer transition-all group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-primary-500/10 border border-primary-500/20 text-primary-400 flex items-center justify-center">
                   {item.type === 'Course' && <BookOpen className="w-4 h-4" />}
                   {item.type === 'Session' && <Layers className="w-4 h-4" />}
                   {item.type === 'Task' && <CheckSquare className="w-4 h-4" />}
                   {item.type === 'User' && <GraduationCap className="w-4 h-4" />}
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
+                  <h4 className="text-xs font-bold text-white group-hover:text-primary-300 transition-colors">
                     {item.title}
                   </h4>
-                  {item.subtitle && <p className="text-[10px] text-zinc-400">{item.subtitle}</p>}
+                  {item.subtitle && <p className="text-[10px] text-sage-400">{item.subtitle}</p>}
                 </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+              <ArrowRight className="w-4 h-4 text-sage-500 group-hover:text-white transition-colors" />
             </div>
           ))}
         </div>

@@ -62,29 +62,29 @@ export const AssignmentsList: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Header & Search */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F1F26] pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1A2016] pb-6">
           <div>
             <h1 className="text-2xl font-extrabold text-white flex items-center gap-3">
-              <FileCode className="w-6 h-6 text-indigo-500" />
+              <FileCode className="w-6 h-6 text-primary-500" />
               Assignment Management
             </h1>
           </div>
 
           <div className="relative">
-            <Search className={`w-4 h-4 text-zinc-400 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
+            <Search className={`w-4 h-4 text-sage-400 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
             <input
               type="text"
               placeholder="Search assignment, course..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={`bg-[#1A1A20] border border-[#292933] rounded-xl text-xs text-white py-2 ${isRtl ? 'pr-9 pl-4' : 'pl-9 pr-4'} focus:outline-none focus:border-indigo-500 w-64`}
+              className={`bg-[#1A2016] border border-[#212B1E] rounded-xl text-xs text-white py-2 ${isRtl ? 'pr-9 pl-4' : 'pl-9 pr-4'} focus:outline-none focus:border-primary-500 w-64`}
             />
           </div>
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-zinc-400">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-3" />
+          <div className="flex flex-col items-center justify-center py-20 text-sage-400">
+            <Loader2 className="w-8 h-8 animate-spin text-primary-500 mb-3" />
             <p className="text-xs">Loading assignment overview...</p>
           </div>
         ) : error ? (
@@ -92,10 +92,10 @@ export const AssignmentsList: React.FC = () => {
             {error}
           </div>
         ) : filteredAssignments.length === 0 ? (
-          <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-12 text-center text-zinc-500 space-y-3">
-            <FileCode className="w-12 h-12 mx-auto text-zinc-600 mb-2" />
-            <p className="text-sm font-bold text-zinc-300">No Assignments Found</p>
-            <p className="text-xs text-zinc-500">There are no published assignments matching your search criteria.</p>
+          <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-12 text-center text-sage-500 space-y-3">
+            <FileCode className="w-12 h-12 mx-auto text-sage-600 mb-2" />
+            <p className="text-sm font-bold text-sage-300">No Assignments Found</p>
+            <p className="text-xs text-sage-500">There are no published assignments matching your search criteria.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -105,12 +105,12 @@ export const AssignmentsList: React.FC = () => {
                 <div
                   key={assignment.id}
                   onClick={() => navigate('/teacher/pending-reviews')}
-                  className="bg-[#121215] hover:bg-[#16161C] border border-[#24242B] hover:border-indigo-500/40 rounded-2xl p-6 shadow-xl cursor-pointer transition-all duration-200 flex flex-col justify-between space-y-5 group"
+                  className="bg-[#12160F] hover:bg-[#1A2016] border border-[#212B1E] hover:border-primary-500/40 rounded-2xl p-6 shadow-xl cursor-pointer transition-all duration-200 flex flex-col justify-between space-y-5 group"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] uppercase font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-                        <BookOpen className="w-3 h-3 text-indigo-400" />
+                      <span className="text-[10px] uppercase font-bold text-primary-400 bg-primary-500/10 border border-primary-500/20 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                        <BookOpen className="w-3 h-3 text-primary-400" />
                         {assignment.courseName}
                       </span>
                       <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
@@ -118,32 +118,32 @@ export const AssignmentsList: React.FC = () => {
                       </span>
                     </div>
 
-                    <h3 className="text-base font-extrabold text-white group-hover:text-indigo-300 transition-colors line-clamp-1">
+                    <h3 className="text-base font-extrabold text-white group-hover:text-primary-300 transition-colors line-clamp-1">
                       {assignment.title}
                     </h3>
-                    <p className="text-xs text-zinc-400">Session: {assignment.sessionName}</p>
+                    <p className="text-xs text-sage-400">Session: {assignment.sessionName}</p>
 
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-400 pt-1">
-                      <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+                    <div className="flex items-center gap-1.5 text-xs text-sage-400 pt-1">
+                      <Calendar className="w-3.5 h-3.5 text-sage-500" />
                       <span>Deadline:</span>
-                      <span className={`font-mono text-[11px] ${isExpired ? 'text-rose-400 font-bold' : 'text-zinc-300'}`}>
+                      <span className={`font-mono text-[11px] ${isExpired ? 'text-rose-400 font-bold' : 'text-sage-300'}`}>
                         {new Date(assignment.deadline).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
 
                   {/* Comprehensive Assignment Metrics Grid */}
-                  <div className="pt-4 border-t border-[#1F1F26] space-y-3">
+                  <div className="pt-4 border-t border-[#1A2016] space-y-3">
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="p-2.5 bg-[#1A1A20] border border-[#292933] rounded-xl">
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block flex items-center gap-1">
-                          <Users className="w-3 h-3 text-indigo-400" /> Total Students
+                      <div className="p-2.5 bg-[#1A2016] border border-[#212B1E] rounded-xl">
+                        <span className="text-[10px] font-bold text-sage-400 uppercase tracking-wider block flex items-center gap-1">
+                          <Users className="w-3 h-3 text-primary-400" /> Total Students
                         </span>
                         <span className="font-extrabold text-white text-sm">{assignment.totalStudents}</span>
                       </div>
 
-                      <div className="p-2.5 bg-[#1A1A20] border border-[#292933] rounded-xl">
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block flex items-center gap-1">
+                      <div className="p-2.5 bg-[#1A2016] border border-[#212B1E] rounded-xl">
+                        <span className="text-[10px] font-bold text-sage-400 uppercase tracking-wider block flex items-center gap-1">
                           <Award className="w-3 h-3 text-amber-400" /> Avg Grade
                         </span>
                         <span className="font-extrabold text-amber-400 text-sm">{assignment.averageGrade}</span>
@@ -151,21 +151,21 @@ export const AssignmentsList: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-3 gap-1.5 text-[11px]">
-                      <div className="p-2 bg-[#1A1A20] border border-[#292933] rounded-xl text-center">
+                      <div className="p-2 bg-[#1A2016] border border-[#212B1E] rounded-xl text-center">
                         <span className="text-[9px] font-bold text-emerald-400 block uppercase">Submitted</span>
                         <span className="font-mono font-bold text-emerald-400">{assignment.submitted}</span>
                       </div>
-                      <div className="p-2 bg-[#1A1A20] border border-[#292933] rounded-xl text-center">
+                      <div className="p-2 bg-[#1A2016] border border-[#212B1E] rounded-xl text-center">
                         <span className="text-[9px] font-bold text-rose-400 block uppercase">Missing</span>
                         <span className="font-mono font-bold text-rose-400">{assignment.missing}</span>
                       </div>
-                      <div className="p-2 bg-[#1A1A20] border border-[#292933] rounded-xl text-center">
+                      <div className="p-2 bg-[#1A2016] border border-[#212B1E] rounded-xl text-center">
                         <span className="text-[9px] font-bold text-amber-400 block uppercase">Pending</span>
                         <span className="font-mono font-bold text-amber-400">{assignment.pendingReview}</span>
                       </div>
                     </div>
 
-                    <div className="pt-2 flex items-center justify-between text-xs font-bold text-indigo-400 group-hover:translate-x-1 transition-transform">
+                    <div className="pt-2 flex items-center justify-between text-xs font-bold text-primary-400 group-hover:translate-x-1 transition-transform">
                       <span>Open Assignment Overview</span>
                       <ArrowRight className="w-4 h-4" />
                     </div>

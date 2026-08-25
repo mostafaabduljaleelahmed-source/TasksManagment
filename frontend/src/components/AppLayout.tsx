@@ -32,7 +32,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0B0F19] text-[#F9FAFB]">
+    <div className="flex h-screen overflow-hidden bg-[#0A0D0A] text-[#F9FAFB]">
       <Sidebar
         isOpen={isMobileOpen}
         onClose={() => setIsMobileOpen(false)}

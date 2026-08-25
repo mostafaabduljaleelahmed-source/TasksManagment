@@ -109,10 +109,10 @@ export const TeacherStudents: React.FC = () => {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       {/* Header Title & Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F2937] pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#212B1E] pb-6">
         <div>
           <h1 className="text-2xl font-extrabold text-white flex items-center gap-3">
-            <span className="p-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl">
+            <span className="p-2 bg-primary-500/10 border border-primary-500/20 text-primary-400 rounded-xl">
               👨‍🎓
             </span>
             Students Roster ({students.length})
@@ -122,7 +122,7 @@ export const TeacherStudents: React.FC = () => {
         <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
           <div className="relative">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder={t('search')}
@@ -133,16 +133,16 @@ export const TeacherStudents: React.FC = () => {
           </div>
 
           {/* Group Filter */}
-          <div className="flex items-center gap-2 bg-[#111827] border border-[#1F2937] px-3 py-2 rounded-xl text-xs">
-            <Filter className="w-3.5 h-3.5 text-zinc-400" />
+          <div className="flex items-center gap-2 bg-[#12160F] border border-[#212B1E] px-3 py-2 rounded-xl text-xs">
+            <Filter className="w-3.5 h-3.5 text-sage-400" />
             <select
               value={groupFilter}
               onChange={(e) => setGroupFilter(e.target.value)}
-              className="bg-transparent text-zinc-300 focus:outline-none cursor-pointer"
+              className="bg-transparent text-sage-300 focus:outline-none cursor-pointer"
             >
-              <option value="All" className="bg-[#111827]">All Teaching Groups</option>
+              <option value="All" className="bg-[#12160F]">All Teaching Groups</option>
               {uniqueGroups.map((grp) => (
-                <option key={grp} value={grp} className="bg-[#111827]">
+                <option key={grp} value={grp} className="bg-[#12160F]">
                   {grp}
                 </option>
               ))}
@@ -162,11 +162,11 @@ export const TeacherStudents: React.FC = () => {
           {error}
         </div>
       ) : (
-        <div className="bg-[#111827] border border-[#1F2937] rounded-2xl shadow-xl overflow-hidden p-4 sm:p-0">
+        <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl shadow-xl overflow-hidden p-4 sm:p-0">
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-left text-xs text-zinc-300">
-              <thead className="bg-[#1F2937]/50 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-[#1F2937]">
+            <table className="w-full text-left text-xs text-sage-300">
+              <thead className="bg-[#212B1E]/50 text-sage-400 uppercase text-[10px] tracking-wider border-b border-[#212B1E]">
                 <tr>
                   <th className="px-5 py-3.5 font-bold">Student</th>
                   <th className="px-4 py-3.5 font-bold">Academic ID</th>
@@ -178,18 +178,18 @@ export const TeacherStudents: React.FC = () => {
                   <th className="px-4 py-3.5 font-bold text-center">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1F2937]/50">
+              <tbody className="divide-y divide-[#212B1E]/50">
                 {filteredStudents.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-zinc-500">
+                    <td colSpan={8} className="px-4 py-12 text-center text-sage-500">
                       No students found matching search filters.
                     </td>
                   </tr>
                 ) : (
                   filteredStudents.map((s) => (
-                    <tr key={s.studentId + s.courseId} className="hover:bg-[#1A2234] transition-colors">
+                    <tr key={s.studentId + s.courseId} className="hover:bg-[#1E2519] transition-colors">
                       <td className="px-5 py-3.5 font-medium text-white flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-primary-600 text-white font-bold text-xs flex items-center justify-center border border-primary-400/30 overflow-hidden shrink-0">
                           {s.avatarUrl ? (
                             <img src={s.avatarUrl} alt={s.name} className="w-full h-full object-cover" />
                           ) : (
@@ -198,12 +198,12 @@ export const TeacherStudents: React.FC = () => {
                         </div>
                         <div>
                           <div className="font-bold text-white">{s.name}</div>
-                          <div className="text-[10px] text-zinc-400">{s.email}</div>
+                          <div className="text-[10px] text-sage-400">{s.email}</div>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 font-mono text-zinc-300">{s.studentRegisterId}</td>
+                      <td className="px-4 py-3.5 font-mono text-sage-300">{s.studentRegisterId}</td>
                       <td className="px-4 py-3.5">
-                        <Link to={`/course/${s.courseId}`} className="text-blue-400 font-semibold hover:underline">
+                        <Link to={`/course/${s.courseId}`} className="text-primary-400 font-semibold hover:underline">
                           {s.groupName}
                         </Link>
                       </td>
@@ -216,7 +216,7 @@ export const TeacherStudents: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3.5">
-                        <span className="text-zinc-400 font-semibold">
+                        <span className="text-sage-400 font-semibold">
                           {s.pendingAssignments} Tasks
                         </span>
                       </td>
@@ -226,14 +226,14 @@ export const TeacherStudents: React.FC = () => {
                             {s.lateAssignments} Late
                           </span>
                         ) : (
-                          <span className="text-zinc-500">0</span>
+                          <span className="text-sage-500">0</span>
                         )}
                       </td>
                       <td className="px-4 py-3.5 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => setSelectedStudentView(s)}
-                            className="px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
+                            className="px-2.5 py-1.5 bg-primary-500/10 hover:bg-primary-500/20 border border-primary-500/20 text-primary-400 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
                             title="View Submissions & Profile"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -261,21 +261,21 @@ export const TeacherStudents: React.FC = () => {
               <EmptyState variant="students" title="No Students Found" description="No student records match your query." />
             ) : (
               filteredStudents.map((s) => (
-                <div key={s.studentId + s.courseId} className="p-4 bg-[#16161A] border border-[#24242B] rounded-xl space-y-3">
+                <div key={s.studentId + s.courseId} className="p-4 bg-[#12160F] border border-[#212B1E] rounded-xl space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-primary-600 text-white font-bold text-xs flex items-center justify-center border border-primary-400/30 overflow-hidden shrink-0">
                         {s.avatarUrl ? <img src={s.avatarUrl} alt={s.name} className="w-full h-full object-cover" /> : s.name.substring(0, 2).toUpperCase()}
                       </div>
                       <div>
                         <p className="font-bold text-white text-xs">{s.name}</p>
-                        <p className="text-[10px] text-zinc-400 font-mono">{s.studentRegisterId}</p>
+                        <p className="text-[10px] text-sage-400 font-mono">{s.studentRegisterId}</p>
                       </div>
                     </div>
                     <ScoreBadge score={s.averageGrade} maxScore={100} showPercentage={true} />
                   </div>
-                  <div className="flex items-center justify-between text-xs pt-2 border-t border-[#24242B]">
-                    <span className="text-zinc-400">Group: <strong className="text-blue-400">{s.groupName}</strong></span>
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-[#212B1E]">
+                    <span className="text-sage-400">Group: <strong className="text-primary-400">{s.groupName}</strong></span>
                     <button
                       onClick={() => setResetStudent(s)}
                       className="px-2.5 py-1 bg-amber-500/10 border border-amber-500/25 text-amber-400 font-bold rounded-lg text-xs flex items-center gap-1"
@@ -293,20 +293,20 @@ export const TeacherStudents: React.FC = () => {
       {/* Reset Password Modal */}
       {resetStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#111827] border border-[#1F2937] rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+          <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
             <div>
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <KeyRound className="w-5 h-5 text-amber-400" />
                 Reset Student Password
               </h3>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-xs text-sage-400 mt-1">
                 Enter a new temporary password for <strong>{resetStudent.name}</strong> ({resetStudent.studentRegisterId}).
               </p>
             </div>
 
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">New Temporary Password</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">New Temporary Password</label>
                 <input
                   type="text"
                   required

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
-import { KeyRound, Mail, AlertCircle, ArrowRight, ArrowLeft, Loader2, Globe, CheckCircle2 } from 'lucide-react';
+import { KeyRound, Mail, AlertCircle, ArrowRight, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
+import { AuthShell } from '../components/AuthShell';
 
 export const Login: React.FC = () => {
   const { login, googleLogin, resendVerification, user } = useAuth();
@@ -126,28 +127,21 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0B0E14] px-4 relative overflow-hidden">
-      {/* Language Switcher */}
-      <div className="absolute top-6 right-6 z-20">
-        <button
-          onClick={toggleLanguage}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#151B28] hover:bg-[#1E2638] border border-[#232F45] text-slate-300 hover:text-white text-xs font-semibold rounded-xl transition-colors"
-        >
-          <Globe className="w-4 h-4 text-blue-400" />
-          <span>{lang === 'ar' ? 'English' : 'عربي'}</span>
-        </button>
-      </div>
-
-      <div className="w-full max-w-md academic-surface rounded-2xl p-8 shadow-2xl relative z-10">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">
-            {t('welcome')}
-          </h1>
-          <p className="text-xs text-slate-400">
-            {t('appName')} - {t('login')}
-          </p>
-        </div>
-
+    <AuthShell
+      appName={t('appName')}
+      lang={lang}
+      onToggleLanguage={toggleLanguage}
+      headline={
+        <>
+          Every submission,
+          <br />
+          graded with <span className="text-primary-400">precision</span>.
+        </>
+      }
+      subtext="A single console for assignments, code review, and class analytics — built for instructors and students who move fast."
+      formTitle={t('welcome')}
+      formSubtitle={`${t('login')} to continue to your dashboard`}
+    >
         {error && (
           <div className="mb-6 bg-red-950/40 border border-red-800/50 text-red-200 rounded-xl p-4 text-xs space-y-2">
             <div className="flex items-start gap-2.5">
@@ -158,7 +152,7 @@ export const Login: React.FC = () => {
               <button
                 onClick={handleResendVerification}
                 disabled={isResending}
-                className="text-blue-400 hover:text-blue-300 font-semibold underline text-xs transition-colors"
+                className="text-primary-400 hover:text-primary-300 font-semibold underline text-xs transition-colors"
               >
                 {isResending ? 'Sending link...' : 'Resend Verification Email'}
               </button>
@@ -181,8 +175,8 @@ export const Login: React.FC = () => {
             </div>
 
             <div className="relative flex items-center justify-center my-6">
-              <div className="border-t border-[#1B2333] w-full" />
-              <span className="bg-[#121620] px-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider absolute">
+              <div className="border-t border-[#1E2519] w-full" />
+              <span className="bg-[#12160F] px-3 text-[10px] uppercase font-bold text-sage-500 tracking-wider absolute">
                 or continue with email
               </span>
             </div>
@@ -191,9 +185,9 @@ export const Login: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">{t('email')}</label>
+            <label className="block text-xs font-semibold text-sage-300 mb-1.5">{t('email')}</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-500" />
               <input
                 type="email"
                 required
@@ -207,13 +201,13 @@ export const Login: React.FC = () => {
 
           <div>
             <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-xs font-semibold text-slate-300">{t('password')}</label>
-              <Link to="/forgot-password" className="text-xs font-semibold text-blue-400 hover:underline">
+              <label className="block text-xs font-semibold text-sage-300">{t('password')}</label>
+              <Link to="/forgot-password" className="text-xs font-semibold text-primary-400 hover:underline">
                 Forgot password?
               </Link>
             </div>
             <div className="relative">
-              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-500" />
               <input
                 type="password"
                 required
@@ -225,13 +219,13 @@ export const Login: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+          <div className="flex items-center justify-between text-xs text-sage-400 pt-1">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-[#232F45] bg-[#151B28] text-blue-600 focus:ring-blue-500"
+                className="rounded border-[#37452E] bg-[#1A2016] text-primary-600 focus:ring-primary-500"
               />
               <span>Remember Me</span>
             </label>
@@ -253,18 +247,17 @@ export const Login: React.FC = () => {
           </button>
         </form>
 
-        <div className="mt-8 text-center border-t border-[#1B2333] pt-6">
-          <p className="text-xs text-slate-400">
+        <div className="mt-8 text-center border-t border-[#1E2519] pt-6">
+          <p className="text-xs text-sage-400">
             {t('register')}?{' '}
             <Link
               to="/register"
-              className="text-blue-400 hover:text-blue-300 font-bold transition-colors"
+              className="text-primary-400 hover:text-primary-300 font-bold transition-colors"
             >
               {t('register')}
             </Link>
           </p>
         </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 };

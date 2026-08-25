@@ -82,12 +82,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           to={path}
           onClick={onClose}
           aria-label={label}
-          className={`flex items-center gap-2.5 py-1.5 rounded text-xs font-medium transition-colors ${
+          className={`flex items-center gap-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
             isCollapsed ? 'justify-center px-0' : 'justify-between px-2.5'
           } ${
             active
-              ? 'bg-[#1E2638] text-white font-semibold border-l-2 border-blue-500'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-[#151B28]'
+              ? 'bg-primary-500/12 text-white font-semibold'
+              : 'text-sage-400 hover:text-sage-200 hover:bg-[#1A2016]'
           }`}
         >
           <span className="flex items-center gap-2.5 shrink-0 min-w-0">
@@ -101,7 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </Link>
         {isCollapsed && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 px-2 py-1 bg-[#182030] text-slate-100 text-xs rounded border border-[#2A364F] whitespace-nowrap opacity-0 pointer-events-none group-hover/item:opacity-100 transition-opacity">
+          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 px-2 py-1 bg-[#1E2519] text-sage-100 text-xs rounded border border-[#37452E] whitespace-nowrap opacity-0 pointer-events-none group-hover/item:opacity-100 transition-opacity">
             {label}
           </div>
         )}
@@ -111,19 +111,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const sidebarContent = (collapsed: boolean) => (
     <aside
-      className={`w-full bg-[#0E121A] border-r border-[#1B2333] flex flex-col justify-between h-full select-none transition-all duration-200 ${
+      className={`w-full bg-[#12160F] border-r border-[#1E2519] flex flex-col justify-between h-full select-none transition-all duration-200 ${
         collapsed ? 'items-center px-2 py-3' : 'p-3'
       }`}
     >
       <div className="flex flex-col gap-3 overflow-y-auto w-full">
         {/* Institutional Header */}
-        <div className="flex items-center justify-between border-b border-[#1B2333] pb-3 min-h-[42px]">
+        <div className="flex items-center justify-between border-b border-[#1E2519] pb-3 min-h-[42px]">
           <Link
             to="/"
             className={`flex items-center gap-2.5 group shrink-0 ${collapsed ? 'justify-center w-full' : ''}`}
             onClick={onClose}
           >
-            <div className="w-7 h-7 rounded bg-blue-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+            <div className="w-7 h-7 rounded-md bg-primary-600 flex items-center justify-center text-[#06150E] font-bold text-xs shrink-0 shadow-field-sm">
               TP
             </div>
             {!collapsed && (
@@ -132,11 +132,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <span className="text-xs font-bold text-white tracking-tight leading-none truncate">
                     Academic Grading
                   </span>
-                  <span className="px-1 py-0.2 text-[9px] font-mono font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded">
+                  <span className="px-1 py-0.2 text-[9px] font-mono font-bold text-primary-400 bg-primary-500/10 border border-primary-500/20 rounded">
                     {APP_VERSION}
                   </span>
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono tracking-wider uppercase mt-0.5 block truncate">
+                <span className="text-[10px] text-sage-500 font-mono tracking-wider uppercase mt-0.5 block truncate">
                   {user.role === 'Teacher'
                     ? 'Faculty Portal'
                     : user.role === 'Admin'
@@ -152,12 +152,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={onToggleCollapse}
               aria-label={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
               title="Ctrl+B"
-              className="hidden md:flex items-center justify-center p-1 text-slate-400 hover:text-white rounded bg-[#161C28] border border-[#232F45] transition-colors shrink-0"
+              className="hidden md:flex items-center justify-center p-1 text-sage-400 hover:text-white rounded bg-[#1A2016] border border-[#37452E] transition-colors shrink-0"
             >
               {collapsed ? (
-                <ChevronRight className="w-3.5 h-3.5 text-blue-400" />
+                <ChevronRight className="w-3.5 h-3.5 text-primary-400" />
               ) : (
-                <ChevronLeft className="w-3.5 h-3.5 text-blue-400" />
+                <ChevronLeft className="w-3.5 h-3.5 text-primary-400" />
               )}
             </button>
           )}
@@ -165,10 +165,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {onClose && (
             <button
               onClick={onClose}
-              className="md:hidden p-1.5 text-slate-400 hover:text-white rounded bg-[#161C28] border border-[#232F45] flex items-center justify-center"
+              className="md:hidden p-1.5 text-sage-400 hover:text-white rounded bg-[#1A2016] border border-[#37452E] flex items-center justify-center"
               aria-label="Close Drawer"
             >
-              <X className="w-4 h-4 text-slate-300" />
+              <X className="w-4 h-4 text-sage-300" />
             </button>
           )}
         </div>
@@ -176,76 +176,76 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Navigation Sections */}
         <nav className="space-y-0.5 w-full">
           {!collapsed && (
-            <div className="text-[10px] font-bold font-mono uppercase tracking-wider text-slate-500 px-2 mt-2 mb-1 truncate">
+            <div className="text-[10px] font-bold font-mono uppercase tracking-wider text-sage-500 px-2 mt-2 mb-1 truncate">
               Academic Operations
             </div>
           )}
-          {renderNavItem('/dashboard', t('dashboard'), <LayoutDashboard className="w-3.5 h-3.5 text-blue-400" />)}
-          {renderNavItem('/', t('courses'), <BookOpen className="w-3.5 h-3.5 text-slate-400" />)}
-          {renderNavItem('/chat', lang === 'ar' ? 'المحادثات' : 'Messages', <MessageSquare className="w-3.5 h-3.5 text-slate-400" />)}
-          {renderNavItem('/leaderboard', t('leaderboard'), <Trophy className="w-3.5 h-3.5 text-slate-400" />)}
-          {renderNavItem('/calendar', t('calendar'), <Calendar className="w-3.5 h-3.5 text-slate-400" />)}
+          {renderNavItem('/dashboard', t('dashboard'), <LayoutDashboard className="w-3.5 h-3.5 text-primary-400" />)}
+          {renderNavItem('/', t('courses'), <BookOpen className="w-3.5 h-3.5 text-sage-400" />)}
+          {renderNavItem('/chat', lang === 'ar' ? 'المحادثات' : 'Messages', <MessageSquare className="w-3.5 h-3.5 text-sage-400" />)}
+          {renderNavItem('/leaderboard', t('leaderboard'), <Trophy className="w-3.5 h-3.5 text-sage-400" />)}
+          {renderNavItem('/calendar', t('calendar'), <Calendar className="w-3.5 h-3.5 text-sage-400" />)}
 
           {isTeacherOrAdmin && hasCourses && (
             <>
               {!collapsed && (
-                <div className="text-[10px] font-bold font-mono uppercase tracking-wider text-slate-500 px-2 pt-3 mb-1 truncate">
+                <div className="text-[10px] font-bold font-mono uppercase tracking-wider text-sage-500 px-2 pt-3 mb-1 truncate">
                   Review & Evaluation
                 </div>
               )}
               {renderNavItem('/teacher/pending-reviews', t('pendingReviews'), <Inbox className="w-3.5 h-3.5 text-amber-400" />, 'Queue')}
-              {renderNavItem('/teacher/students', t('students'), <Users className="w-3.5 h-3.5 text-slate-400" />)}
-              {renderNavItem('/archive', t('archive'), <Archive className="w-3.5 h-3.5 text-slate-400" />)}
-              {renderNavItem('/activity-log', t('activityLog'), <Activity className="w-3.5 h-3.5 text-slate-400" />)}
+              {renderNavItem('/teacher/students', t('students'), <Users className="w-3.5 h-3.5 text-sage-400" />)}
+              {renderNavItem('/archive', t('archive'), <Archive className="w-3.5 h-3.5 text-sage-400" />)}
+              {renderNavItem('/activity-log', t('activityLog'), <Activity className="w-3.5 h-3.5 text-sage-400" />)}
             </>
           )}
 
           {user.role === 'Admin' && (
             <>
               {!collapsed && (
-                <div className="text-[10px] font-bold font-mono uppercase tracking-wider text-blue-400 px-2 pt-3 mb-1 truncate">
+                <div className="text-[10px] font-bold font-mono uppercase tracking-wider text-primary-400 px-2 pt-3 mb-1 truncate">
                   System Administration
                 </div>
               )}
-              {renderNavItem('/admin/dashboard', t('adminDashboard'), <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />)}
-              {renderNavItem('/admin/users', t('userManagement'), <Users className="w-3.5 h-3.5 text-blue-400" />)}
-              {renderNavItem('/admin/settings', t('systemSettings'), <Settings className="w-3.5 h-3.5 text-blue-400" />)}
+              {renderNavItem('/admin/dashboard', t('adminDashboard'), <ShieldCheck className="w-3.5 h-3.5 text-primary-400" />)}
+              {renderNavItem('/admin/users', t('userManagement'), <Users className="w-3.5 h-3.5 text-primary-400" />)}
+              {renderNavItem('/admin/settings', t('systemSettings'), <Settings className="w-3.5 h-3.5 text-primary-400" />)}
             </>
           )}
 
           {!collapsed && (
-            <div className="text-[10px] font-bold font-mono uppercase tracking-wider text-slate-500 px-2 pt-3 mb-1 truncate">
+            <div className="text-[10px] font-bold font-mono uppercase tracking-wider text-sage-500 px-2 pt-3 mb-1 truncate">
               User Preferences
             </div>
           )}
-          {renderNavItem('/settings', t('settings'), <Settings className="w-3.5 h-3.5 text-slate-400" />)}
-          {renderNavItem('/profile', t('profile'), <User className="w-3.5 h-3.5 text-slate-400" />)}
+          {renderNavItem('/settings', t('settings'), <Settings className="w-3.5 h-3.5 text-sage-400" />)}
+          {renderNavItem('/profile', t('profile'), <User className="w-3.5 h-3.5 text-sage-400" />)}
         </nav>
       </div>
 
       {/* Institutional User & Language Footer */}
-      <div className="border-t border-[#1B2333] pt-2.5 space-y-2 bg-[#0E121A] w-full">
+      <div className="border-t border-[#1E2519] pt-2.5 space-y-2 bg-[#12160F] w-full">
         <button
           onClick={toggleLanguage}
-          className={`w-full flex items-center bg-[#151B28] hover:bg-[#1E2638] border border-[#232F45] text-slate-300 rounded text-xs py-1.5 transition-colors ${
+          className={`w-full flex items-center bg-[#1A2016] hover:bg-[#212B1E] border border-[#37452E] text-sage-300 rounded text-xs py-1.5 transition-colors ${
             collapsed ? 'justify-center px-0' : 'justify-between px-2.5'
           }`}
         >
           <span className="flex items-center gap-2">
-            <Globe className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+            <Globe className="w-3.5 h-3.5 text-primary-400 shrink-0" />
             {!collapsed && <span>Language</span>}
           </span>
           {!collapsed && (
-            <span className="text-[9px] font-mono font-bold uppercase bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20">
+            <span className="text-[9px] font-mono font-bold uppercase bg-primary-500/10 text-primary-400 px-1.5 py-0.5 rounded border border-primary-500/20">
               {lang === 'ar' ? 'عربي' : 'English'}
             </span>
           )}
         </button>
 
-        <div className="bg-[#151B28] rounded border border-[#232F45] p-2 w-full space-y-2">
+        <div className="bg-[#1A2016] rounded border border-[#37452E] p-2 w-full space-y-2">
           <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'} gap-2`}>
             <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-              <div className="w-7 h-7 rounded bg-blue-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0 border border-blue-400/30">
+              <div className="w-7 h-7 rounded bg-primary-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0 border border-primary-400/30">
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl} alt={displayName} className="w-full h-full object-cover" />
                 ) : (
@@ -255,14 +255,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {!collapsed && (
                 <div className="min-w-0 overflow-hidden">
                   <p className="text-xs font-semibold text-white truncate">{displayName}</p>
-                  <p className="text-[10px] text-slate-400 truncate">{user.role}</p>
+                  <p className="text-[10px] text-sage-400 truncate">{user.role}</p>
                 </div>
               )}
             </div>
             {collapsed && (
               <button
                 onClick={logout}
-                className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors shrink-0"
+                className="p-1 text-sage-400 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors shrink-0"
                 title={t('logout')}
               >
                 <LogOut className="w-3.5 h-3.5" />

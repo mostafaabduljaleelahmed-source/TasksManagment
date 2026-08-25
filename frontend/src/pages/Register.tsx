@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
-import { KeyRound, Mail, User, AlertCircle, ArrowRight, ArrowLeft, Loader2, Globe, CheckCircle2 } from 'lucide-react';
+import { KeyRound, Mail, User, AlertCircle, ArrowRight, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
+import { AuthShell } from '../components/AuthShell';
 
 export const Register: React.FC = () => {
   const { register, googleLogin, user } = useAuth();
@@ -119,28 +120,21 @@ export const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0B0E14] px-4 relative overflow-hidden">
-      {/* Language Switcher */}
-      <div className="absolute top-6 right-6 z-20">
-        <button
-          onClick={toggleLanguage}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#151B28] hover:bg-[#1E2638] border border-[#232F45] text-slate-300 hover:text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
-        >
-          <Globe className="w-4 h-4 text-blue-400" />
-          <span>{lang === 'ar' ? 'English' : 'عربي'}</span>
-        </button>
-      </div>
-
-      <div className="w-full max-w-md academic-surface rounded-2xl p-8 shadow-2xl relative z-10">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-100 mb-2">
-            {t('register')}
-          </h1>
-          <p className="text-xs text-slate-400">
-            {t('appName')}
-          </p>
-        </div>
-
+    <AuthShell
+      appName={t('appName')}
+      lang={lang}
+      onToggleLanguage={toggleLanguage}
+      headline={
+        <>
+          Your gradebook,
+          <br />
+          built for <span className="text-primary-400">momentum</span>.
+        </>
+      }
+      subtext="Join your class, submit work, and track review status in one place — no spreadsheets, no lost feedback."
+      formTitle={t('register')}
+      formSubtitle={t('appName')}
+    >
         {error && (
           <div className="mb-6 flex items-start gap-3 bg-red-950/40 border border-red-800/50 text-red-200 rounded-xl p-4 text-xs">
             <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
@@ -153,8 +147,8 @@ export const Register: React.FC = () => {
             <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-bold text-slate-100">Check Your Inbox</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <h3 className="text-lg font-bold text-sage-100">Check Your Inbox</h3>
+            <p className="text-xs text-sage-300 leading-relaxed">
               {successMessage}
             </p>
             <div className="pt-4">
@@ -176,8 +170,8 @@ export const Register: React.FC = () => {
                 </div>
 
                 <div className="relative flex items-center justify-center my-6">
-                  <div className="border-t border-[#1B2333] w-full" />
-                  <span className="bg-[#121620] px-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider absolute">
+                  <div className="border-t border-[#1E2519] w-full" />
+                  <span className="bg-[#12160F] px-3 text-[10px] uppercase font-bold text-sage-500 tracking-wider absolute">
                     or register with email
                   </span>
                 </div>
@@ -186,11 +180,11 @@ export const Register: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-sage-300 mb-1.5">
                   {t('name')}
                 </label>
                 <div className="relative">
-                  <User className={`w-4 h-4 text-slate-500 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
+                  <User className={`w-4 h-4 text-sage-500 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
                   <input
                     type="text"
                     required
@@ -203,11 +197,11 @@ export const Register: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-sage-300 mb-1.5">
                   {t('email')}
                 </label>
                 <div className="relative">
-                  <Mail className={`w-4 h-4 text-slate-500 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
+                  <Mail className={`w-4 h-4 text-sage-500 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
                   <input
                     type="email"
                     required
@@ -220,11 +214,11 @@ export const Register: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-sage-300 mb-1.5">
                   {t('password')}
                 </label>
                 <div className="relative">
-                  <KeyRound className={`w-4 h-4 text-slate-500 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
+                  <KeyRound className={`w-4 h-4 text-sage-500 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
                   <input
                     type="password"
                     required
@@ -235,15 +229,15 @@ export const Register: React.FC = () => {
                     placeholder="••••••••"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1.5">At least 8 characters.</p>
+                <p className="text-[11px] text-sage-500 mt-1.5">At least 8 characters.</p>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-sage-300 mb-1.5">
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <KeyRound className={`w-4 h-4 text-slate-500 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
+                  <KeyRound className={`w-4 h-4 text-sage-500 absolute top-1/2 -translate-y-1/2 ${isRtl ? 'right-3' : 'left-3'}`} />
                   <input
                     type="password"
                     required
@@ -273,18 +267,17 @@ export const Register: React.FC = () => {
           </>
         )}
 
-        <div className="mt-8 text-center border-t border-[#1B2333] pt-6">
-          <p className="text-xs text-slate-400">
+        <div className="mt-8 text-center border-t border-[#1E2519] pt-6">
+          <p className="text-xs text-sage-400">
             {t('login')}?{' '}
             <Link
               to="/login"
-              className="text-blue-400 hover:text-blue-300 font-bold transition-colors"
+              className="text-primary-400 hover:text-primary-300 font-bold transition-colors"
             >
               {t('login')}
             </Link>
           </p>
         </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 };

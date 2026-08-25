@@ -70,12 +70,12 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="space-y-4 animate-fade-in max-w-7xl mx-auto px-2 sm:px-4 py-3">
       {/* Header */}
-      <div className="border-b border-[#1B2333] pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div className="border-b border-[#1E2519] pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
             {lang === 'ar' ? 'لوحة المتابعة الأكاديمية' : 'Faculty Overview'}
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-sage-400">
             {lang === 'ar' ? 'نظرة عامة على مهام التقييم والمقررات الدراسية النشطة' : 'Active courses, urgent evaluations, and submission stream'}
           </p>
         </div>
@@ -105,8 +105,8 @@ export const Dashboard: React.FC = () => {
 
       {/* Priority 1: Pending Evaluation Queue Panel (Teachers/Admins) */}
       {(user?.role === 'Teacher' || user?.role === 'Admin') && (
-        <div className="academic-surface rounded-lg border border-[#1B2333]">
-          <div className="p-3 border-b border-[#1B2333] flex items-center justify-between">
+        <div className="academic-surface rounded-lg border border-[#1E2519]">
+          <div className="p-3 border-b border-[#1E2519] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Inbox className="w-4 h-4 text-amber-400" />
               <h2 className="text-xs font-bold text-white uppercase tracking-wider">
@@ -115,39 +115,39 @@ export const Dashboard: React.FC = () => {
             </div>
             <button
               onClick={() => navigate('/teacher/pending-reviews')}
-              className="text-[11px] text-blue-400 hover:underline font-semibold"
+              className="text-[11px] text-primary-400 hover:underline font-semibold"
             >
               {lang === 'ar' ? 'عرض الكل' : 'View All'} ({urgentQueue.length})
             </button>
           </div>
 
           {loading ? (
-            <div className="p-6 text-center text-xs text-slate-500">
+            <div className="p-6 text-center text-xs text-sage-500">
               {lang === 'ar' ? 'جاري التحميل...' : 'Loading priority items...'}
             </div>
           ) : urgentQueue.length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-400 space-y-1">
+            <div className="p-6 text-center text-xs text-sage-400 space-y-1">
               <CheckCircle2 className="w-6 h-6 mx-auto text-emerald-400" />
-              <p className="font-semibold text-slate-300">
+              <p className="font-semibold text-sage-300">
                 {lang === 'ar' ? 'لا توجد تسليمات تنتظر التقييم' : 'Queue Empty'}
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-[#141A28]">
+            <div className="divide-y divide-[#1A2016]">
               {urgentQueue.map((item) => (
-                <div key={item.submissionId} className="p-3 flex items-center justify-between hover:bg-[#161C2A] transition-colors">
+                <div key={item.submissionId} className="p-3 flex items-center justify-between hover:bg-[#1A2016] transition-colors">
                   <div className="min-w-0 pr-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-white truncate">{item.studentName}</span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.2 bg-[#161C29] border border-[#232F45] text-slate-300 rounded">
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 bg-[#1A2016] border border-[#37452E] text-sage-300 rounded">
                         {item.groupName}
                       </span>
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-0.5 truncate">{item.taskTitle}</div>
+                    <div className="text-[11px] text-sage-400 mt-0.5 truncate">{item.taskTitle}</div>
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
+                    <span className="text-[10px] font-mono text-sage-400 hidden sm:inline">
                       {new Date(item.submittedAt).toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US', {
                         hour: '2-digit',
                         minute: '2-digit'
@@ -169,10 +169,10 @@ export const Dashboard: React.FC = () => {
       )}
 
       {/* Priority 2: Active Courses Matrix */}
-      <div className="academic-surface rounded-lg border border-[#1B2333]">
-        <div className="p-3 border-b border-[#1B2333] flex items-center justify-between">
+      <div className="academic-surface rounded-lg border border-[#1E2519]">
+        <div className="p-3 border-b border-[#1E2519] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-blue-400" />
+            <BookOpen className="w-4 h-4 text-primary-400" />
             <h2 className="text-xs font-bold text-white uppercase tracking-wider">
               {lang === 'ar' ? 'المقررات الدراسية النشطة' : 'Active Courses Roster'}
             </h2>
@@ -180,16 +180,16 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="p-6 text-center text-xs text-slate-500">
+          <div className="p-6 text-center text-xs text-sage-500">
             {lang === 'ar' ? 'جاري التحميل...' : 'Loading courses...'}
           </div>
         ) : courses.length === 0 ? (
-          <div className="p-6 text-center text-xs text-slate-400 space-y-2">
-            <BookOpen className="w-6 h-6 mx-auto text-slate-600" />
-            <p className="font-semibold text-slate-300">
+          <div className="p-6 text-center text-xs text-sage-400 space-y-2">
+            <BookOpen className="w-6 h-6 mx-auto text-sage-600" />
+            <p className="font-semibold text-sage-300">
               {lang === 'ar' ? 'لا توجد مقررات بعد' : 'No courses yet'}
             </p>
-            <p className="text-slate-500">
+            <p className="text-sage-500">
               {user?.role === 'Student'
                 ? (lang === 'ar' ? 'أدخل رمز المقرر من معلمك للانضمام.' : "Enter a course code from your teacher to join.")
                 : (lang === 'ar' ? 'أنشئ مقررك الأول لدعوة طلابك.' : 'Create your first course to invite students.')}
@@ -217,9 +217,9 @@ export const Dashboard: React.FC = () => {
               <tbody>
                 {courses.map((course) => (
                   <tr key={course.id}>
-                    <td className="font-mono font-semibold text-blue-400">{course.courseCode}</td>
+                    <td className="font-mono font-semibold text-primary-400">{course.courseCode}</td>
                     <td className="font-semibold text-white">{course.name}</td>
-                    <td className="font-mono text-slate-300">{course.studentsCount}</td>
+                    <td className="font-mono text-sage-300">{course.studentsCount}</td>
                     <td className="text-right">
                       <button
                         onClick={() => navigate(`/course/${course.id}`)}

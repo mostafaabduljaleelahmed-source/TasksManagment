@@ -54,19 +54,19 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 ? 'bg-[#2A1215]/90 border-red-500/40 text-red-300'
                 : toast.type === 'warning'
                 ? 'bg-[#2A1E0E]/90 border-amber-500/40 text-amber-300'
-                : 'bg-[#141A29]/90 border-indigo-500/40 text-indigo-300'
+                : 'bg-[#1A2016]/90 border-primary-500/40 text-primary-300'
             }`}
           >
             <div className="flex items-center gap-3">
               {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />}
               {toast.type === 'error' && <XCircle className="w-5 h-5 text-red-400 shrink-0" />}
               {toast.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />}
-              {toast.type === 'info' && <Info className="w-5 h-5 text-indigo-400 shrink-0" />}
+              {toast.type === 'info' && <Info className="w-5 h-5 text-primary-400 shrink-0" />}
               <p className="text-xs font-semibold leading-relaxed">{toast.message}</p>
             </div>
             <button
               onClick={() => removeToast(toast.id)}
-              className="p-1 hover:bg-white/10 rounded-lg transition-colors text-zinc-400 hover:text-white shrink-0"
+              className="p-1 hover:bg-white/10 rounded-lg transition-colors text-sage-400 hover:text-white shrink-0"
             >
               <X className="w-4 h-4" />
             </button>

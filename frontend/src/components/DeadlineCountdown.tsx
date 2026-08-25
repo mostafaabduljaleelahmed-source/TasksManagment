@@ -58,11 +58,11 @@ export const DeadlineCountdown: React.FC<DeadlineCountdownProps> = ({
   if (timeLeft.isExpired) {
     return (
       <span
-        className={`inline-flex items-center gap-1.5 font-semibold text-zinc-400 bg-zinc-800/60 border border-zinc-700/50 rounded-lg ${
+        className={`inline-flex items-center gap-1.5 font-semibold text-sage-400 bg-sage-800/60 border border-sage-700/50 rounded-lg ${
           size === 'sm' ? 'px-2 py-0.5 text-xs' : size === 'lg' ? 'px-4 py-2 text-base' : 'px-3 py-1 text-sm'
         } ${className}`}
       >
-        {showIcon && <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />}
+        {showIcon && <Clock className="w-3.5 h-3.5 text-sage-400 shrink-0" />}
         Expired
       </span>
     );

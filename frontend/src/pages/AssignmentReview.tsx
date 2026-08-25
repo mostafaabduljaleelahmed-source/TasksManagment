@@ -136,14 +136,14 @@ export const AssignmentReview: React.FC = () => {
       />
 
       {/* Header & Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F2937] pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#212B1E] pb-6">
         <div>
           <h1 className="text-2xl font-extrabold text-white flex items-center gap-3 tracking-tight">
-            <Code className="w-6 h-6 text-blue-400" />
+            <Code className="w-6 h-6 text-primary-400" />
             {data?.taskTitle}
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
-            Max Grade: <strong className="text-blue-400">{data?.maxGrade} pts</strong> | Deadline: <strong>{data?.deadline ? new Date(data.deadline).toLocaleString() : 'None'}</strong>
+          <p className="text-xs text-sage-400 mt-1">
+            Max Grade: <strong className="text-primary-400">{data?.maxGrade} pts</strong> | Deadline: <strong>{data?.deadline ? new Date(data.deadline).toLocaleString() : 'None'}</strong>
           </p>
         </div>
 
@@ -151,13 +151,13 @@ export const AssignmentReview: React.FC = () => {
         <div className="flex items-center gap-3">
           <Link
             to={`/grading-workspace/${taskId}`}
-            className="academic-button-primary bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-xs"
+            className="academic-button-primary bg-gradient-to-r from-primary-600 to-primary-600 hover:from-primary-500 hover:to-primary-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-xs"
           >
             <Code className="w-4 h-4" />
             Open 2-Panel Grading Workspace
           </Link>
           <div className="relative">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder={t('search')}
@@ -170,8 +170,8 @@ export const AssignmentReview: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-3" />
+        <div className="flex flex-col items-center justify-center py-20 text-sage-500">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-500 mb-3" />
           <p className="text-xs">{t('loading')}</p>
         </div>
       ) : error ? (
@@ -182,46 +182,46 @@ export const AssignmentReview: React.FC = () => {
         <div className="space-y-10">
           {/* Top Statistics Cards */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-            <div className="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
-              <span className="text-[11px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-blue-400" /> Total Students
+            <div className="bg-[#12160F] border border-[#212B1E] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
+              <span className="text-[11px] text-sage-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-primary-400" /> Total Students
               </span>
               <div className="text-2xl font-extrabold text-white mt-2">{totalStudents}</div>
             </div>
 
-            <div className="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
-              <span className="text-[11px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <div className="bg-[#12160F] border border-[#212B1E] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
+              <span className="text-[11px] text-sage-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Submitted
               </span>
               <div className="text-2xl font-extrabold text-emerald-400 mt-2">{submittedCount}</div>
             </div>
 
-            <div className="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
-              <span className="text-[11px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <div className="bg-[#12160F] border border-[#212B1E] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
+              <span className="text-[11px] text-sage-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                 <XCircle className="w-3.5 h-3.5 text-rose-400" /> Missing
               </span>
               <div className="text-2xl font-extrabold text-rose-400 mt-2">{missingCount}</div>
             </div>
 
-            <div className="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
-              <span className="text-[11px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <div className="bg-[#12160F] border border-[#212B1E] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
+              <span className="text-[11px] text-sage-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-amber-400" /> Pending Review
               </span>
               <div className="text-2xl font-extrabold text-amber-400 mt-2">{pendingReviewCount}</div>
             </div>
 
-            <div className="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
-              <span className="text-[11px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <Award className="w-3.5 h-3.5 text-sky-400" /> Graded
+            <div className="bg-[#12160F] border border-[#212B1E] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
+              <span className="text-[11px] text-sage-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <Award className="w-3.5 h-3.5 text-secondary-400" /> Graded
               </span>
-              <div className="text-2xl font-extrabold text-sky-400 mt-2">{gradedCount}</div>
+              <div className="text-2xl font-extrabold text-secondary-400 mt-2">{gradedCount}</div>
             </div>
 
-            <div className="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
-              <span className="text-[11px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <Code className="w-3.5 h-3.5 text-indigo-400" /> Avg Grade
+            <div className="bg-[#12160F] border border-[#212B1E] p-4 rounded-2xl shadow-xl flex flex-col justify-between">
+              <span className="text-[11px] text-sage-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <Code className="w-3.5 h-3.5 text-primary-400" /> Avg Grade
               </span>
-              <div className="text-2xl font-extrabold text-indigo-400 mt-2">{avgGrade} <span className="text-xs text-zinc-500">/ {data?.maxGrade}</span></div>
+              <div className="text-2xl font-extrabold text-primary-400 mt-2">{avgGrade} <span className="text-xs text-sage-500">/ {data?.maxGrade}</span></div>
             </div>
           </div>
 
@@ -232,21 +232,21 @@ export const AssignmentReview: React.FC = () => {
                 <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                 Submitted Students ({searchFilteredSubmitted.length})
               </h2>
-              <p className="text-xs text-zinc-400">Students who submitted their assignment. Click Review to inspect code and grade.</p>
+              <p className="text-xs text-sage-400">Students who submitted their assignment. Click Review to inspect code and grade.</p>
             </div>
 
             {/* Mobile Cards Layout (sm:hidden) */}
             <div className="sm:hidden space-y-3">
               {searchFilteredSubmitted.length === 0 ? (
-                <div className="p-6 bg-[#111827] border border-[#1F2937] rounded-2xl text-center text-zinc-500 text-xs">
+                <div className="p-6 bg-[#12160F] border border-[#212B1E] rounded-2xl text-center text-sage-500 text-xs">
                   No submitted students found.
                 </div>
               ) : (
                 searchFilteredSubmitted.map((s) => (
-                  <div key={s.studentId} className="bg-[#111827] border border-[#1F2937] rounded-2xl p-4 space-y-3 shadow-xl">
+                  <div key={s.studentId} className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-4 space-y-3 shadow-xl">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-primary-600 text-white font-bold text-xs flex items-center justify-center border border-primary-400/30 overflow-hidden shrink-0">
                           {s.studentAvatarUrl ? (
                             <img src={s.studentAvatarUrl} alt={s.studentName} className="w-full h-full object-cover" />
                           ) : (
@@ -255,7 +255,7 @@ export const AssignmentReview: React.FC = () => {
                         </div>
                         <div>
                           <h3 className="font-bold text-white text-sm">{s.studentName}</h3>
-                          <span className="text-xs text-zinc-400 font-mono">{s.studentRegisterId}</span>
+                          <span className="text-xs text-sage-400 font-mono">{s.studentRegisterId}</span>
                         </div>
                       </div>
                       <span className="font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl text-xs">
@@ -263,7 +263,7 @@ export const AssignmentReview: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs pt-2 border-t border-[#1F2937]/60 text-zinc-400">
+                    <div className="flex items-center justify-between text-xs pt-2 border-t border-[#212B1E]/60 text-sage-400">
                       <span>Submitted: {s.submissionTime ? new Date(s.submissionTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</span>
                       <span className="font-mono">Attempt #{s.attemptNumber}</span>
                     </div>
@@ -281,10 +281,10 @@ export const AssignmentReview: React.FC = () => {
             </div>
 
             {/* Desktop Table (hidden on mobile) */}
-            <div className="hidden sm:block bg-[#111827] border border-[#1F2937] rounded-2xl overflow-hidden shadow-xl">
+            <div className="hidden sm:block bg-[#12160F] border border-[#212B1E] rounded-2xl overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left text-zinc-300">
-                  <thead className="bg-[#1F2937]/50 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-[#1F2937]">
+                <table className="w-full text-xs text-left text-sage-300">
+                  <thead className="bg-[#212B1E]/50 text-sage-400 uppercase text-[10px] tracking-wider border-b border-[#212B1E]">
                     <tr>
                       <th className="px-5 py-3.5 font-bold">Avatar</th>
                       <th className="px-5 py-3.5 font-bold">Name</th>
@@ -295,18 +295,18 @@ export const AssignmentReview: React.FC = () => {
                       <th className="px-4 py-3.5 font-bold text-center">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#1F2937]/50">
+                  <tbody className="divide-y divide-[#212B1E]/50">
                     {searchFilteredSubmitted.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
+                        <td colSpan={7} className="px-4 py-8 text-center text-sage-500">
                           No submitted students found.
                         </td>
                       </tr>
                     ) : (
                       searchFilteredSubmitted.map((s) => (
-                        <tr key={s.studentId} className="hover:bg-[#1A2234] transition-colors">
+                        <tr key={s.studentId} className="hover:bg-[#1E2519] transition-colors">
                           <td className="px-5 py-3.5">
-                            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center border border-blue-400/30 overflow-hidden shrink-0">
+                            <div className="w-9 h-9 rounded-xl bg-primary-600 text-white font-bold text-xs flex items-center justify-center border border-primary-400/30 overflow-hidden shrink-0">
                               {s.studentAvatarUrl ? (
                                 <img src={s.studentAvatarUrl} alt={s.studentName} className="w-full h-full object-cover" />
                               ) : (
@@ -316,12 +316,12 @@ export const AssignmentReview: React.FC = () => {
                           </td>
                           <td className="px-5 py-3.5">
                             <div className="font-bold text-white text-sm">{s.studentName}</div>
-                            <div className="text-[11px] text-zinc-400 font-mono">{s.studentRegisterId}</div>
+                            <div className="text-[11px] text-sage-400 font-mono">{s.studentRegisterId}</div>
                           </td>
-                          <td className="px-4 py-3.5 text-zinc-300">
+                          <td className="px-4 py-3.5 text-sage-300">
                             {s.submissionTime ? new Date(s.submissionTime).toLocaleString() : '-'}
                           </td>
-                          <td className="px-4 py-3.5 font-mono text-zinc-400">
+                          <td className="px-4 py-3.5 font-mono text-sage-400">
                             #{s.attemptNumber}
                           </td>
                           <td className="px-4 py-3.5">
@@ -371,22 +371,22 @@ export const AssignmentReview: React.FC = () => {
                 <XCircle className="w-5 h-5 text-rose-400" />
                 Missing Students ({searchFilteredMissing.length})
               </h2>
-              <p className="text-xs text-zinc-400">Enrolled students who have not turned in a submission yet.</p>
+              <p className="text-xs text-sage-400">Enrolled students who have not turned in a submission yet.</p>
             </div>
 
             {/* Mobile Cards for Missing Students */}
             <div className="sm:hidden space-y-3">
               {searchFilteredMissing.length === 0 ? (
-                <div className="p-6 bg-[#111827] border border-[#1F2937] rounded-2xl text-center text-zinc-500 text-xs">
+                <div className="p-6 bg-[#12160F] border border-[#212B1E] rounded-2xl text-center text-sage-500 text-xs">
                   All enrolled students have submitted! No missing students.
                 </div>
               ) : (
                 searchFilteredMissing.map((s) => {
                   const isOverdue = data?.deadline ? new Date() > new Date(data.deadline) : false;
                   return (
-                    <div key={s.studentId} className="bg-[#111827] border border-[#1F2937] rounded-2xl p-4 flex items-center justify-between gap-3 shadow-xl">
+                    <div key={s.studentId} className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-4 flex items-center justify-between gap-3 shadow-xl">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-400 font-bold text-xs flex items-center justify-center border border-zinc-700/40 overflow-hidden shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-sage-800 text-sage-400 font-bold text-xs flex items-center justify-center border border-sage-700/40 overflow-hidden shrink-0">
                           {s.studentAvatarUrl ? (
                             <img src={s.studentAvatarUrl} alt={s.studentName} className="w-full h-full object-cover" />
                           ) : (
@@ -395,7 +395,7 @@ export const AssignmentReview: React.FC = () => {
                         </div>
                         <div>
                           <h3 className="font-bold text-white text-sm">{s.studentName}</h3>
-                          <span className="text-xs text-zinc-400 font-mono">{s.studentRegisterId}</span>
+                          <span className="text-xs text-sage-400 font-mono">{s.studentRegisterId}</span>
                         </div>
                       </div>
 
@@ -404,7 +404,7 @@ export const AssignmentReview: React.FC = () => {
                           🔴 Overdue
                         </span>
                       ) : (
-                        <span className="px-2.5 py-1 rounded-xl font-medium text-[10px] bg-zinc-500/15 border border-zinc-500/30 text-zinc-400 shrink-0">
+                        <span className="px-2.5 py-1 rounded-xl font-medium text-[10px] bg-sage-500/15 border border-sage-500/30 text-sage-400 shrink-0">
                           ⚪ Pending
                         </span>
                       )}
@@ -415,20 +415,20 @@ export const AssignmentReview: React.FC = () => {
             </div>
 
             {/* Desktop Table for Missing Students */}
-            <div className="hidden sm:block bg-[#111827] border border-[#1F2937] rounded-2xl overflow-hidden shadow-xl">
+            <div className="hidden sm:block bg-[#12160F] border border-[#212B1E] rounded-2xl overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left text-zinc-300">
-                  <thead className="bg-[#1F2937]/50 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-[#1F2937]">
+                <table className="w-full text-xs text-left text-sage-300">
+                  <thead className="bg-[#212B1E]/50 text-sage-400 uppercase text-[10px] tracking-wider border-b border-[#212B1E]">
                     <tr>
                       <th className="px-5 py-3.5 font-bold">Avatar</th>
                       <th className="px-5 py-3.5 font-bold">Name</th>
                       <th className="px-4 py-3.5 font-bold">Deadline Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#1F2937]/50">
+                  <tbody className="divide-y divide-[#212B1E]/50">
                     {searchFilteredMissing.length === 0 ? (
                       <tr>
-                        <td colSpan={3} className="px-4 py-8 text-center text-zinc-500">
+                        <td colSpan={3} className="px-4 py-8 text-center text-sage-500">
                           All enrolled students have submitted! No missing students.
                         </td>
                       </tr>
@@ -436,9 +436,9 @@ export const AssignmentReview: React.FC = () => {
                       searchFilteredMissing.map((s) => {
                         const isOverdue = data?.deadline ? new Date() > new Date(data.deadline) : false;
                         return (
-                          <tr key={s.studentId} className="hover:bg-[#1A2234] transition-colors">
+                          <tr key={s.studentId} className="hover:bg-[#1E2519] transition-colors">
                             <td className="px-5 py-3.5">
-                              <div className="w-9 h-9 rounded-xl bg-zinc-800 text-zinc-400 font-bold text-xs flex items-center justify-center border border-zinc-700/40 overflow-hidden shrink-0">
+                              <div className="w-9 h-9 rounded-xl bg-sage-800 text-sage-400 font-bold text-xs flex items-center justify-center border border-sage-700/40 overflow-hidden shrink-0">
                                 {s.studentAvatarUrl ? (
                                   <img src={s.studentAvatarUrl} alt={s.studentName} className="w-full h-full object-cover" />
                                 ) : (
@@ -448,7 +448,7 @@ export const AssignmentReview: React.FC = () => {
                             </td>
                             <td className="px-5 py-3.5">
                               <div className="font-bold text-white text-sm">{s.studentName}</div>
-                              <div className="text-[11px] text-zinc-400 font-mono">{s.studentRegisterId}</div>
+                              <div className="text-[11px] text-sage-400 font-mono">{s.studentRegisterId}</div>
                             </td>
                             <td className="px-4 py-3.5">
                               {isOverdue ? (
@@ -456,7 +456,7 @@ export const AssignmentReview: React.FC = () => {
                                   🔴 Overdue / Deadline Passed
                                 </span>
                               ) : (
-                                <span className="px-2.5 py-1 rounded-lg font-medium text-[10px] bg-zinc-500/15 border border-zinc-500/30 text-zinc-400 inline-flex items-center gap-1">
+                                <span className="px-2.5 py-1 rounded-lg font-medium text-[10px] bg-sage-500/15 border border-sage-500/30 text-sage-400 inline-flex items-center gap-1">
                                   ⚪ Pending Submission (Due: {data?.deadline ? new Date(data.deadline).toLocaleDateString() : 'N/A'})
                                 </span>
                               )}

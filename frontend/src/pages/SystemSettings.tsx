@@ -10,8 +10,8 @@ export const SystemSettings: React.FC = () => {
 
   const [academyName, setAcademyName] = useState('Grading Platform Private Academy');
   const [academyLogo, setAcademyLogo] = useState('');
-  const [primaryColor, setPrimaryColor] = useState('#7C3AED');
-  const [secondaryColor, setSecondaryColor] = useState('#4F46E5');
+  const [primaryColor, setPrimaryColor] = useState('#D9822E');
+  const [secondaryColor, setSecondaryColor] = useState('#1FA971');
   const [contactEmail, setContactEmail] = useState('contact@academy.com');
   const [supportEmail, setSupportEmail] = useState('support@academy.com');
   const [footerText, setFooterText] = useState('© 2026 Private Academy. All rights reserved.');
@@ -77,7 +77,7 @@ export const SystemSettings: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="flex items-center gap-3 text-indigo-400">
+        <div className="flex items-center gap-3 text-primary-400">
           <Loader2 className="w-5 h-5 animate-spin" />
           <span className="text-sm font-semibold">Loading System Settings...</span>
         </div>
@@ -91,34 +91,34 @@ export const SystemSettings: React.FC = () => {
 
         <div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-            <Settings className="w-7 h-7 text-indigo-400" />
+            <Settings className="w-7 h-7 text-primary-400" />
             Academy System Settings
           </h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* General Branding */}
-          <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
-            <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-              <ShieldCheck className="w-5 h-5 text-indigo-400" />
+          <section className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl space-y-6">
+            <div className="flex items-center gap-3 border-b border-[#1A2016] pb-4">
+              <ShieldCheck className="w-5 h-5 text-primary-400" />
               <h2 className="text-base font-bold text-white">Academy Identity & Branding</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Academy Name</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Academy Name</label>
                 <input
                   type="text"
                   value={academyName}
                   onChange={(e) => setAcademyName(e.target.value)}
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#1A2016] border border-[#212B1E] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5 flex items-center gap-2">
-                  <Image className="w-3.5 h-3.5 text-indigo-400" />
+                <label className="block text-xs font-bold text-sage-300 mb-1.5 flex items-center gap-2">
+                  <Image className="w-3.5 h-3.5 text-primary-400" />
                   Academy Logo URL
                 </label>
                 <input
@@ -126,22 +126,22 @@ export const SystemSettings: React.FC = () => {
                   value={academyLogo}
                   onChange={(e) => setAcademyLogo(e.target.value)}
                   placeholder="https://example.com/logo.png"
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#1A2016] border border-[#212B1E] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500"
                 />
               </div>
             </div>
           </section>
 
           {/* Theme Palette */}
-          <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
-            <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-              <Palette className="w-5 h-5 text-indigo-400" />
+          <section className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl space-y-6">
+            <div className="flex items-center gap-3 border-b border-[#1A2016] pb-4">
+              <Palette className="w-5 h-5 text-primary-400" />
               <h2 className="text-base font-bold text-white">System Color Palette</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Primary Accent Color</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Primary Accent Color</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
@@ -153,13 +153,13 @@ export const SystemSettings: React.FC = () => {
                     type="text"
                     value={primaryColor}
                     onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white font-mono"
+                    className="w-full bg-[#1A2016] border border-[#212B1E] rounded-xl px-4 py-2.5 text-xs text-white font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Secondary Accent Color</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Secondary Accent Color</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
@@ -171,7 +171,7 @@ export const SystemSettings: React.FC = () => {
                     type="text"
                     value={secondaryColor}
                     onChange={(e) => setSecondaryColor(e.target.value)}
-                    className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white font-mono"
+                    className="w-full bg-[#1A2016] border border-[#212B1E] rounded-xl px-4 py-2.5 text-xs text-white font-mono"
                   />
                 </div>
               </div>
@@ -179,46 +179,46 @@ export const SystemSettings: React.FC = () => {
           </section>
 
           {/* Contact & Support Emails */}
-          <section className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-6">
-            <div className="flex items-center gap-3 border-b border-[#1F1F26] pb-4">
-              <Mail className="w-5 h-5 text-indigo-400" />
+          <section className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl space-y-6">
+            <div className="flex items-center gap-3 border-b border-[#1A2016] pb-4">
+              <Mail className="w-5 h-5 text-primary-400" />
               <h2 className="text-base font-bold text-white">Contact & Support Email Configuration</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">Contact Email</label>
+                <label className="block text-xs font-bold text-sage-300 mb-1.5">Contact Email</label>
                 <input
                   type="email"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#1A2016] border border-[#212B1E] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5 flex items-center gap-1.5">
-                  <HelpCircle className="w-3.5 h-3.5 text-indigo-400" />
+                <label className="block text-xs font-bold text-sage-300 mb-1.5 flex items-center gap-1.5">
+                  <HelpCircle className="w-3.5 h-3.5 text-primary-400" />
                   Support Email
                 </label>
                 <input
                   type="email"
                   value={supportEmail}
                   onChange={(e) => setSupportEmail(e.target.value)}
-                  className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#1A2016] border border-[#212B1E] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-zinc-300 mb-1.5">Footer Copyright Text</label>
+              <label className="block text-xs font-bold text-sage-300 mb-1.5">Footer Copyright Text</label>
               <input
                 type="text"
                 value={footerText}
                 onChange={(e) => setFooterText(e.target.value)}
-                className="w-full bg-[#1A1A20] border border-[#292933] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#1A2016] border border-[#212B1E] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500"
                 required
               />
             </div>
@@ -230,14 +230,14 @@ export const SystemSettings: React.FC = () => {
               <span className="text-xl">⚠️</span>
               <div>
                 <h2 className="text-base font-extrabold text-rose-400">Danger Zone — Reset Entire Platform</h2>
-                <p className="text-xs text-zinc-400 mt-0.5">
+                <p className="text-xs text-sage-400 mt-0.5">
                   Reset ALL submissions across all courses and students back to Pending state. Old attempts remain stored as read-only history.
                 </p>
               </div>
             </div>
 
             <div className="flex items-center justify-between gap-4">
-              <div className="text-xs text-zinc-400">
+              <div className="text-xs text-sage-400">
                 Requires typing <span className="font-mono text-rose-400 font-bold">RESET</span> to confirm platform-wide action.
               </div>
 
@@ -273,7 +273,7 @@ export const SystemSettings: React.FC = () => {
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-indigo-950/40 transition-all disabled:opacity-50 cursor-pointer"
+              className="px-6 py-3 bg-primary-600 hover:bg-primary-500 active:scale-[0.98] text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-primary-950/40 transition-all disabled:opacity-50 cursor-pointer"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save System Settings

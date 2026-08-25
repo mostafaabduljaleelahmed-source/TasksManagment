@@ -88,27 +88,27 @@ export const CalendarPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-3">
-              <CalendarIcon className="w-6 h-6 text-indigo-400" />
+              <CalendarIcon className="w-6 h-6 text-primary-400" />
               Academic Deadlines & Schedule Calendar
             </h1>
           </div>
 
-          <div className="flex items-center gap-3 bg-[#121215] border border-[#24242B] p-1.5 rounded-xl">
-            <button onClick={handlePrevMonth} className="p-1.5 hover:bg-[#1A1A20] text-zinc-400 hover:text-white rounded-lg">
+          <div className="flex items-center gap-3 bg-[#12160F] border border-[#212B1E] p-1.5 rounded-xl">
+            <button onClick={handlePrevMonth} className="p-1.5 hover:bg-[#1A2016] text-sage-400 hover:text-white rounded-lg">
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="text-xs font-bold text-white px-2">
               {monthNames[month]} {year}
             </span>
-            <button onClick={handleNextMonth} className="p-1.5 hover:bg-[#1A1A20] text-zinc-400 hover:text-white rounded-lg">
+            <button onClick={handleNextMonth} className="p-1.5 hover:bg-[#1A2016] text-sage-400 hover:text-white rounded-lg">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Calendar Grid */}
-        <div className="bg-[#121215] border border-[#24242B] rounded-2xl p-6 shadow-xl space-y-4">
-          <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold text-zinc-400 border-b border-[#1F1F26] pb-3">
+        <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl space-y-4">
+          <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold text-sage-400 border-b border-[#1A2016] pb-3">
             <span>Sun</span>
             <span>Mon</span>
             <span>Tue</span>
@@ -121,7 +121,7 @@ export const CalendarPage: React.FC = () => {
           <div className="grid grid-cols-7 gap-2">
             {/* Blank leading days */}
             {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-              <div key={`empty-${i}`} className="h-24 bg-[#0D0D10]/50 rounded-xl border border-transparent" />
+              <div key={`empty-${i}`} className="h-24 bg-[#0A0D0A]/50 rounded-xl border border-transparent" />
             ))}
 
             {/* Calendar Days */}
@@ -136,11 +136,11 @@ export const CalendarPage: React.FC = () => {
                   key={dayNum}
                   className={`h-24 p-2 rounded-xl border flex flex-col justify-between transition-all ${
                     isToday
-                      ? 'bg-indigo-600/10 border-indigo-500/50 text-indigo-300'
-                      : 'bg-[#17171C] border-[#22222A] text-zinc-300 hover:border-[#2D2D38]'
+                      ? 'bg-primary-600/10 border-primary-500/50 text-primary-300'
+                      : 'bg-[#12160F] border-[#212B1E] text-sage-300 hover:border-[#37452E]'
                   }`}
                 >
-                  <span className={`text-xs font-bold ${isToday ? 'text-indigo-400' : 'text-zinc-400'}`}>{dayNum}</span>
+                  <span className={`text-xs font-bold ${isToday ? 'text-primary-400' : 'text-sage-400'}`}>{dayNum}</span>
 
                   <div className="space-y-1 overflow-y-auto max-h-14">
                     {dayEvents.map((ev) => (

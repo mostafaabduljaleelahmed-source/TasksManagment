@@ -1,25 +1,55 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,500&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg-main: #0B0E14;
-  --bg-surface: #121620;
-  --bg-surface-hover: #1A202E;
-  --bg-inset: #07090E;
-  --border-subtle: #1B2333;
-  --border-strong: #2A364F;
-  --text-heading: #F1F5F9;
-  --text-main: #CBD5E1;
-  --text-muted: #64748B;
+  /* ---- Field Ledger design system ---- */
+  /* Neutrals: warm graphite with a faint green undertone, not blue-slate */
+  --bg-canvas: #0A0D0A;
+  --bg-surface: #12160F;
+  --bg-surface-hover: #1A2016;
+  --bg-elevated: #1E2519;
+  --bg-inset: #070907;
+  --border-subtle: #212B1E;
+  --border-strong: #37452E;
+  --text-heading: #F4F6EF;
+  --text-main: #CBD3C3;
+  --text-muted: #7C8A72;
+  --text-faint: #52604B;
 
-  --accent-primary: #3B82F6;
-  --accent-primary-hover: #2563EB;
-  --status-emerald: #10B981;
-  --status-amber: #F59E0B;
-  --status-rose: #EF4444;
+  /* Brand */
+  --primary: #1FA971;
+  --primary-hover: #2BC280;
+  --primary-deep: #0E5C3C;
+  --primary-tint: rgba(31, 169, 113, 0.12);
+  --secondary: #3E93A8;
+  --secondary-hover: #4FAEC4;
+  --secondary-tint: rgba(62, 147, 168, 0.12);
+  --accent: #D9822E;
+  --accent-hover: #EC9640;
+  --accent-tint: rgba(217, 130, 46, 0.14);
+
+  /* Status */
+  --status-success: #1FA971;
+  --status-warning: #D9822E;
+  --status-danger: #E2584F;
+  --status-danger-tint: rgba(226, 88, 79, 0.12);
+
+  /* Shape */
+  --radius-sm: 7px;
+  --radius-md: 11px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 6px 16px -4px rgba(0, 0, 0, 0.5), 0 2px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 48px -12px rgba(0, 0, 0, 0.6), 0 8px 20px -8px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 0 1px rgba(31, 169, 113, 0.28), 0 10px 28px -8px rgba(31, 169, 113, 0.32);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
@@ -33,53 +63,74 @@
     max-width: 100vw;
     width: 100%;
     -webkit-tap-highlight-color: transparent;
-    background-color: var(--bg-main);
+    background-color: var(--bg-canvas);
   }
-  
+
   body {
-    @apply bg-[#0B0E14] text-slate-300 antialiased selection:bg-blue-600/30 selection:text-blue-200;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    @apply antialiased;
+    background-color: var(--bg-canvas);
+    color: var(--text-main);
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     padding-top: var(--sat);
     padding-bottom: var(--sab);
     padding-left: var(--sal);
     padding-right: var(--sar);
   }
 
+  body::selection, body *::selection {
+    background-color: rgba(31, 169, 113, 0.32);
+    color: #EFFBF4;
+  }
+
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', 'Inter', sans-serif;
-    letter-spacing: -0.015em;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
     color: var(--text-heading);
+  }
+
+  ::placeholder {
+    color: var(--text-faint);
+  }
+
+  html {
+    caret-color: var(--primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
   }
 }
 
-/* Precise Institutional Scrollbars */
+/* Field Ledger scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B0E14;
+  background: var(--bg-canvas);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1E2638;
-  border-radius: 2px;
+  background: var(--border-strong);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2D3B57;
+  background: var(--primary-deep);
 }
 
-/* Institutional Design Utility Classes */
+/* ---- Institutional surface primitives ---- */
 .academic-surface {
-  background-color: #121620;
-  border: 1px solid #1B2333;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
 }
 
 .academic-panel {
-  background-color: #0E121A;
-  border: 1px solid #182030;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
 }
 
 .academic-table {
@@ -89,41 +140,93 @@
 }
 
 .academic-table th {
-  background-color: #0F131C;
-  color: #94A3B8;
-  font-size: 0.7rem;
-  font-weight: 700;
+  background-color: var(--bg-inset);
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   padding: 10px 16px;
-  border-bottom: 1px solid #1E2638;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .academic-table td {
   padding: 12px 16px;
-  border-bottom: 1px solid #141A28;
-  color: #CBD5E1;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-main);
   font-size: 0.8125rem;
 }
 
-.academic-table tr:hover td {
-  background-color: #161C2A;
+.academic-table tr {
+  transition: background-color 0.15s var(--ease-out);
 }
 
+.academic-table tr:hover td {
+  background-color: var(--bg-surface-hover);
+}
+
+/* ---- Buttons ---- */
 .academic-button-primary {
-  @apply bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs py-2 px-4 rounded-lg shadow-sm border border-blue-500/30 transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
+  @apply font-semibold text-xs py-2.5 px-4 flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
+  background-color: var(--primary);
+  color: #06150E;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--primary-hover);
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.16s var(--ease-out), box-shadow 0.16s var(--ease-out), transform 0.1s var(--ease-out);
+}
+
+.academic-button-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+  box-shadow: var(--shadow-glow);
 }
 
 .academic-button-secondary {
-  @apply bg-[#161C29] hover:bg-[#1E2638] text-slate-200 font-semibold text-xs py-2 px-3.5 rounded-lg border border-[#232F45] transition-all flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer;
+  @apply font-semibold text-xs py-2.5 px-3.5 flex items-center justify-center gap-2 active:scale-[0.97] cursor-pointer;
+  background-color: var(--bg-surface);
+  color: var(--text-main);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  transition: all 0.16s var(--ease-out);
+}
+
+.academic-button-secondary:hover {
+  background-color: var(--bg-surface-hover);
+  border-color: var(--text-faint);
 }
 
 .academic-button-danger {
-  @apply bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-semibold text-xs py-2 px-3.5 rounded-lg border border-rose-500/30 transition-all flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer;
+  @apply font-semibold text-xs py-2.5 px-3.5 flex items-center justify-center gap-2 active:scale-[0.97] cursor-pointer;
+  background-color: var(--status-danger-tint);
+  color: #F5A39C;
+  border: 1px solid rgba(226, 88, 79, 0.35);
+  border-radius: var(--radius-md);
+  transition: all 0.16s var(--ease-out);
 }
 
+.academic-button-danger:hover {
+  background-color: rgba(226, 88, 79, 0.22);
+}
+
+/* ---- Inputs ---- */
 .academic-input {
-  @apply bg-[#080B10] border border-[#1E2638] text-slate-100 rounded-lg text-xs py-2 px-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all w-full placeholder:text-slate-600;
+  @apply text-xs py-2.5 px-3.5 w-full;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-strong);
+  color: var(--text-heading);
+  border-radius: var(--radius-md);
+  transition: border-color 0.16s var(--ease-out), box-shadow 0.16s var(--ease-out);
+}
+
+.academic-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
+}
+
+.academic-input::placeholder {
+  color: var(--text-faint);
 }
 
 /* Force Monaco Editor containers to strictly render LTR */
@@ -141,11 +244,45 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(3px); }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.97) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.18s var(--ease-out) forwards;
 }
 
+.animate-fade-in-scale {
+  animation: fadeInScale 0.2s var(--ease-out) forwards;
+}
+
+.animate-rise-in {
+  animation: riseIn 0.5s var(--ease-out) forwards;
+  opacity: 0;
+}
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+
+/* Signature hairline label — mono, tracked, used as an eyebrow/kicker for data */
+.field-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}

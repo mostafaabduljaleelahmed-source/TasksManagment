@@ -95,30 +95,30 @@ export const Archive: React.FC = () => {
     <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-6">
       {/* Navigation Breadcrumb & Back Button */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-zinc-400">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-sage-400">
           <Link to="/dashboard" className="hover:text-white flex items-center gap-1 transition-colors">
             <Home className="w-3.5 h-3.5" />
             Dashboard
           </Link>
-          <ChevronRight className="w-3.5 h-3.5 text-zinc-600" />
+          <ChevronRight className="w-3.5 h-3.5 text-sage-600" />
           <Link to="/" className="hover:text-white transition-colors">
             Courses
           </Link>
-          <ChevronRight className="w-3.5 h-3.5 text-zinc-600" />
+          <ChevronRight className="w-3.5 h-3.5 text-sage-600" />
           <span className="text-amber-400 font-semibold">Archive</span>
         </nav>
 
         <button
           onClick={() => navigate(-1)}
-          className="px-3.5 py-1.5 bg-[#1F2937] hover:bg-[#374151] text-zinc-200 font-semibold text-xs rounded-xl border border-[#374151] transition-all flex items-center gap-2 shadow-sm active:scale-95"
+          className="px-3.5 py-1.5 bg-[#212B1E] hover:bg-[#37452E] text-sage-200 font-semibold text-xs rounded-xl border border-[#37452E] transition-all flex items-center gap-2 shadow-sm active:scale-95"
         >
-          <ArrowLeft className="w-3.5 h-3.5 text-zinc-400" />
+          <ArrowLeft className="w-3.5 h-3.5 text-sage-400" />
           Back
         </button>
       </div>
 
       {/* Header */}
-      <div className="border-b border-[#1F2937] pb-6 flex items-center justify-between">
+      <div className="border-b border-[#212B1E] pb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-white flex items-center gap-3 tracking-tight">
             <ArchiveIcon className="w-6 h-6 text-amber-400" />
@@ -128,13 +128,13 @@ export const Archive: React.FC = () => {
       </div>
 
       {/* Tabs Switcher */}
-      <div className="flex items-center gap-2 border-b border-[#1F2937]">
+      <div className="flex items-center gap-2 border-b border-[#212B1E]">
         <button
           onClick={() => setActiveTab('courses')}
           className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'courses'
               ? 'border-amber-400 text-amber-400 bg-amber-500/10'
-              : 'border-transparent text-zinc-400 hover:text-white'
+              : 'border-transparent text-sage-400 hover:text-white'
           }`}
         >
           <BookOpen className="w-4 h-4" />
@@ -146,7 +146,7 @@ export const Archive: React.FC = () => {
           className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'sessions'
               ? 'border-amber-400 text-amber-400 bg-amber-500/10'
-              : 'border-transparent text-zinc-400 hover:text-white'
+              : 'border-transparent text-sage-400 hover:text-white'
           }`}
         >
           <FolderGit2 className="w-4 h-4" />
@@ -158,7 +158,7 @@ export const Archive: React.FC = () => {
           className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'assignments'
               ? 'border-amber-400 text-amber-400 bg-amber-500/10'
-              : 'border-transparent text-zinc-400 hover:text-white'
+              : 'border-transparent text-sage-400 hover:text-white'
           }`}
         >
           <FileCode className="w-4 h-4" />
@@ -168,7 +168,7 @@ export const Archive: React.FC = () => {
 
       {/* Tab Content */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
+        <div className="flex flex-col items-center justify-center py-20 text-sage-500">
           <Loader2 className="w-8 h-8 animate-spin text-amber-400 mb-3" />
           <p className="text-xs">Loading archived vault...</p>
         </div>
@@ -182,7 +182,7 @@ export const Archive: React.FC = () => {
           {activeTab === 'courses' && (
             <div>
               {!data?.courses || data.courses.length === 0 ? (
-                <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-12 text-center text-zinc-500 text-xs space-y-2">
+                <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-12 text-center text-sage-500 text-xs space-y-2">
                   <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto opacity-80" />
                   <p className="font-bold text-white text-sm">No archived courses</p>
                   <p>All active courses are currently visible in your main course list.</p>
@@ -192,21 +192,21 @@ export const Archive: React.FC = () => {
                   {data.courses.map((course: ArchivedCourse) => (
                     <div
                       key={course.id}
-                      className="bg-[#111827] border border-[#1F2937] rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4"
+                      className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4"
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20">
                             {course.courseCode}
                           </span>
-                          <span className="text-[11px] text-zinc-500">Course</span>
+                          <span className="text-[11px] text-sage-500">Course</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-white">{course.name}</h3>
-                        <p className="text-xs text-zinc-400 line-clamp-2">{course.description}</p>
+                        <p className="text-xs text-sage-400 line-clamp-2">{course.description}</p>
                       </div>
 
-                      <div className="pt-3 border-t border-[#1F2937] flex items-center justify-between">
-                        <span className="text-[10px] text-zinc-500">
+                      <div className="pt-3 border-t border-[#212B1E] flex items-center justify-between">
+                        <span className="text-[10px] text-sage-500">
                           Created {new Date(course.createdAt).toLocaleDateString()}
                         </span>
                         <button
@@ -233,7 +233,7 @@ export const Archive: React.FC = () => {
           {activeTab === 'sessions' && (
             <div>
               {!data?.sessions || data.sessions.length === 0 ? (
-                <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-12 text-center text-zinc-500 text-xs space-y-2">
+                <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-12 text-center text-sage-500 text-xs space-y-2">
                   <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto opacity-80" />
                   <p className="font-bold text-white text-sm">No archived sessions</p>
                   <p>All sessions in your courses are currently active.</p>
@@ -243,20 +243,20 @@ export const Archive: React.FC = () => {
                   {data.sessions.map((session: ArchivedSession) => (
                     <div
                       key={session.id}
-                      className="bg-[#111827] border border-[#1F2937] rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4"
+                      className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4"
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
+                          <span className="text-xs font-bold text-primary-400 bg-primary-500/10 px-2.5 py-0.5 rounded border border-primary-500/20">
                             {session.courseName}
                           </span>
-                          <span className="text-[11px] text-zinc-500">Session {session.order}</span>
+                          <span className="text-[11px] text-sage-500">Session {session.order}</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-white">{session.title}</h3>
                       </div>
 
-                      <div className="pt-3 border-t border-[#1F2937] flex items-center justify-between">
-                        <span className="text-[10px] text-zinc-500">
+                      <div className="pt-3 border-t border-[#212B1E] flex items-center justify-between">
+                        <span className="text-[10px] text-sage-500">
                           Created {new Date(session.createdAt).toLocaleDateString()}
                         </span>
                         <button
@@ -283,7 +283,7 @@ export const Archive: React.FC = () => {
           {activeTab === 'assignments' && (
             <div>
               {!data?.assignments || data.assignments.length === 0 ? (
-                <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-12 text-center text-zinc-500 text-xs space-y-2">
+                <div className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-12 text-center text-sage-500 text-xs space-y-2">
                   <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto opacity-80" />
                   <p className="font-bold text-white text-sm">No archived assignments</p>
                   <p>All programming tasks in your sessions are active.</p>
@@ -293,21 +293,21 @@ export const Archive: React.FC = () => {
                   {data.assignments.map((task: ArchivedAssignment) => (
                     <div
                       key={task.id}
-                      className="bg-[#111827] border border-[#1F2937] rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4"
+                      className="bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4"
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
+                          <span className="text-xs font-bold text-primary-400 bg-primary-500/10 px-2.5 py-0.5 rounded border border-primary-500/20">
                             {task.courseName}
                           </span>
                           <span className="text-[11px] font-semibold text-amber-400">{task.maxGrade} pts</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-white">{task.title}</h3>
-                        <p className="text-xs text-zinc-400">Session: {task.sessionName}</p>
+                        <p className="text-xs text-sage-400">Session: {task.sessionName}</p>
                       </div>
 
-                      <div className="pt-3 border-t border-[#1F2937] flex items-center justify-between">
-                        <span className="text-[10px] text-zinc-500">
+                      <div className="pt-3 border-t border-[#212B1E] flex items-center justify-between">
+                        <span className="text-[10px] text-sage-500">
                           Due: {new Date(task.deadline).toLocaleDateString()}
                         </span>
                         <button

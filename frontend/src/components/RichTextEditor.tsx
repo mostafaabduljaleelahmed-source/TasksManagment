@@ -57,15 +57,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   };
 
   return (
-    <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl overflow-hidden shadow-lg">
+    <div className="bg-[#1A2016] border border-[#37452E] rounded-xl overflow-hidden shadow-lg">
       {/* Editor Toolbar Header */}
-      <div className="bg-[#16161A] border-b border-[#2F2F37] px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+      <div className="bg-[#12160F] border-b border-[#37452E] px-3 py-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1">
           {/* Headings */}
           <button
             type="button"
             onClick={() => insertText('# ', '\n', 'Heading 1')}
-            className="p-1.5 hover:bg-[#272732] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 hover:bg-[#212B1E] text-sage-400 hover:text-white rounded-lg transition-colors"
             title="Heading 1"
           >
             <Heading1 className="w-4 h-4" />
@@ -73,7 +73,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <button
             type="button"
             onClick={() => insertText('## ', '\n', 'Heading 2')}
-            className="p-1.5 hover:bg-[#272732] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 hover:bg-[#212B1E] text-sage-400 hover:text-white rounded-lg transition-colors"
             title="Heading 2"
           >
             <Heading2 className="w-4 h-4" />
@@ -81,19 +81,19 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <button
             type="button"
             onClick={() => insertText('### ', '\n', 'Heading 3')}
-            className="p-1.5 hover:bg-[#272732] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 hover:bg-[#212B1E] text-sage-400 hover:text-white rounded-lg transition-colors"
             title="Heading 3"
           >
             <Heading3 className="w-4 h-4" />
           </button>
 
-          <span className="w-px h-4 bg-[#2F2F37] mx-1" />
+          <span className="w-px h-4 bg-[#37452E] mx-1" />
 
           {/* Formatting */}
           <button
             type="button"
             onClick={() => insertText('**', '**', 'bold text')}
-            className="p-1.5 hover:bg-[#272732] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 hover:bg-[#212B1E] text-sage-400 hover:text-white rounded-lg transition-colors"
             title="Bold"
           >
             <Bold className="w-4 h-4" />
@@ -101,19 +101,19 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <button
             type="button"
             onClick={() => insertText('*', '*', 'italic text')}
-            className="p-1.5 hover:bg-[#272732] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 hover:bg-[#212B1E] text-sage-400 hover:text-white rounded-lg transition-colors"
             title="Italic"
           >
             <Italic className="w-4 h-4" />
           </button>
 
-          <span className="w-px h-4 bg-[#2F2F37] mx-1" />
+          <span className="w-px h-4 bg-[#37452E] mx-1" />
 
           {/* Lists */}
           <button
             type="button"
             onClick={() => insertText('- ', '\n', 'List item')}
-            className="p-1.5 hover:bg-[#272732] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 hover:bg-[#212B1E] text-sage-400 hover:text-white rounded-lg transition-colors"
             title="Unordered List"
           >
             <List className="w-4 h-4" />
@@ -121,19 +121,19 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <button
             type="button"
             onClick={() => insertText('1. ', '\n', 'Numbered item')}
-            className="p-1.5 hover:bg-[#272732] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 hover:bg-[#212B1E] text-sage-400 hover:text-white rounded-lg transition-colors"
             title="Ordered List"
           >
             <ListOrdered className="w-4 h-4" />
           </button>
 
-          <span className="w-px h-4 bg-[#2F2F37] mx-1" />
+          <span className="w-px h-4 bg-[#37452E] mx-1" />
 
           {/* Advanced Blocks */}
           <button
             type="button"
             onClick={() => insertText('```python\n', '\n```', '# write code snippet here')}
-            className="p-1.5 hover:bg-[#272732] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 hover:bg-[#212B1E] text-sage-400 hover:text-white rounded-lg transition-colors"
             title="Code Block"
           >
             <Code className="w-4 h-4" />
@@ -141,7 +141,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <button
             type="button"
             onClick={handleAddTable}
-            className="p-1.5 hover:bg-[#272732] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 hover:bg-[#212B1E] text-sage-400 hover:text-white rounded-lg transition-colors"
             title="Insert Table"
           >
             <Table className="w-4 h-4" />
@@ -149,7 +149,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <button
             type="button"
             onClick={handleAddImage}
-            className="p-1.5 hover:bg-[#272732] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 hover:bg-[#212B1E] text-sage-400 hover:text-white rounded-lg transition-colors"
             title="Insert Image"
           >
             <ImageIcon className="w-4 h-4" />
@@ -157,7 +157,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <button
             type="button"
             onClick={handleAddLink}
-            className="p-1.5 hover:bg-[#272732] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 hover:bg-[#212B1E] text-sage-400 hover:text-white rounded-lg transition-colors"
             title="Insert Link"
           >
             <LinkIcon className="w-4 h-4" />
@@ -165,12 +165,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         </div>
 
         {/* Tab Selector: Write vs Preview */}
-        <div className="flex items-center gap-1 bg-[#1F1F24] p-1 rounded-lg border border-[#2F2F37]">
+        <div className="flex items-center gap-1 bg-[#1A2016] p-1 rounded-lg border border-[#37452E]">
           <button
             type="button"
             onClick={() => setMode('write')}
             className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 ${
-              mode === 'write' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'
+              mode === 'write' ? 'bg-primary-600 text-white' : 'text-sage-400 hover:text-white'
             }`}
           >
             <Edit3 className="w-3 h-3" />
@@ -180,7 +180,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             type="button"
             onClick={() => setMode('preview')}
             className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 ${
-              mode === 'preview' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'
+              mode === 'preview' ? 'bg-primary-600 text-white' : 'text-sage-400 hover:text-white'
             }`}
           >
             <Eye className="w-3 h-3" />
@@ -197,10 +197,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-[#1F1F24] text-white p-4 text-xs font-mono focus:outline-none resize-y min-h-[140px]"
+          className="w-full bg-[#1A2016] text-white p-4 text-xs font-mono focus:outline-none resize-y min-h-[140px]"
         />
       ) : (
-        <div className="p-4 text-xs bg-[#1A1A20] text-zinc-200 min-h-[140px] overflow-y-auto">
+        <div className="p-4 text-xs bg-[#1A2016] text-sage-200 min-h-[140px] overflow-y-auto">
           <RichTextViewer content={value} />
         </div>
       )}
@@ -211,7 +211,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 // RichTextViewer handles rendering markdown/HTML description cleanly and safely
 export const RichTextViewer: React.FC<{ content: string }> = ({ content }) => {
   if (!content || !content.trim()) {
-    return <p className="text-zinc-500 italic text-xs">No description provided.</p>;
+    return <p className="text-sage-500 italic text-xs">No description provided.</p>;
   }
 
   // Parse lines into clean markdown-like elements
@@ -227,7 +227,7 @@ export const RichTextViewer: React.FC<{ content: string }> = ({ content }) => {
     if (line.trim().startsWith('```')) {
       if (inCodeBlock) {
         elements.push(
-          <div key={`code-${index}`} className="my-3 bg-[#111827] border border-[#1F2937] rounded-xl p-3 font-mono text-xs overflow-x-auto">
+          <div key={`code-${index}`} className="my-3 bg-[#12160F] border border-[#212B1E] rounded-xl p-3 font-mono text-xs overflow-x-auto">
             <pre className="text-emerald-400 whitespace-pre-wrap">{codeBlockLines.join('\n')}</pre>
           </div>
         );
@@ -256,10 +256,10 @@ export const RichTextViewer: React.FC<{ content: string }> = ({ content }) => {
     } else if (inTable) {
       // Flush table
       elements.push(
-        <div key={`table-${index}`} className="my-3 overflow-x-auto border border-[#2F2F37] rounded-xl">
-          <table className="w-full text-xs text-left text-zinc-300">
+        <div key={`table-${index}`} className="my-3 overflow-x-auto border border-[#37452E] rounded-xl">
+          <table className="w-full text-xs text-left text-sage-300">
             {tableRows.length > 0 && (
-              <thead className="bg-[#272732] text-white font-bold border-b border-[#2F2F37]">
+              <thead className="bg-[#212B1E] text-white font-bold border-b border-[#37452E]">
                 <tr>
                   {tableRows[0].map((headerCell, hIdx) => (
                     <th key={hIdx} className="px-3 py-2 font-bold">{headerCell}</th>
@@ -267,11 +267,11 @@ export const RichTextViewer: React.FC<{ content: string }> = ({ content }) => {
                 </tr>
               </thead>
             )}
-            <tbody className="divide-y divide-[#2F2F37] bg-[#1F1F24]">
+            <tbody className="divide-y divide-[#37452E] bg-[#1A2016]">
               {tableRows.slice(1).map((row, rIdx) => (
-                <tr key={rIdx} className="hover:bg-[#272732]/50">
+                <tr key={rIdx} className="hover:bg-[#212B1E]/50">
                   {row.map((cell, cIdx) => (
-                    <td key={cIdx} className="px-3 py-2 font-mono text-zinc-300">{cell}</td>
+                    <td key={cIdx} className="px-3 py-2 font-mono text-sage-300">{cell}</td>
                   ))}
                 </tr>
               ))}
@@ -285,7 +285,7 @@ export const RichTextViewer: React.FC<{ content: string }> = ({ content }) => {
 
     // Headings
     if (line.startsWith('# ')) {
-      elements.push(<h1 key={index} className="text-xl font-extrabold text-white my-3 tracking-tight border-b border-[#2F2F37] pb-1">{parseFormatting(line.replace('# ', ''))}</h1>);
+      elements.push(<h1 key={index} className="text-xl font-extrabold text-white my-3 tracking-tight border-b border-[#37452E] pb-1">{parseFormatting(line.replace('# ', ''))}</h1>);
       return;
     }
     if (line.startsWith('## ')) {
@@ -293,14 +293,14 @@ export const RichTextViewer: React.FC<{ content: string }> = ({ content }) => {
       return;
     }
     if (line.startsWith('### ')) {
-      elements.push(<h3 key={index} className="text-base font-bold text-blue-400 my-2">{parseFormatting(line.replace('### ', ''))}</h3>);
+      elements.push(<h3 key={index} className="text-base font-bold text-primary-400 my-2">{parseFormatting(line.replace('### ', ''))}</h3>);
       return;
     }
 
     // Lists
     if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
       elements.push(
-        <li key={index} className="ml-5 list-disc text-zinc-300 my-1">
+        <li key={index} className="ml-5 list-disc text-sage-300 my-1">
           {parseFormatting(line.trim().substring(2))}
         </li>
       );
@@ -310,7 +310,7 @@ export const RichTextViewer: React.FC<{ content: string }> = ({ content }) => {
     if (/^\d+\.\s/.test(line.trim())) {
       const content = line.trim().replace(/^\d+\.\s/, '');
       elements.push(
-        <li key={index} className="ml-5 list-decimal text-zinc-300 my-1">
+        <li key={index} className="ml-5 list-decimal text-sage-300 my-1">
           {parseFormatting(content)}
         </li>
       );
@@ -325,7 +325,7 @@ export const RichTextViewer: React.FC<{ content: string }> = ({ content }) => {
 
     // Normal paragraph
     elements.push(
-      <p key={index} className="text-zinc-300 leading-relaxed my-1">
+      <p key={index} className="text-sage-300 leading-relaxed my-1">
         {parseFormatting(line)}
       </p>
     );
@@ -334,20 +334,20 @@ export const RichTextViewer: React.FC<{ content: string }> = ({ content }) => {
   // Flush remaining table if exists
   if (inTable && tableRows.length > 0) {
     elements.push(
-      <div key="table-flush" className="my-3 overflow-x-auto border border-[#2F2F37] rounded-xl">
-        <table className="w-full text-xs text-left text-zinc-300">
-          <thead className="bg-[#272732] text-white font-bold border-b border-[#2F2F37]">
+      <div key="table-flush" className="my-3 overflow-x-auto border border-[#37452E] rounded-xl">
+        <table className="w-full text-xs text-left text-sage-300">
+          <thead className="bg-[#212B1E] text-white font-bold border-b border-[#37452E]">
             <tr>
               {tableRows[0].map((headerCell, hIdx) => (
                 <th key={hIdx} className="px-3 py-2 font-bold">{headerCell}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#2F2F37] bg-[#1F1F24]">
+          <tbody className="divide-y divide-[#37452E] bg-[#1A2016]">
             {tableRows.slice(1).map((row, rIdx) => (
-              <tr key={rIdx} className="hover:bg-[#272732]/50">
+              <tr key={rIdx} className="hover:bg-[#212B1E]/50">
                 {row.map((cell, cIdx) => (
-                  <td key={cIdx} className="px-3 py-2 font-mono text-zinc-300">{cell}</td>
+                  <td key={cIdx} className="px-3 py-2 font-mono text-sage-300">{cell}</td>
                 ))}
               </tr>
             ))}
@@ -371,7 +371,7 @@ function parseFormatting(text: string): React.ReactNode {
     return (
       <>
         {parts[0]}
-        <img src={url} alt={alt} className="my-3 rounded-xl border border-[#2F2F37] max-h-64 object-cover shadow-lg" />
+        <img src={url} alt={alt} className="my-3 rounded-xl border border-[#37452E] max-h-64 object-cover shadow-lg" />
         {parts[1]}
       </>
     );
@@ -386,7 +386,7 @@ function parseFormatting(text: string): React.ReactNode {
     return (
       <>
         {parts[0]}
-        <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline font-semibold transition-colors">
+        <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:text-primary-300 underline font-semibold transition-colors">
           {title}
         </a>
         {parts[1]}

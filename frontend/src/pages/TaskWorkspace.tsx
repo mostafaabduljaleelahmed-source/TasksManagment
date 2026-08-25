@@ -389,8 +389,8 @@ export const TaskWorkspace: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center text-zinc-500">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-3" />
+      <div className="min-h-screen bg-[#070907] flex flex-col items-center justify-center text-sage-500">
+        <Loader2 className="w-10 h-10 animate-spin text-primary-500 mb-3" />
         <p>Loading task workspace...</p>
       </div>
     );
@@ -398,10 +398,10 @@ export const TaskWorkspace: React.FC = () => {
 
   if (!task) {
     return (
-      <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center text-slate-400">
+      <div className="min-h-screen bg-[#070907] flex flex-col items-center justify-center text-sage-400">
         <ShieldAlert className="w-12 h-12 text-rose-500 mb-3 animate-pulse" />
-        <p className="text-slate-100 font-bold">Workspace not accessible.</p>
-        <Link to="/" className="text-indigo-400 mt-4 hover:underline">Go Back Home</Link>
+        <p className="text-sage-100 font-bold">Workspace not accessible.</p>
+        <Link to="/" className="text-primary-400 mt-4 hover:underline">Go Back Home</Link>
       </div>
     );
   }
@@ -412,13 +412,13 @@ export const TaskWorkspace: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-[#0F0F11] text-zinc-200 flex flex-col overflow-hidden h-screen">
+    <div className="min-h-screen bg-[#0A0D0A] text-sage-200 flex flex-col overflow-hidden h-screen">
       {/* Top Header Bar */}
-      <header className="bg-[#16161A] border-b border-[#24242B] px-3 sm:px-6 py-2.5 flex items-center justify-between shrink-0 min-h-[52px]">
+      <header className="bg-[#12160F] border-b border-[#212B1E] px-3 sm:px-6 py-2.5 flex items-center justify-between shrink-0 min-h-[52px]">
         <div className="flex items-center gap-2 min-w-0">
           <Link
             to={task ? `/course/${task.sessionId}` : '/'}
-            className="p-2 hover:bg-zinc-800 rounded-xl text-zinc-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-2 hover:bg-sage-800 rounded-xl text-sage-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             title="Back to syllabus"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -428,12 +428,12 @@ export const TaskWorkspace: React.FC = () => {
 
         {/* Stats Summary Bar */}
         <div className="flex items-center gap-2 text-xs font-semibold">
-          <div className="flex items-center gap-1 bg-zinc-800/80 border border-zinc-700/50 px-2.5 py-1 rounded-xl text-zinc-200 text-xs font-bold">
-            <Award className="w-4 h-4 text-indigo-400" />
+          <div className="flex items-center gap-1 bg-sage-800/80 border border-sage-700/50 px-2.5 py-1 rounded-xl text-sage-200 text-xs font-bold">
+            <Award className="w-4 h-4 text-primary-400" />
             <span>{task.maxGrade} pts</span>
           </div>
           {isHomework && (
-            <div className="hidden sm:flex items-center gap-1 bg-zinc-800/80 border border-zinc-700/50 px-2.5 py-1 rounded-xl text-zinc-200 text-xs font-bold">
+            <div className="hidden sm:flex items-center gap-1 bg-sage-800/80 border border-sage-700/50 px-2.5 py-1 rounded-xl text-sage-200 text-xs font-bold">
               <Clock className="w-4 h-4 text-rose-400" />
               <span>{getCountdown()}</span>
             </div>
@@ -442,13 +442,13 @@ export const TaskWorkspace: React.FC = () => {
       </header>
 
       {/* Mobile Workspace Navigation Tab Bar (Visible on < 768px) */}
-      <div className="md:hidden flex border-b border-[#24242B] bg-[#16161A] shrink-0">
+      <div className="md:hidden flex border-b border-[#212B1E] bg-[#12160F] shrink-0">
         <button
           onClick={() => setMobileTab('editor')}
           className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 min-h-[48px] ${
             mobileTab === 'editor'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/10'
-              : 'border-transparent text-zinc-400 hover:text-white'
+              ? 'border-primary-500 text-primary-400 bg-primary-500/10'
+              : 'border-transparent text-sage-400 hover:text-white'
           }`}
         >
           <Code className="w-4 h-4" />
@@ -458,8 +458,8 @@ export const TaskWorkspace: React.FC = () => {
           onClick={() => setMobileTab('instructions')}
           className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 min-h-[48px] ${
             mobileTab === 'instructions'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/10'
-              : 'border-transparent text-zinc-400 hover:text-white'
+              ? 'border-primary-500 text-primary-400 bg-primary-500/10'
+              : 'border-transparent text-sage-400 hover:text-white'
           }`}
         >
           <Sparkles className="w-4 h-4" />
@@ -469,8 +469,8 @@ export const TaskWorkspace: React.FC = () => {
           onClick={() => setMobileTab('history')}
           className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 min-h-[48px] ${
             mobileTab === 'history'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/10'
-              : 'border-transparent text-zinc-400 hover:text-white'
+              ? 'border-primary-500 text-primary-400 bg-primary-500/10'
+              : 'border-transparent text-sage-400 hover:text-white'
           }`}
         >
           <History className="w-4 h-4" />
@@ -480,8 +480,8 @@ export const TaskWorkspace: React.FC = () => {
           onClick={() => setMobileTab('console')}
           className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 min-h-[48px] ${
             mobileTab === 'console'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/10'
-              : 'border-transparent text-zinc-400 hover:text-white'
+              ? 'border-primary-500 text-primary-400 bg-primary-500/10'
+              : 'border-transparent text-sage-400 hover:text-white'
           }`}
         >
           <Terminal className="w-4 h-4" />
@@ -492,16 +492,16 @@ export const TaskWorkspace: React.FC = () => {
       {/* Main Container Layout */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
         {/* Left Pane: Instructions & History (Desktop side pane, Mobile toggled) */}
-        <div className={`w-full md:w-[32%] lg:w-[28%] flex flex-col border-r border-[#24242B] bg-[#16161A] overflow-hidden min-h-0 shrink-0 ${
+        <div className={`w-full md:w-[32%] lg:w-[28%] flex flex-col border-r border-[#212B1E] bg-[#12160F] overflow-hidden min-h-0 shrink-0 ${
           mobileTab === 'instructions' || mobileTab === 'history' ? 'flex flex-1' : 'hidden md:flex'
         }`}>
-          <div className="hidden md:flex border-b border-[#24242B] shrink-0 bg-[#1A1A22]/50">
+          <div className="hidden md:flex border-b border-[#212B1E] shrink-0 bg-[#1A2016]/50">
             <button
               onClick={() => setActiveTab('description')}
               className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold border-b-2 transition-all ${
                 activeTab === 'description'
-                  ? 'border-indigo-500 text-white bg-[#1F1F28]/50'
-                  : 'border-transparent text-zinc-400 hover:text-white'
+                  ? 'border-primary-500 text-white bg-[#1A2016]/50'
+                  : 'border-transparent text-sage-400 hover:text-white'
               }`}
             >
               <Code className="w-4 h-4" />
@@ -511,8 +511,8 @@ export const TaskWorkspace: React.FC = () => {
               onClick={() => setActiveTab('history')}
               className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold border-b-2 transition-all ${
                 activeTab === 'history'
-                  ? 'border-indigo-500 text-white bg-[#1F1F28]/50'
-                  : 'border-transparent text-zinc-400 hover:text-white'
+                  ? 'border-primary-500 text-white bg-[#1A2016]/50'
+                  : 'border-transparent text-sage-400 hover:text-white'
               }`}
             >
               <History className="w-4 h-4" />
@@ -527,28 +527,28 @@ export const TaskWorkspace: React.FC = () => {
                   <h2 className="text-lg font-extrabold text-white tracking-tight">{task.title}</h2>
                 </div>
 
-                <div className="prose prose-invert max-w-none text-zinc-300 text-xs leading-relaxed">
+                <div className="prose prose-invert max-w-none text-sage-300 text-xs leading-relaxed">
                   <RichTextViewer content={task.description} />
                 </div>
 
                 {/* Example Blocks */}
                 {!task.exampleInput && task.exampleOutput ? (
                   <div className="space-y-2">
-                    <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Expected Output</h4>
-                    <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-3 font-mono text-[11px]">
+                    <h4 className="text-[10px] uppercase tracking-wider font-bold text-sage-400">Expected Output</h4>
+                    <div className="bg-[#1A2016] border border-[#37452E] rounded-xl p-3 font-mono text-[11px]">
                       <pre className="text-emerald-400 whitespace-pre-wrap">{task.exampleOutput}</pre>
                     </div>
                   </div>
                 ) : task.exampleInput ? (
                   <div className="space-y-2">
-                    <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Example Input/Output</h4>
-                    <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-3 space-y-2 font-mono text-[11px]">
+                    <h4 className="text-[10px] uppercase tracking-wider font-bold text-sage-400">Example Input/Output</h4>
+                    <div className="bg-[#1A2016] border border-[#37452E] rounded-xl p-3 space-y-2 font-mono text-[11px]">
                       <div>
-                        <p className="text-zinc-500 text-[9px] uppercase font-bold tracking-wider mb-1">Input</p>
+                        <p className="text-sage-500 text-[9px] uppercase font-bold tracking-wider mb-1">Input</p>
                         <pre className="text-white whitespace-pre-wrap">{task.exampleInput}</pre>
                       </div>
-                      <div className="border-t border-[#2F2F37] pt-2">
-                        <p className="text-zinc-500 text-[9px] uppercase font-bold tracking-wider mb-1">Output</p>
+                      <div className="border-t border-[#37452E] pt-2">
+                        <p className="text-sage-500 text-[9px] uppercase font-bold tracking-wider mb-1">Output</p>
                         <pre className="text-emerald-400 whitespace-pre-wrap">{task.exampleOutput}</pre>
                       </div>
                     </div>
@@ -556,14 +556,14 @@ export const TaskWorkspace: React.FC = () => {
                 ) : null}
 
                 {/* Attachments Section */}
-                <div className="space-y-3 pt-3 border-t border-[#24242B]">
+                <div className="space-y-3 pt-3 border-t border-[#212B1E]">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold text-white flex items-center gap-2">
-                      <Upload className="w-4 h-4 text-blue-400" />
+                      <Upload className="w-4 h-4 text-primary-400" />
                       Task Attachments ({attachments.length})
                     </h4>
                     {user?.role === 'Teacher' && (
-                      <label className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-[11px] cursor-pointer transition-colors flex items-center gap-1">
+                      <label className="px-2.5 py-1 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-lg text-[11px] cursor-pointer transition-colors flex items-center gap-1">
                         {uploadingAttachment ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
                         Upload
                         <input
@@ -578,21 +578,21 @@ export const TaskWorkspace: React.FC = () => {
                   </div>
 
                   {attachments.length === 0 ? (
-                    <p className="text-zinc-500 text-[11px] italic">No attachments attached to this task.</p>
+                    <p className="text-sage-500 text-[11px] italic">No attachments attached to this task.</p>
                   ) : (
                     <div className="space-y-2">
                       {attachments.map((att) => (
                         <div
                           key={att.id}
-                          className="flex items-center justify-between p-2.5 bg-[#1C1C24] border border-[#2B2B36] rounded-xl hover:border-blue-500/40 transition-colors text-xs"
+                          className="flex items-center justify-between p-2.5 bg-[#1A2016] border border-[#37452E] rounded-xl hover:border-primary-500/40 transition-colors text-xs"
                         >
                           <div className="flex items-center gap-2.5 truncate flex-1">
-                            <span className="p-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg shrink-0 font-bold uppercase text-[9px]">
+                            <span className="p-1.5 bg-primary-500/10 border border-primary-500/20 text-primary-400 rounded-lg shrink-0 font-bold uppercase text-[9px]">
                               {att.fileName.split('.').pop()}
                             </span>
                             <div className="truncate">
                               <p className="text-white font-semibold truncate text-[11px]">{att.fileName}</p>
-                              <p className="text-[10px] text-zinc-500">{(att.fileSize / (1024 * 1024)).toFixed(2)} MB</p>
+                              <p className="text-[10px] text-sage-500">{(att.fileSize / (1024 * 1024)).toFixed(2)} MB</p>
                             </div>
                           </div>
 
@@ -602,7 +602,7 @@ export const TaskWorkspace: React.FC = () => {
                               download={att.fileName}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-2.5 py-1 bg-zinc-800 hover:bg-blue-600 text-zinc-300 hover:text-white font-bold rounded-xl text-xs transition-colors min-h-[36px] flex items-center justify-center"
+                              className="px-2.5 py-1 bg-sage-800 hover:bg-primary-600 text-sage-300 hover:text-white font-bold rounded-xl text-xs transition-colors min-h-[36px] flex items-center justify-center"
                             >
                               Download
                             </a>
@@ -610,7 +610,7 @@ export const TaskWorkspace: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteAttachment(att.id)}
-                                className="p-1.5 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 rounded-lg transition-colors"
+                                className="p-1.5 hover:bg-red-500/20 text-sage-500 hover:text-red-400 rounded-lg transition-colors"
                                 title="Delete Attachment"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -628,7 +628,7 @@ export const TaskWorkspace: React.FC = () => {
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-white">Past Submission History</h3>
                 {submissions.length === 0 ? (
-                  <p className="text-zinc-500 text-xs py-4">No submissions made yet.</p>
+                  <p className="text-sage-500 text-xs py-4">No submissions made yet.</p>
                 ) : (
                   <div className="space-y-2.5">
                     {submissions.map((sub: any) => {
@@ -637,7 +637,7 @@ export const TaskWorkspace: React.FC = () => {
                         <div
                           key={sub.id}
                           onClick={() => setSelectedSubmission(sub)}
-                          className="bg-[#1F1F24] border border-[#2F2F37] hover:border-indigo-500/40 rounded-xl p-3 cursor-pointer hover:bg-zinc-800/30 transition-all flex flex-col gap-1.5 group"
+                          className="bg-[#1A2016] border border-[#37452E] hover:border-primary-500/40 rounded-xl p-3 cursor-pointer hover:bg-sage-800/30 transition-all flex flex-col gap-1.5 group"
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-white">Attempt #{sub.attemptNumber}</span>
@@ -652,11 +652,11 @@ export const TaskWorkspace: React.FC = () => {
                             )}
                           </div>
 
-                          <span className="text-[10px] text-zinc-400">
+                          <span className="text-[10px] text-sage-400">
                             {new Date(sub.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
 
-                          <div className="flex justify-end items-center text-[11px] text-indigo-400 font-semibold pt-1">
+                          <div className="flex justify-end items-center text-[11px] text-primary-400 font-semibold pt-1">
                             <span>Inspect &rarr;</span>
                           </div>
                         </div>
@@ -670,21 +670,21 @@ export const TaskWorkspace: React.FC = () => {
         </div>
 
         {/* Right Pane: Monaco Editor & Console */}
-        <div className={`w-full md:w-[68%] lg:w-[72%] flex flex-col bg-[#0F0F11] overflow-hidden min-h-0 h-full ${
+        <div className={`w-full md:w-[68%] lg:w-[72%] flex flex-col bg-[#0A0D0A] overflow-hidden min-h-0 h-full ${
           mobileTab === 'editor' || mobileTab === 'console' ? 'flex flex-1' : 'hidden md:flex'
         }`} dir="ltr" style={{ direction: 'ltr', unicodeBidi: 'isolate' }}>
           {/* Action Toolbar Header */}
-          <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-[#16161A] border-b border-[#24242B] shrink-0" dir="ltr" style={{ direction: 'ltr' }}>
+          <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-[#12160F] border-b border-[#212B1E] shrink-0" dir="ltr" style={{ direction: 'ltr' }}>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-zinc-300 font-mono flex items-center gap-1.5">
-                <Code className="w-4 h-4 text-blue-400" />
+              <span className="text-xs font-bold text-sage-300 font-mono flex items-center gap-1.5">
+                <Code className="w-4 h-4 text-primary-400" />
                 <span>solution.py</span>
               </span>
 
               {code.trim() !== '' && (
                 <button
                   onClick={() => handleCodeChange('')}
-                  className="text-xs text-zinc-500 hover:text-red-400 transition-colors flex items-center gap-1 ml-2 p-1"
+                  className="text-xs text-sage-500 hover:text-red-400 transition-colors flex items-center gap-1 ml-2 p-1"
                   title="Clear Code"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -694,8 +694,8 @@ export const TaskWorkspace: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1 bg-[#1F1F24] hover:bg-zinc-800 border border-[#2F2F37] text-zinc-200 font-semibold py-1.5 px-3 rounded-xl text-xs cursor-pointer transition-all min-h-[38px]">
-                <Upload className="w-3.5 h-3.5 text-blue-400" />
+              <label className="flex items-center gap-1 bg-[#1A2016] hover:bg-sage-800 border border-[#37452E] text-sage-200 font-semibold py-1.5 px-3 rounded-xl text-xs cursor-pointer transition-all min-h-[38px]">
+                <Upload className="w-3.5 h-3.5 text-primary-400" />
                 <span>Upload .py</span>
                 <input
                   type="file"
@@ -708,7 +708,7 @@ export const TaskWorkspace: React.FC = () => {
               <button
                 onClick={handleSubmitCode}
                 disabled={running || submitting || attemptsDisabled || deadlinePassed}
-                className="hidden sm:flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold py-1.5 px-4 rounded-xl text-xs shadow-lg transition-all min-h-[38px] disabled:opacity-50"
+                className="hidden sm:flex items-center gap-1.5 bg-primary-600 hover:bg-primary-500 text-white font-bold py-1.5 px-4 rounded-xl text-xs shadow-lg transition-all min-h-[38px] disabled:opacity-50"
               >
                 {submitting ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -741,8 +741,8 @@ export const TaskWorkspace: React.FC = () => {
                 }, 100);
               }}
               loading={
-                <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-xs bg-[#0F0F11]">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-500 mb-2" />
+                <div className="flex flex-col items-center justify-center h-full text-sage-500 text-xs bg-[#0A0D0A]">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary-500 mb-2" />
                   <span>Loading Code Editor...</span>
                 </div>
               }
@@ -761,18 +761,18 @@ export const TaskWorkspace: React.FC = () => {
           </div>
 
           {/* Console / Terminal Output Container */}
-          <div className={`h-[220px] md:h-[200px] bg-[#121216] border-t border-[#24242B] flex flex-col shrink-0 ${
+          <div className={`h-[220px] md:h-[200px] bg-[#12160F] border-t border-[#212B1E] flex flex-col shrink-0 ${
             mobileTab === 'console' ? 'flex flex-1 md:flex-none' : 'hidden md:flex'
           }`}>
-            <div className="flex items-center justify-between px-4 py-2 bg-[#18181E] border-b border-[#24242B] text-xs font-semibold text-zinc-400">
+            <div className="flex items-center justify-between px-4 py-2 bg-[#1A2016] border-b border-[#212B1E] text-xs font-semibold text-sage-400">
               <div className="flex items-center gap-2">
-                <Terminal className="w-3.5 h-3.5 text-blue-400" />
+                <Terminal className="w-3.5 h-3.5 text-primary-400" />
                 <span>Console Output</span>
               </div>
               {consoleOutput && (
                 <button
                   onClick={() => setConsoleOutput(null)}
-                  className="text-xs text-zinc-500 hover:text-white transition-colors p-1"
+                  className="text-xs text-sage-500 hover:text-white transition-colors p-1"
                 >
                   Clear Console
                 </button>
@@ -781,8 +781,8 @@ export const TaskWorkspace: React.FC = () => {
 
             <div className="flex-1 p-4 overflow-y-auto font-mono text-xs min-h-0 space-y-3">
               {!consoleOutput ? (
-                <div className="text-zinc-500 flex flex-col items-center justify-center h-full">
-                  <Terminal className="w-8 h-8 text-zinc-700 mb-2" />
+                <div className="text-sage-500 flex flex-col items-center justify-center h-full">
+                  <Terminal className="w-8 h-8 text-sage-700 mb-2" />
                   <p className="text-xs">Click Submit Code to turn in your solution.</p>
                 </div>
               ) : consoleOutput.type === 'error' ? (
@@ -793,11 +793,11 @@ export const TaskWorkspace: React.FC = () => {
                   </pre>
                 </div>
               ) : (
-                <div className="text-zinc-200 space-y-3">
-                  <p className="font-bold text-blue-400 text-sm mb-2">{consoleOutput.summary}</p>
-                  <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-3.5 space-y-1.5">
-                    <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Submission Details</p>
-                    <pre className="text-zinc-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">
+                <div className="text-sage-200 space-y-3">
+                  <p className="font-bold text-primary-400 text-sm mb-2">{consoleOutput.summary}</p>
+                  <div className="bg-[#1A2016] border border-[#37452E] rounded-xl p-3.5 space-y-1.5">
+                    <p className="text-sage-400 text-[10px] uppercase font-bold tracking-wider">Submission Details</p>
+                    <pre className="text-sage-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">
                       {consoleOutput.detailsMessage}
                     </pre>
                   </div>
@@ -809,11 +809,11 @@ export const TaskWorkspace: React.FC = () => {
       </div>
 
       {/* Sticky Mobile Bottom Submit Bar */}
-      <div className="md:hidden sticky bottom-0 z-30 bg-[#16161A] border-t border-[#24242B] p-3 flex items-center justify-between gap-3 shadow-2xl">
+      <div className="md:hidden sticky bottom-0 z-30 bg-[#12160F] border-t border-[#212B1E] p-3 flex items-center justify-between gap-3 shadow-2xl">
         <button
           onClick={handleSubmitCode}
           disabled={running || submitting || attemptsDisabled || deadlinePassed}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-xl text-sm min-h-[52px] shadow-lg active:scale-[0.98] disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-500 text-white font-bold py-3 px-4 rounded-xl text-sm min-h-[52px] shadow-lg active:scale-[0.98] disabled:opacity-50"
         >
           {submitting ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -829,22 +829,22 @@ export const TaskWorkspace: React.FC = () => {
       {/* Historical Code Viewer Modal */}
       {selectedSubmission && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-[#16161A] border-t sm:border border-[#24242B] rounded-t-3xl sm:rounded-2xl w-full max-w-4xl p-4 sm:p-6 shadow-2xl relative max-h-[92vh] flex flex-col">
-            <div className="flex justify-between items-center pb-3 mb-3 border-b border-[#24242B]">
+          <div className="bg-[#12160F] border-t sm:border border-[#212B1E] rounded-t-3xl sm:rounded-2xl w-full max-w-4xl p-4 sm:p-6 shadow-2xl relative max-h-[92vh] flex flex-col">
+            <div className="flex justify-between items-center pb-3 mb-3 border-b border-[#212B1E]">
               <div>
                 <h3 className="text-base font-bold text-white">Submission Review (Attempt #{selectedSubmission.attemptNumber})</h3>
-                <p className="text-zinc-400 text-xs">{new Date(selectedSubmission.submittedAt).toLocaleString()}</p>
+                <p className="text-sage-400 text-xs">{new Date(selectedSubmission.submittedAt).toLocaleString()}</p>
               </div>
               <button
                 onClick={() => setSelectedSubmission(null)}
-                className="p-2 text-zinc-400 hover:text-white rounded-xl min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="p-2 text-sage-400 hover:text-white rounded-xl min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 ✕
               </button>
             </div>
 
             <div className="flex-1 flex flex-col gap-4 overflow-y-auto min-h-0">
-              <div className="h-[250px] sm:h-[350px] border border-[#2F2F37] rounded-xl overflow-hidden" dir="ltr" style={{ direction: 'ltr' }}>
+              <div className="h-[250px] sm:h-[350px] border border-[#37452E] rounded-xl overflow-hidden" dir="ltr" style={{ direction: 'ltr' }}>
                 <Editor
                   height="100%"
                   width="100%"
@@ -863,14 +863,14 @@ export const TaskWorkspace: React.FC = () => {
               </div>
 
               {selectedSubmission.feedback && (
-                <div className="bg-[#1F1F24] border border-[#2F2F37] rounded-xl p-3 space-y-1">
-                  <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">Evaluation Feedback</p>
-                  <pre className="text-zinc-300 font-mono text-xs whitespace-pre-wrap">{selectedSubmission.feedback}</pre>
+                <div className="bg-[#1A2016] border border-[#37452E] rounded-xl p-3 space-y-1">
+                  <p className="text-sage-400 text-[10px] uppercase font-bold tracking-wider">Evaluation Feedback</p>
+                  <pre className="text-sage-300 font-mono text-xs whitespace-pre-wrap">{selectedSubmission.feedback}</pre>
                 </div>
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 pt-3 mt-3 border-t border-[#24242B]">
+            <div className="flex flex-col sm:flex-row gap-2 pt-3 mt-3 border-t border-[#212B1E]">
               <button
                 type="button"
                 onClick={() => {

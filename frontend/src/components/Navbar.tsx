@@ -69,28 +69,28 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
 
   return (
     <>
-      <header className="border-b border-[#1B2333] bg-[#0E121A] sticky top-0 z-40 px-3 sm:px-5 py-2 flex items-center justify-between min-h-[44px]">
+      <header className="border-b border-[#1E2519] bg-[#12160F] sticky top-0 z-40 px-3 sm:px-5 py-2 flex items-center justify-between min-h-[44px]">
         <div className="flex items-center gap-2.5 shrink-0 min-w-0">
           <button
             onClick={onOpenMobileDrawer}
-            className="md:hidden p-1.5 text-slate-300 hover:text-white bg-[#151B28] border border-[#232F45] rounded flex items-center justify-center cursor-pointer"
+            className="md:hidden p-1.5 text-sage-300 hover:text-white bg-[#1A2016] border border-[#37452E] rounded-md flex items-center justify-center cursor-pointer transition-colors"
             aria-label="Open Navigation Drawer"
           >
-            <Menu className="w-4 h-4 text-blue-400" />
+            <Menu className="w-4 h-4 text-primary-400" />
           </button>
-          <h1 className="text-xs sm:text-sm font-bold text-slate-100 truncate max-w-[180px] sm:max-w-none">
+          <h1 className="text-xs sm:text-sm font-bold text-sage-100 truncate max-w-[180px] sm:max-w-none">
             {getPageTitle()}
           </h1>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded">
+          <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold text-primary-400 bg-primary-500/10 border border-primary-500/20 rounded">
             {APP_VERSION}
           </span>
 
           <button
             onClick={() => setIsSearchOpen(true)}
-            className="p-1.5 bg-[#151B28] hover:bg-[#1E2638] border border-[#232F45] text-slate-300 hover:text-white rounded transition-colors flex items-center justify-center cursor-pointer"
+            className="p-1.5 bg-[#1A2016] hover:bg-[#212B1E] border border-[#37452E] text-sage-300 hover:text-white rounded-md transition-colors flex items-center justify-center cursor-pointer"
             title="Search (Ctrl+K)"
           >
             <Search className="w-3.5 h-3.5" />
@@ -99,7 +99,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
           {(user.role === 'Teacher' || user.role === 'Admin') && (
             <button
               onClick={() => navigate('/teacher/pending-reviews')}
-              className="p-1.5 bg-[#151B28] hover:bg-[#1E2638] border border-[#232F45] text-amber-400 rounded transition-colors relative flex items-center justify-center cursor-pointer"
+              className="p-1.5 bg-[#1A2016] hover:bg-[#212B1E] border border-[#37452E] text-amber-400 rounded-md transition-colors relative flex items-center justify-center cursor-pointer"
               title="Pending Reviews Queue"
             >
               <Inbox className="w-3.5 h-3.5" />
@@ -111,10 +111,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileDrawer }) => {
 
           <Link
             to="/profile"
-            className="p-0.5 rounded border border-[#232F45] bg-[#151B28] transition-transform"
+            className="p-0.5 rounded-md border border-[#37452E] bg-[#1A2016] transition-transform hover:scale-105 active:scale-95"
             aria-label="User Profile"
           >
-            <div className="w-6 h-6 rounded bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center overflow-hidden">
+            <div className="w-6 h-6 rounded-[5px] bg-primary-600 text-[#06150E] font-bold text-[10px] flex items-center justify-center overflow-hidden">
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
               ) : (
