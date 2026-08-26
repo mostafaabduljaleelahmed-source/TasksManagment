@@ -3,9 +3,7 @@ import { useAuth, API_URL } from '../context/AuthContext';
 import { useTranslation } from '../utils/i18n';
 import { StudentGradeBreakdownModal } from '../components/StudentGradeBreakdownModal';
 import { LeaderboardPodium } from '../components/LeaderboardPodium';
-import { useRankHistory } from '../hooks/useRankHistory';
-import { computeRanks } from '../utils/leaderboardRanking';
-import { Trophy, Search, RefreshCw, AlertCircle, ArrowUp, ArrowDown, Flame } from 'lucide-react';
+import { Trophy, Search, RefreshCw, AlertCircle, ArrowUp, ArrowDown, Flame, Users } from 'lucide-react';
 
 interface LeaderboardEntry {
   studentId: string;
@@ -18,6 +16,15 @@ interface LeaderboardEntry {
   completedTasks: number;
   totalTasks: number;
   totalSubmissions: number;
+  rank: number;
+  tiedCount: number;
+  previousRank: number | null;
+}
+
+interface CourseOption {
+  id: string;
+  name: string;
+  courseCode: string;
 }
 
 type Period = 'all' | 'week' | 'month';
@@ -66,20 +73,35 @@ export const Leaderboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [period, setPeriod] = useState<Period>('all');
+  const [courses, setCourses] = useState<CourseOption[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('all');
   const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
-    fetchLeaderboard(period);
+    if (!user || !user.token) return;
+    const endpoint = (user.role === 'Teacher' || user.role === 'Admin') ? 'teacher' : 'student';
+    fetch(`${API_URL}/courses/${endpoint}`, { headers: { Authorization: `Bearer ${user.token}` } })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setCourses(Array.isArray(data) ? data : []))
+      .catch(() => setCourses([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, period]);
+  }, [user]);
 
-  const fetchLeaderboard = async (activePeriod: Period) => {
+  useEffect(() => {
+    fetchLeaderboard(period, selectedCourseId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, period, selectedCourseId]);
+
+  const fetchLeaderboard = async (activePeriod: Period, courseId: string) => {
     if (!user || !user.token) return;
     setLoading(true);
     setError(null);
     try {
-      const qs = activePeriod !== 'all' ? `?period=${activePeriod}` : '';
-      const response = await fetch(`${API_URL}/dashboard/leaderboard${qs}`, {
+      const params = new URLSearchParams();
+      if (activePeriod !== 'all') params.set('period', activePeriod);
+      if (courseId !== 'all') params.set('courseId', courseId);
+      const qs = params.toString();
+      const response = await fetch(`${API_URL}/dashboard/leaderboard${qs ? `?${qs}` : ''}`, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       if (!response.ok) {
@@ -103,21 +125,26 @@ export const Leaderboard: React.FC = () => {
     e.studentEmail.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const ranked = useMemo(() => computeRanks(filtered), [filtered]);
-
-  const currentRanksMap = useMemo(() => {
-    if (leaderboard.length === 0) return null;
-    const map: Record<string, number> = {};
-    computeRanks(leaderboard).forEach((r) => { map[r.entry.studentId] = r.rank; });
+  // Names of who each student is tied with, derived from the server-computed `rank` field so it
+  // never disagrees with the backend's own tie logic (the source of truth for the rank number).
+  const tiedNamesByStudent = useMemo(() => {
+    const byRank = new Map<number, LeaderboardEntry[]>();
+    for (const e of leaderboard) {
+      if (e.tiedCount === 0) continue;
+      if (!byRank.has(e.rank)) byRank.set(e.rank, []);
+      byRank.get(e.rank)!.push(e);
+    }
+    const map = new Map<string, string[]>();
+    byRank.forEach((group) => {
+      group.forEach((e) => {
+        map.set(e.studentId, group.filter((g) => g.studentId !== e.studentId).map((g) => g.studentName));
+      });
+    });
     return map;
   }, [leaderboard]);
 
-  const { getDelta } = useRankHistory(`${user?.role === 'Teacher' || user?.role === 'Admin' ? 'staff' : 'own'}_${period}`, currentRanksMap);
-
-  // The podium always reflects the true, unfiltered top 3; searching switches to a flat
-  // ranked list instead of trying to show a partial podium.
-  const top3Ranked = !isSearching ? ranked.slice(0, 3) : [];
-  const rest = isSearching ? ranked : ranked.slice(3);
+  const top3 = !isSearching ? filtered.slice(0, 3) : [];
+  const rest = isSearching ? filtered : filtered.slice(3);
   const labelYou = lang === 'ar' ? 'أنت' : 'You';
 
   const periodTabs: { key: Period; label: string }[] = [
@@ -129,35 +156,66 @@ export const Leaderboard: React.FC = () => {
   return (
     <div className="space-y-4 animate-fade-in max-w-7xl mx-auto px-2 sm:px-4 py-3">
       {/* Header */}
-      <div className="border-b border-[#1E2519] pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-amber-400" />
-            <span>{lang === 'ar' ? 'لوحة الصدارة الأكاديمية' : 'Academic Leaderboard'}</span>
-          </h1>
-          <p className="text-xs text-sage-400 mt-0.5">
-            {lang === 'ar' ? 'تصنيف الطلاب حسب إجمالي الدرجات والتكليفات المكتملة' : 'Student rankings by total marks earned and tasks completed'}
-          </p>
+      <div className="border-b border-[#1E2519] pb-3 flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-amber-400" />
+              <span>{lang === 'ar' ? 'لوحة الصدارة الأكاديمية' : 'Academic Leaderboard'}</span>
+            </h1>
+            <p className="text-xs text-sage-400 mt-0.5">
+              {lang === 'ar' ? 'تصنيف الطلاب حسب إجمالي الدرجات والتكليفات المكتملة' : 'Student rankings by total marks earned and tasks completed'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-[#12160F] border border-[#1E2519] rounded-lg p-0.5">
+              {periodTabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setPeriod(tab.key)}
+                  className={`px-2.5 py-1.5 text-[11px] font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+                    period === tab.key ? 'bg-primary-500 text-[#06150E]' : 'text-sage-400 hover:text-white'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => fetchLeaderboard(period, selectedCourseId)} className="academic-button-secondary py-1 px-3">
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center bg-[#12160F] border border-[#1E2519] rounded-lg p-0.5">
-            {periodTabs.map((tab) => (
+        {courses.length > 0 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <Users className="w-3.5 h-3.5 text-sage-500 shrink-0" />
+            <button
+              onClick={() => setSelectedCourseId('all')}
+              className={`shrink-0 px-2.5 py-1 text-[11px] font-semibold rounded-md border transition-colors cursor-pointer ${
+                selectedCourseId === 'all'
+                  ? 'bg-primary-500/15 border-primary-500/40 text-primary-300'
+                  : 'bg-transparent border-[#212B1E] text-sage-400 hover:text-white hover:border-[#37452E]'
+              }`}
+            >
+              {lang === 'ar' ? 'كل المجموعات' : 'All Groups'}
+            </button>
+            {courses.map((c) => (
               <button
-                key={tab.key}
-                onClick={() => setPeriod(tab.key)}
-                className={`px-2.5 py-1.5 text-[11px] font-semibold rounded-md transition-all duration-150 cursor-pointer ${
-                  period === tab.key ? 'bg-primary-500 text-[#06150E]' : 'text-sage-400 hover:text-white'
+                key={c.id}
+                onClick={() => setSelectedCourseId(c.id)}
+                className={`shrink-0 px-2.5 py-1 text-[11px] font-semibold rounded-md border transition-colors cursor-pointer ${
+                  selectedCourseId === c.id
+                    ? 'bg-primary-500/15 border-primary-500/40 text-primary-300'
+                    : 'bg-transparent border-[#212B1E] text-sage-400 hover:text-white hover:border-[#37452E]'
                 }`}
               >
-                {tab.label}
+                {c.name}
               </button>
             ))}
           </div>
-          <button onClick={() => fetchLeaderboard(period)} className="academic-button-secondary py-1 px-3">
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Search Bar */}
@@ -183,10 +241,11 @@ export const Leaderboard: React.FC = () => {
       {loading ? (
         <PodiumSkeleton />
       ) : (
-        !isSearching && top3Ranked.length > 0 && (
+        !isSearching && top3.length > 0 && (
           <LeaderboardPodium
-            top3={top3Ranked}
+            top3={top3}
             currentUserId={user?.id}
+            tiedNamesByStudent={tiedNamesByStudent}
             onSelect={(entry) => setSelectedStudent({ id: entry.studentId, name: entry.studentName })}
             labelYou={labelYou}
             persistenceThreshold={PERSISTENCE_BADGE_THRESHOLD}
@@ -212,13 +271,14 @@ export const Leaderboard: React.FC = () => {
           </div>
         ) : (
           <div className="divide-y divide-[#1E2519]">
-            {rest.map(({ entry, rank, tiedWith }, index) => {
+            {rest.map((entry, index) => {
               const isYou = entry.studentId === user?.id;
               const pct = entry.totalPossibleScore > 0 ? Math.min(100, (entry.totalScore / entry.totalPossibleScore) * 100) : 0;
               const initials = entry.studentName.split(' ').map((n) => n[0]).join('').toUpperCase().substring(0, 2);
-              const delta = getDelta(entry.studentId, rank);
+              const delta = entry.previousRank != null ? entry.previousRank - entry.rank : null;
               const isPersistent = entry.completedTasks >= PERSISTENCE_BADGE_THRESHOLD;
               const isClimber = delta != null && delta >= CLIMBER_BADGE_THRESHOLD;
+              const tiedNames = tiedNamesByStudent.get(entry.studentId) || [];
 
               return (
                 <div
@@ -229,7 +289,7 @@ export const Leaderboard: React.FC = () => {
                   }`}
                 >
                   <span className="w-6 text-center font-mono text-xs font-bold text-sage-500 shrink-0">
-                    {tiedWith.length > 0 ? `=${rank}` : rank}
+                    {entry.tiedCount > 0 ? `=${entry.rank}` : entry.rank}
                   </span>
 
                   {entry.avatarUrl ? (
@@ -264,11 +324,11 @@ export const Leaderboard: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    {tiedWith.length > 0 && (
+                    {tiedNames.length > 0 && (
                       <p className="text-[10px] text-sage-500 mt-0.5">
                         {lang === 'ar'
-                          ? `نفس الدرجة مع ${tiedWith.map((t) => t.studentName).join('، ')}`
-                          : `Tied with ${tiedWith.map((t) => t.studentName).join(', ')}`}
+                          ? `نفس الدرجة مع ${tiedNames.join('، ')}`
+                          : `Tied with ${tiedNames.join(', ')}`}
                       </p>
                     )}
                     <div className="mt-1.5 flex items-center gap-2">
@@ -305,11 +365,13 @@ export const Leaderboard: React.FC = () => {
         )}
       </div>
 
-      <p className="text-[10px] text-sage-600 text-center px-2">
-        {lang === 'ar'
-          ? 'مؤشرات الصعود/الهبوط تقارن بآخر مرة فتحت فيها هذه الصفحة على هذا الجهاز، وليس بالضرورة الأسبوع الماضي.'
-          : 'Rank-change arrows compare against the last time you opened this page on this device, not necessarily last week.'}
-      </p>
+      {period === 'all' && (
+        <p className="text-[10px] text-sage-600 text-center px-2">
+          {lang === 'ar'
+            ? 'مؤشرات الصعود/الهبوط محفوظة في قاعدة البيانات وتقارن بترتيبك السابق (يُحدَّث مرة كل 24 ساعة كحد أقصى).'
+            : 'Rank-change indicators are stored in the database and compare against your last recorded rank (refreshed at most once every 24 hours).'}
+        </p>
+      )}
 
       {/* Grade Breakdown Modal */}
       {selectedStudent && (

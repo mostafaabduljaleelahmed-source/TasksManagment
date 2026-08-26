@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Platform.Application.Common.Interfaces;
 using Platform.Application.Common.Utils;
+using Platform.Application.Features.Dashboard.Dtos;
 using Platform.Domain.Entities;
 using Platform.Domain.Enums;
 
@@ -929,7 +930,59 @@ public class DashboardController : ControllerBase
 
         var ranked = _gradingCalculator.BuildLeaderboard(enrollments, submissions, assignedTasks);
 
+        // Rank history only makes sense for the canonical, unfiltered-by-time ranking: a
+        // week/month view's denominator shifts day to day, so "your rank last time you viewed
+        // the weekly board" isn't a meaningful comparison. Checkpoints are tracked per (student,
+        // courseId) -- including courseId == null for the cross-course view -- and refreshed at
+        // most once every 24 hours, so this stays "roughly yesterday's rank" rather than an
+        // unbounded history log.
+        var isAllTimeView = string.IsNullOrEmpty(period) || string.Equals(period, "all", StringComparison.OrdinalIgnoreCase);
+        if (isAllTimeView && ranked.Count > 0)
+        {
+            await ApplyRankCheckpointsAsync(ranked, courseId, cancellationToken);
+        }
+
         return Ok(ranked);
+    }
+
+    private async Task ApplyRankCheckpointsAsync(List<LeaderboardEntryDto> ranked, Guid? courseId, CancellationToken cancellationToken)
+    {
+        var rankedStudentIds = ranked.Select(e => e.StudentId).ToList();
+        var checkpoints = await _context.LeaderboardRankCheckpoints
+            .Where(c => c.CourseId == courseId && rankedStudentIds.Contains(c.StudentId))
+            .ToListAsync(cancellationToken);
+        var checkpointMap = checkpoints.ToDictionary(c => c.StudentId);
+
+        var refreshCutoff = DateTime.UtcNow.AddHours(-24);
+
+        foreach (var entry in ranked)
+        {
+            if (checkpointMap.TryGetValue(entry.StudentId, out var checkpoint))
+            {
+                entry.PreviousRank = checkpoint.Rank;
+                if (checkpoint.RecordedAt < refreshCutoff)
+                {
+                    checkpoint.Rank = entry.Rank;
+                    checkpoint.Score = entry.TotalScore;
+                    checkpoint.RecordedAt = DateTime.UtcNow;
+                }
+            }
+            else
+            {
+                entry.PreviousRank = null;
+                _context.LeaderboardRankCheckpoints.Add(new LeaderboardRankCheckpoint
+                {
+                    Id = Guid.NewGuid(),
+                    StudentId = entry.StudentId,
+                    CourseId = courseId,
+                    Rank = entry.Rank,
+                    Score = entry.TotalScore,
+                    RecordedAt = DateTime.UtcNow,
+                });
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     [HttpGet("student/{studentId}/breakdown")]

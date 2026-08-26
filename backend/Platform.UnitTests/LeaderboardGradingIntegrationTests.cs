@@ -236,4 +236,184 @@ public class LeaderboardGradingIntegrationTests
         var all = await Fetch(null);
         Assert.Equal(90, all.TotalScore);
     }
+
+    [Fact]
+    public async Task GetLeaderboard_FirstView_HasNoPreviousRank_AndPersistsAcheckpoint()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        var (course, student) = await SeedSingleGradedStudentAsync(dbName, grade: 80);
+
+        using var context = new ApplicationDbContext(MakeOptions(dbName));
+        var controller = new DashboardController(context, new GradingCalculator());
+
+        var result = await controller.GetLeaderboard(course.Id, null, default);
+        var entry = SingleEntry(result);
+
+        Assert.Null(entry.PreviousRank);
+        Assert.Equal(1, entry.Rank);
+
+        var stored = await context.LeaderboardRankCheckpoints.SingleAsync(c => c.StudentId == student.Id && c.CourseId == course.Id);
+        Assert.Equal(1, stored.Rank);
+        Assert.Equal(80, stored.Score);
+    }
+
+    [Fact]
+    public async Task GetLeaderboard_ViewedAgainWithinADay_ReportsPreviousRank_ButDoesNotOverwriteTheCheckpointYet()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        var (course, student) = await SeedSingleGradedStudentAsync(dbName, grade: 80);
+
+        // First view creates the checkpoint (rank 1, score 80).
+        using (var firstContext = new ApplicationDbContext(MakeOptions(dbName)))
+        {
+            await new DashboardController(firstContext, new GradingCalculator()).GetLeaderboard(course.Id, null, default);
+        }
+
+        // A teacher regrades the submission up before the 24h window elapses.
+        using (var regradeContext = new ApplicationDbContext(MakeOptions(dbName)))
+        {
+            var submission = await regradeContext.Submissions.SingleAsync(s => s.StudentId == student.Id);
+            submission.Grade = 95;
+            await regradeContext.SaveChangesAsync();
+        }
+
+        using var context = new ApplicationDbContext(MakeOptions(dbName));
+        var controller = new DashboardController(context, new GradingCalculator());
+        var entry = SingleEntry(await controller.GetLeaderboard(course.Id, null, default));
+
+        // PreviousRank reflects the checkpoint (still rank 1 -- only one student exists, so the
+        // rank number didn't move even though the score did); the checkpoint itself is untouched
+        // because less than 24h has passed.
+        Assert.Equal(1, entry.PreviousRank);
+        var stored = await context.LeaderboardRankCheckpoints.SingleAsync(c => c.StudentId == student.Id && c.CourseId == course.Id);
+        Assert.Equal(80, stored.Score); // still the original checkpoint value, not yet refreshed
+    }
+
+    [Fact]
+    public async Task GetLeaderboard_ViewedAfterADay_RefreshesTheCheckpoint_AndReportsTheOldRankAsPrevious()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        var teacher = new User { Id = Guid.NewGuid(), Name = "Teacher", Email = "teacher@test.com", Role = UserRole.Teacher, PasswordHash = "hash" };
+        var student = new User { Id = Guid.NewGuid(), Name = "Rami", Email = "rami@test.com", Role = UserRole.Student, PasswordHash = "hash" };
+        var course = new Course { Id = Guid.NewGuid(), Name = "CS101", CourseCode = "CS101", TeacherId = teacher.Id, Teacher = teacher, IsArchived = false };
+        var session = new Session { Id = Guid.NewGuid(), CourseId = course.Id, Course = course, Title = "Week 1", IsUnlocked = true };
+        var task = new ProgrammingTask { Id = Guid.NewGuid(), SessionId = session.Id, Session = session, Title = "Task A", MaxGrade = 100, Deadline = DateTime.UtcNow.AddDays(7) };
+
+        using (var seedContext = new ApplicationDbContext(MakeOptions(dbName)))
+        {
+            seedContext.Users.AddRange(teacher, student);
+            seedContext.Courses.Add(course);
+            seedContext.Sessions.Add(session);
+            seedContext.ProgrammingTasks.Add(task);
+            seedContext.Enrollments.Add(new Enrollment { StudentId = student.Id, Student = student, CourseId = course.Id, Course = course });
+            seedContext.Submissions.Add(new Submission
+            {
+                Id = Guid.NewGuid(), TaskId = task.Id, Task = task, StudentId = student.Id, Student = student,
+                Grade = 30, Status = SubmissionStatus.Graded, IsReviewed = true, AttemptNumber = 1, SubmittedAt = DateTime.UtcNow,
+            });
+            // Simulate a checkpoint taken more than 24h ago, back when this student ranked 5th.
+            seedContext.LeaderboardRankCheckpoints.Add(new LeaderboardRankCheckpoint
+            {
+                Id = Guid.NewGuid(), StudentId = student.Id, CourseId = course.Id,
+                Rank = 5, Score = 30, RecordedAt = DateTime.UtcNow.AddHours(-30),
+            });
+            await seedContext.SaveChangesAsync();
+        }
+
+        using var context = new ApplicationDbContext(MakeOptions(dbName));
+        var controller = new DashboardController(context, new GradingCalculator());
+        var entry = SingleEntry(await controller.GetLeaderboard(course.Id, null, default));
+
+        // Only one student, so current rank is 1 -- old checkpoint said 5, so this reads as a
+        // genuine climb from rank 5 to rank 1.
+        Assert.Equal(1, entry.Rank);
+        Assert.Equal(5, entry.PreviousRank);
+
+        var stored = await context.LeaderboardRankCheckpoints.SingleAsync(c => c.StudentId == student.Id && c.CourseId == course.Id);
+        Assert.Equal(1, stored.Rank); // refreshed to the current rank
+        Assert.True(stored.RecordedAt > DateTime.UtcNow.AddMinutes(-1)); // refreshed just now
+    }
+
+    [Fact]
+    public async Task GetLeaderboard_PeriodFilteredView_NeverReadsOrWritesCheckpoints()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        var (course, student) = await SeedSingleGradedStudentAsync(dbName, grade: 80);
+
+        using var context = new ApplicationDbContext(MakeOptions(dbName));
+        var controller = new DashboardController(context, new GradingCalculator());
+        var entry = SingleEntry(await controller.GetLeaderboard(course.Id, "week", default));
+
+        Assert.Null(entry.PreviousRank);
+        Assert.False(await context.LeaderboardRankCheckpoints.AnyAsync(c => c.StudentId == student.Id));
+    }
+
+    [Fact]
+    public async Task GetLeaderboard_CheckspointsAreScopedPerCourse_GlobalAndCourseViewDoNotShareOne()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        var teacher = new User { Id = Guid.NewGuid(), Name = "Teacher", Email = "teacher@test.com", Role = UserRole.Teacher, PasswordHash = "hash" };
+        var student = new User { Id = Guid.NewGuid(), Name = "Huda", Email = "huda@test.com", Role = UserRole.Student, PasswordHash = "hash" };
+        var course = new Course { Id = Guid.NewGuid(), Name = "CS101", CourseCode = "CS101", TeacherId = teacher.Id, Teacher = teacher, IsArchived = false };
+        var session = new Session { Id = Guid.NewGuid(), CourseId = course.Id, Course = course, Title = "Week 1", IsUnlocked = true };
+        var task = new ProgrammingTask { Id = Guid.NewGuid(), SessionId = session.Id, Session = session, Title = "Task A", MaxGrade = 100, Deadline = DateTime.UtcNow.AddDays(7) };
+
+        using (var seedContext = new ApplicationDbContext(MakeOptions(dbName)))
+        {
+            seedContext.Users.AddRange(teacher, student);
+            seedContext.Courses.Add(course);
+            seedContext.Sessions.Add(session);
+            seedContext.ProgrammingTasks.Add(task);
+            seedContext.Enrollments.Add(new Enrollment { StudentId = student.Id, Student = student, CourseId = course.Id, Course = course });
+            seedContext.Submissions.Add(new Submission
+            {
+                Id = Guid.NewGuid(), TaskId = task.Id, Task = task, StudentId = student.Id, Student = student,
+                Grade = 50, Status = SubmissionStatus.Graded, IsReviewed = true, AttemptNumber = 1, SubmittedAt = DateTime.UtcNow,
+            });
+            await seedContext.SaveChangesAsync();
+        }
+
+        using (var courseViewContext = new ApplicationDbContext(MakeOptions(dbName)))
+        {
+            await new DashboardController(courseViewContext, new GradingCalculator()).GetLeaderboard(course.Id, null, default);
+        }
+        using (var globalViewContext = new ApplicationDbContext(MakeOptions(dbName)))
+        {
+            await new DashboardController(globalViewContext, new GradingCalculator()).GetLeaderboard(null, null, default);
+        }
+
+        using var context = new ApplicationDbContext(MakeOptions(dbName));
+        var courseCheckpoint = await context.LeaderboardRankCheckpoints.SingleAsync(c => c.StudentId == student.Id && c.CourseId == course.Id);
+        var globalCheckpoint = await context.LeaderboardRankCheckpoints.SingleAsync(c => c.StudentId == student.Id && c.CourseId == null);
+        Assert.NotEqual(courseCheckpoint.Id, globalCheckpoint.Id);
+    }
+
+    private static async Task<(Course course, User student)> SeedSingleGradedStudentAsync(string dbName, int grade)
+    {
+        var teacher = new User { Id = Guid.NewGuid(), Name = "Teacher", Email = "teacher@test.com", Role = UserRole.Teacher, PasswordHash = "hash" };
+        var student = new User { Id = Guid.NewGuid(), Name = "Sami", Email = "sami@test.com", Role = UserRole.Student, PasswordHash = "hash" };
+        var course = new Course { Id = Guid.NewGuid(), Name = "CS101", CourseCode = "CS101", TeacherId = teacher.Id, Teacher = teacher, IsArchived = false };
+        var session = new Session { Id = Guid.NewGuid(), CourseId = course.Id, Course = course, Title = "Week 1", IsUnlocked = true };
+        var task = new ProgrammingTask { Id = Guid.NewGuid(), SessionId = session.Id, Session = session, Title = "Task A", MaxGrade = 100, Deadline = DateTime.UtcNow.AddDays(7) };
+
+        using var seedContext = new ApplicationDbContext(MakeOptions(dbName));
+        seedContext.Users.AddRange(teacher, student);
+        seedContext.Courses.Add(course);
+        seedContext.Sessions.Add(session);
+        seedContext.ProgrammingTasks.Add(task);
+        seedContext.Enrollments.Add(new Enrollment { StudentId = student.Id, Student = student, CourseId = course.Id, Course = course });
+        seedContext.Submissions.Add(new Submission
+        {
+            Id = Guid.NewGuid(), TaskId = task.Id, Task = task, StudentId = student.Id, Student = student,
+            Grade = grade, Status = SubmissionStatus.Graded, IsReviewed = true, AttemptNumber = 1, SubmittedAt = DateTime.UtcNow,
+        });
+        await seedContext.SaveChangesAsync();
+        return (course, student);
+    }
+
+    private static LeaderboardEntryDto SingleEntry(Microsoft.AspNetCore.Mvc.IActionResult result)
+    {
+        var ok = Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
+        return Assert.IsAssignableFrom<System.Collections.Generic.IEnumerable<LeaderboardEntryDto>>(ok.Value).Single();
+    }
 }

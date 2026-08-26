@@ -18,5 +18,6 @@ public interface IApplicationDbContext
     DbSet<UserTaskView> UserTaskViews { get; }
     DbSet<ActivityLog> ActivityLogs { get; }
     DbSet<SystemSetting> SystemSettings { get; }
+    DbSet<LeaderboardRankCheckpoint> LeaderboardRankCheckpoints { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

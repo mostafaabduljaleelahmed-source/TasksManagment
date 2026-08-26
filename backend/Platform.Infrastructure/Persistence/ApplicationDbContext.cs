@@ -21,6 +21,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<UserTaskView> UserTaskViews => Set<UserTaskView>();
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
     public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+    public DbSet<LeaderboardRankCheckpoint> LeaderboardRankCheckpoints => Set<LeaderboardRankCheckpoint>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -144,5 +145,23 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<Course>()
             .HasIndex(c => c.CourseCode)
             .IsUnique();
+
+        // One checkpoint row per (StudentId, CourseId) -- overwritten in place, not appended to,
+        // so this never grows into an unbounded history table.
+        modelBuilder.Entity<LeaderboardRankCheckpoint>()
+            .HasIndex(c => new { c.StudentId, c.CourseId })
+            .IsUnique();
+
+        modelBuilder.Entity<LeaderboardRankCheckpoint>()
+            .HasOne(c => c.Student)
+            .WithMany()
+            .HasForeignKey(c => c.StudentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<LeaderboardRankCheckpoint>()
+            .HasOne(c => c.Course)
+            .WithMany()
+            .HasForeignKey(c => c.CourseId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

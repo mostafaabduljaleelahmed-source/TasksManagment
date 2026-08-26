@@ -106,18 +106,57 @@ public class GradingCalculator : IGradingCalculator
             });
         }
 
-        return entries
+        var sorted = entries
             // Ranked by raw total marks earned -- the "total marks" metric this leaderboard is
             // meant to show -- not the percentage, which can disagree with it once students are
             // compared across courses with different total possible marks (the global, no-
-            // courseId view). CompletedTasks/TotalTasks break ties on equal marks; StudentName is
-            // the final stable tiebreaker so genuinely tied students render in a predictable
-            // (alphabetical) order rather than shuffling between requests.
+            // courseId view). CompletedTasks/TotalTasks order same-score students within a tied
+            // group (more completed work first); StudentName is the final stable tiebreaker so
+            // that ordering is predictable rather than shuffling between requests.
             .OrderByDescending(e => e.TotalScore)
             .ThenByDescending(e => e.CompletedTasks)
             .ThenByDescending(e => e.TotalTasks)
             .ThenBy(e => e.StudentName, StringComparer.OrdinalIgnoreCase)
             .ToList();
+
+        AssignCompetitionRanks(sorted);
+        return sorted;
+    }
+
+    /// <summary>
+    /// Competition ranking (1,2,2,4): students with an equal TotalScore share a rank, and the
+    /// next distinct score skips ahead by the size of the tied group. A student with zero
+    /// assigned tasks is never folded into a tied group with others at 0 -- "5 people tied for
+    /// last, none of whom have started" is noise, not a real tie. Mirrors the frontend's
+    /// leaderboardRanking.ts exactly so client and server never disagree about who's tied with whom.
+    /// </summary>
+    private static void AssignCompetitionRanks(List<LeaderboardEntryDto> sorted)
+    {
+        var i = 0;
+        while (i < sorted.Count)
+        {
+            if (sorted[i].TotalTasks == 0)
+            {
+                sorted[i].Rank = i + 1;
+                sorted[i].TiedCount = 0;
+                i += 1;
+                continue;
+            }
+
+            var j = i;
+            while (j < sorted.Count && sorted[j].TotalScore == sorted[i].TotalScore && sorted[j].TotalTasks > 0)
+            {
+                j += 1;
+            }
+            var rank = i + 1;
+            var groupSize = j - i;
+            for (var k = i; k < j; k++)
+            {
+                sorted[k].Rank = rank;
+                sorted[k].TiedCount = groupSize - 1;
+            }
+            i = j;
+        }
     }
 
     /// <summary>

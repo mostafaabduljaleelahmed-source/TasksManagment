@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Crown, Flame } from 'lucide-react';
+import { Crown, Flame, ArrowUp, ArrowDown } from 'lucide-react';
 import { useCountUp } from '../hooks/useCountUp';
-import type { RankedEntry } from '../utils/leaderboardRanking';
 
 export interface PodiumEntry {
   studentId: string;
@@ -12,6 +11,9 @@ export interface PodiumEntry {
   totalPossibleScore: number;
   completedTasks: number;
   totalTasks: number;
+  rank: number;
+  tiedCount: number;
+  previousRank: number | null;
 }
 
 interface TierConfig {
@@ -117,19 +119,20 @@ const Avatar: React.FC<{ entry: PodiumEntry; sizeClass: string }> = ({ entry, si
 };
 
 interface PodiumCardProps {
-  ranked: RankedEntry<PodiumEntry>;
+  entry: PodiumEntry;
   slot: 1 | 2 | 3;
   isYou: boolean;
+  tiedNames: string[];
   onSelect: () => void;
   labelYou: string;
   persistenceThreshold: number;
 }
 
-const PodiumCard: React.FC<PodiumCardProps> = ({ ranked, slot, isYou, onSelect, labelYou, persistenceThreshold }) => {
-  const { entry, rank, tiedWith } = ranked;
+const PodiumCard: React.FC<PodiumCardProps> = ({ entry, slot, isYou, tiedNames, onSelect, labelYou, persistenceThreshold }) => {
   const tier = TIERS[slot];
   const score = useCountUp(entry.totalScore);
   const isPersistent = entry.completedTasks >= persistenceThreshold;
+  const delta = entry.previousRank != null ? entry.previousRank - entry.rank : null;
 
   return (
     <div className={`flex flex-col items-center ${tier.entrance} ${tier.order}`}>
@@ -163,10 +166,16 @@ const PodiumCard: React.FC<PodiumCardProps> = ({ ranked, slot, isYou, onSelect, 
           {entry.studentName}
         </p>
         {isPersistent && <Flame className="w-3 h-3 text-accent-400 shrink-0" aria-label="Persistence badge" />}
+        {delta != null && delta !== 0 && (
+          <span className={`shrink-0 flex items-center font-mono text-[10px] font-bold ${delta > 0 ? 'text-primary-400' : 'text-red-400'}`}>
+            {delta > 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+            {Math.abs(delta)}
+          </span>
+        )}
       </div>
-      {tiedWith.length > 0 && (
+      {tiedNames.length > 0 && (
         <p className="text-[9px] text-sage-500 text-center max-w-[7rem] sm:max-w-[9rem] truncate">
-          = {tiedWith[0].studentName}{tiedWith.length > 1 ? ` +${tiedWith.length - 1}` : ''}
+          = {tiedNames[0]}{tiedNames.length > 1 ? ` +${tiedNames.length - 1}` : ''}
         </p>
       )}
       <p className="font-mono text-[11px] text-sage-500 mt-0.5">
@@ -175,7 +184,7 @@ const PodiumCard: React.FC<PodiumCardProps> = ({ ranked, slot, isYou, onSelect, 
 
       <div className={`mt-2 flex flex-col items-center justify-end rounded-t-lg border border-b-0 ${tier.base} w-16 sm:w-24 ${tier.baseHeight} pt-2 pb-1`}>
         <span className={`font-mono font-black text-base sm:text-xl ${tier.baseText}`}>
-          {tiedWith.length > 0 ? `=${rank}` : rank}
+          {entry.tiedCount > 0 ? `=${entry.rank}` : entry.rank}
         </span>
         <span className="font-mono text-[10px] sm:text-xs text-white font-bold">
           {entry.totalTasks > 0 ? Math.round(score) : '—'}
@@ -187,25 +196,27 @@ const PodiumCard: React.FC<PodiumCardProps> = ({ ranked, slot, isYou, onSelect, 
 };
 
 interface LeaderboardPodiumProps {
-  top3: RankedEntry<PodiumEntry>[];
+  top3: PodiumEntry[];
   currentUserId?: string;
+  tiedNamesByStudent: Map<string, string[]>;
   onSelect: (entry: PodiumEntry) => void;
   labelYou: string;
   persistenceThreshold: number;
 }
 
-export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ top3, currentUserId, onSelect, labelYou, persistenceThreshold }) => {
+export const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ top3, currentUserId, tiedNamesByStudent, onSelect, labelYou, persistenceThreshold }) => {
   if (top3.length === 0) return null;
 
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:justify-center sm:gap-6 py-6 px-2">
-      {top3.map((ranked, idx) => (
+      {top3.map((entry, idx) => (
         <PodiumCard
-          key={ranked.entry.studentId}
-          ranked={ranked}
+          key={entry.studentId}
+          entry={entry}
           slot={(idx + 1) as 1 | 2 | 3}
-          isYou={ranked.entry.studentId === currentUserId}
-          onSelect={() => onSelect(ranked.entry)}
+          isYou={entry.studentId === currentUserId}
+          tiedNames={tiedNamesByStudent.get(entry.studentId) || []}
+          onSelect={() => onSelect(entry)}
           labelYou={labelYou}
           persistenceThreshold={persistenceThreshold}
         />
