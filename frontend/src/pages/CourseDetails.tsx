@@ -7,7 +7,7 @@ import {
   Loader2, Plus, FileCode, Clock, AlertCircle,
   Award, BarChart3, Users, BookOpen, CheckCircle, AlertTriangle, FileSpreadsheet,
   Download, Eye, Search, ChevronRight, ChevronDown, Bell, RefreshCw, X, Trash2, Archive,
-  Lock, Unlock
+  Lock, Unlock, Sparkles, Pencil
 } from 'lucide-react';
 import { StudentDetailsModal } from './StudentDetailsModal';
 import { Breadcrumbs } from '../components/Breadcrumbs';
@@ -37,6 +37,15 @@ interface ProgrammingTask {
   submittedCount?: number;
   missingCount?: number;
   pendingReviewsCount?: number;
+}
+
+interface GeneratedTaskDraft {
+  title: string;
+  description: string;
+  exampleInput: string;
+  exampleOutput: string;
+  publicTestCasesJson: string;
+  hiddenTestCasesJson: string;
 }
 
 interface Session {
@@ -176,6 +185,19 @@ export const CourseDetails: React.FC = () => {
   const [publicTestCases, setPublicTestCases] = useState<{ input: string; expectedOutput: string }[]>([{ input: '', expectedOutput: '' }]);
   const [hiddenTestCases, setHiddenTestCases] = useState<{ input: string; expectedOutput: string }[]>([{ input: '', expectedOutput: '' }]);
   const [taskLoading, setTaskLoading] = useState(false);
+
+  // AI Task Generator State
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiCount, setAiCount] = useState(3);
+  const [aiTaskType, setAiTaskType] = useState<'BasicExercise' | 'InputExercise' | 'ProgrammingChallenge'>('BasicExercise');
+  const [aiMode, setAiMode] = useState<'InClass' | 'Homework'>('Homework');
+  const [aiMaxGrade, setAiMaxGrade] = useState(100);
+  const [aiDeadline, setAiDeadline] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiDrafts, setAiDrafts] = useState<GeneratedTaskDraft[]>([]);
+  const [aiConfirmingIndex, setAiConfirmingIndex] = useState<number | null>(null);
+  const [aiConfirmedIndexes, setAiConfirmedIndexes] = useState<Set<number>>(new Set());
 
   const fetchSessions = async () => {
     if (!user || !courseId) return;
@@ -529,6 +551,126 @@ export const CourseDetails: React.FC = () => {
     setHiddenTestCases([{ input: '', expectedOutput: '' }]);
   };
 
+  const resetAiForm = () => {
+    setAiTopic('');
+    setAiCount(3);
+    setAiTaskType('BasicExercise');
+    setAiMode('Homework');
+    setAiMaxGrade(100);
+    setAiDeadline('');
+    setAiDrafts([]);
+    setAiConfirmedIndexes(new Set());
+  };
+
+  const handleGenerateAiDrafts = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!aiTopic.trim()) {
+      toast.error('Topic is required');
+      return;
+    }
+    if (!selectedSessionId || !user) return;
+    setAiLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/tasks/session/${selectedSessionId}/ai-generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({
+          topic: aiTopic.trim(),
+          count: aiCount,
+          type: aiTaskType,
+          language: 'python',
+          mode: aiMode,
+          maxGrade: aiMaxGrade,
+          deadline: aiDeadline ? new Date(aiDeadline).toISOString() : new Date(Date.now() + 86400000 * 7).toISOString(),
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to generate tasks');
+
+      setAiDrafts(data);
+      setAiConfirmedIndexes(new Set());
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to generate tasks with AI');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleConfirmAiDraft = async (index: number) => {
+    const draft = aiDrafts[index];
+    if (!draft || !selectedSessionId || !user) return;
+    setAiConfirmingIndex(index);
+    try {
+      const response = await fetch(`${API_URL}/tasks/session/${selectedSessionId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({
+          title: draft.title,
+          description: draft.description,
+          exampleInput: draft.exampleInput,
+          exampleOutput: draft.exampleOutput,
+          publicTestCasesJson: draft.publicTestCasesJson,
+          hiddenTestCasesJson: draft.hiddenTestCasesJson,
+          deadline: aiDeadline ? new Date(aiDeadline).toISOString() : new Date(Date.now() + 86400000 * 7).toISOString(),
+          maxGrade: aiMaxGrade,
+          mode: aiMode,
+          maxAttempts: 3,
+          runHiddenTestCases: true,
+          type: aiTaskType,
+          timeLimitMs: 3000,
+          memoryLimitMb: 256,
+          gradingStrategy: 'Educational',
+          evaluationMode: 'ManualReview',
+          language: 'python',
+          ignoreMultipleSpaces: true,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to create task');
+
+      toast.success(`Task '${data.title}' created successfully.`);
+      setAiConfirmedIndexes((prev) => new Set(prev).add(index));
+      fetchSessions();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create task');
+    } finally {
+      setAiConfirmingIndex(null);
+    }
+  };
+
+  const handleEditAiDraft = (index: number) => {
+    const draft = aiDrafts[index];
+    if (!draft) return;
+    setTaskTitle(draft.title);
+    setTaskDesc(draft.description);
+    setTaskExampleInput(draft.exampleInput);
+    setTaskExampleOutput(draft.exampleOutput);
+    setTaskDeadline(aiDeadline);
+    setTaskMaxGrade(aiMaxGrade);
+    setTaskMode(aiMode);
+    setTaskType(aiTaskType);
+    try {
+      const parsedPublic = JSON.parse(draft.publicTestCasesJson || '[]');
+      setPublicTestCases(parsedPublic.length ? parsedPublic : [{ input: '', expectedOutput: '' }]);
+      const parsedHidden = JSON.parse(draft.hiddenTestCasesJson || '[]');
+      setHiddenTestCases(parsedHidden.length ? parsedHidden : [{ input: '', expectedOutput: '' }]);
+    } catch {
+      setPublicTestCases([{ input: '', expectedOutput: '' }]);
+      setHiddenTestCases([{ input: '', expectedOutput: '' }]);
+    }
+    setAiConfirmedIndexes((prev) => new Set(prev).add(index));
+    setShowAiModal(false);
+    setShowTaskModal(true);
+  };
+
   const handleExportCSV = () => {
     window.open(`${API_URL}/dashboard/teacher/course/${courseId}/export`, '_blank');
   };
@@ -776,6 +918,17 @@ export const CourseDetails: React.FC = () => {
                               >
                                 <Plus className="w-3.5 h-3.5" />
                                 Add Task
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedSessionId(session.id);
+                                  resetAiForm();
+                                  setShowAiModal(true);
+                                }}
+                                className="text-xs text-amber-400 hover:text-white flex items-center gap-1 font-semibold ml-2"
+                              >
+                                <Sparkles className="w-3.5 h-3.5" />
+                                Generate with AI
                               </button>
                               <button
                                 onClick={() => handleArchiveSession(session.id)}
@@ -1512,6 +1665,185 @@ export const CourseDetails: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* AI Task Generator Modal */}
+      {showAiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl bg-[#12160F] border border-[#212B1E] rounded-2xl p-6 shadow-2xl my-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-400" />
+                Generate Tasks with AI
+              </h3>
+              <button onClick={() => setShowAiModal(false)} className="p-1 hover:bg-sage-800 rounded-lg text-sage-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {aiDrafts.length === 0 ? (
+              <form onSubmit={handleGenerateAiDrafts} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-sage-300 uppercase tracking-wider mb-2">Topic</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. for loops"
+                    value={aiTopic}
+                    onChange={(e) => setAiTopic(e.target.value)}
+                    className="w-full bg-[#1A2016] border border-[#37452E] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-sage-300 uppercase tracking-wider mb-2">Number of Tasks</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10}
+                      required
+                      value={aiCount}
+                      onChange={(e) => setAiCount(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
+                      className="w-full bg-[#1A2016] border border-[#37452E] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-sage-300 uppercase tracking-wider mb-2">Task Type</label>
+                    <select
+                      value={aiTaskType}
+                      onChange={(e) => setAiTaskType(e.target.value as any)}
+                      className="w-full bg-[#1A2016] border border-[#37452E] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="BasicExercise">Basic Console Output</option>
+                      <option value="InputExercise">Input & Output Exercise</option>
+                      <option value="ProgrammingChallenge">Complex Programming Challenge</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-sage-300 uppercase tracking-wider mb-2">Max Grade</label>
+                    <input
+                      type="number"
+                      required
+                      value={aiMaxGrade}
+                      onChange={(e) => setAiMaxGrade(parseInt(e.target.value) || 100)}
+                      className="w-full bg-[#1A2016] border border-[#37452E] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-sage-300 uppercase tracking-wider mb-2">Mode</label>
+                    <select
+                      value={aiMode}
+                      onChange={(e) => setAiMode(e.target.value as any)}
+                      className="w-full bg-[#1A2016] border border-[#37452E] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="Homework">Homework</option>
+                      <option value="InClass">In Class</option>
+                    </select>
+                  </div>
+                </div>
+
+                {aiMode === 'Homework' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-sage-300 uppercase tracking-wider mb-2">Deadline</label>
+                    <input
+                      type="datetime-local"
+                      value={aiDeadline}
+                      onChange={(e) => setAiDeadline(e.target.value)}
+                      className="w-full bg-[#1A2016] border border-[#37452E] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-[#212B1E]">
+                  <button
+                    type="button"
+                    onClick={() => setShowAiModal(false)}
+                    className="bg-[#1A2016] border border-[#37452E] text-sage-400 hover:text-white rounded-lg py-2 px-4 text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={aiLoading}
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg flex items-center gap-2"
+                  >
+                    {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Sparkles className="w-4 h-4" /> Generate</>}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                {aiDrafts.map((draft, index) => {
+                  const isConfirmed = aiConfirmedIndexes.has(index);
+                  return (
+                    <div key={index} className="bg-[#1A2016] border border-[#37452E] rounded-xl p-4">
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="min-w-0">
+                          <h4 className="text-sm font-bold text-white truncate">{draft.title}</h4>
+                          <p className="text-xs text-sage-400 mt-1 line-clamp-2">{draft.description.replace(/<[^>]+>/g, ' ')}</p>
+                          {draft.exampleInput && (
+                            <p className="text-xs text-sage-500 mt-2">Input: <span className="text-sage-300">{draft.exampleInput}</span></p>
+                          )}
+                          {draft.exampleOutput && (
+                            <p className="text-xs text-sage-500">Output: <span className="text-sage-300">{draft.exampleOutput}</span></p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {isConfirmed ? (
+                            <span className="text-xs text-emerald-400 flex items-center gap-1 font-semibold">
+                              <CheckCircle className="w-4 h-4" /> Done
+                            </span>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleEditAiDraft(index)}
+                                title="Edit manually before saving"
+                                className="p-1.5 bg-[#12160F] border border-[#37452E] rounded-lg text-sage-300 hover:text-white"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleConfirmAiDraft(index)}
+                                disabled={aiConfirmingIndex === index}
+                                title="Confirm and save as-is"
+                                className="p-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white"
+                              >
+                                {aiConfirmingIndex === index ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <div className="flex justify-between items-center gap-3 pt-4 border-t border-[#212B1E]">
+                  <button
+                    type="button"
+                    onClick={() => setAiDrafts([])}
+                    className="text-xs text-sage-400 hover:text-white"
+                  >
+                    ← Back to Generate
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAiModal(false)}
+                    className="bg-[#1A2016] border border-[#37452E] text-sage-400 hover:text-white rounded-lg py-2 px-4 text-sm"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

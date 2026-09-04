@@ -17,12 +17,45 @@ namespace Platform.Api.Controllers;
 public class TasksController : ControllerBase
 {
     private readonly ITaskService _taskService;
+    private readonly IAiTaskGeneratorService _aiTaskGeneratorService;
     private readonly ILogger<TasksController> _logger;
 
-    public TasksController(ITaskService taskService, ILogger<TasksController> logger)
+    public TasksController(ITaskService taskService, IAiTaskGeneratorService aiTaskGeneratorService, ILogger<TasksController> logger)
     {
         _taskService = taskService;
+        _aiTaskGeneratorService = aiTaskGeneratorService;
         _logger = logger;
+    }
+
+    [HttpPost("session/{sessionId}/ai-generate")]
+    public async Task<IActionResult> GenerateAiTaskDrafts(
+        Guid sessionId,
+        [FromBody] GenerateTasksRequestDto dto,
+        [FromServices] Platform.Infrastructure.Persistence.ApplicationDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (role != "Teacher" && role != "Admin")
+        {
+            return Forbid("Only teachers and admins can generate tasks.");
+        }
+
+        var sessionExists = await dbContext.Sessions.AnyAsync(s => s.Id == sessionId, cancellationToken);
+        if (!sessionExists)
+        {
+            return NotFound(new { message = "Session not found." });
+        }
+
+        try
+        {
+            var drafts = await _aiTaskGeneratorService.GenerateDraftsAsync(dto, cancellationToken);
+            return Ok(drafts);
+        }
+        catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException)
+        {
+            _logger.LogWarning(ex, "AI task generation failed for session {SessionId}: {Message}", sessionId, ex.Message);
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPost("session/{sessionId}")]

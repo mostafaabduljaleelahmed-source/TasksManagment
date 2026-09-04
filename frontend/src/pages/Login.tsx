@@ -16,6 +16,18 @@ export const Login: React.FC = () => {
     }
   }, [user, navigate]);
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('sessionExpired') === '1') {
+      setError(
+        lang === 'ar'
+          ? 'انتهت صلاحية جلستك، يرجى تسجيل الدخول مرة أخرى.'
+          : 'Your session has expired. Please log in again.'
+      );
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);

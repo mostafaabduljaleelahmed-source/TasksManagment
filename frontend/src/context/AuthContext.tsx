@@ -58,6 +58,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
   }, []);
 
+  // Global 401 handling: an expired/invalid JWT otherwise surfaces as a confusing
+  // "failed to load" error on whatever page happens to call the API next, and the
+  // only fix users found was to manually log out and back in. Intercept it once here
+  // instead of touching every fetch() call site across the app.
+  useEffect(() => {
+    const originalFetch = window.fetch;
+    window.fetch = async (...args: Parameters<typeof fetch>) => {
+      const response = await originalFetch(...args);
+      if (response.status === 401) {
+        const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request).url;
+        const isAuthEndpoint = url.includes('/auth/');
+        const hadSession = !!(sessionStorage.getItem('grading_platform_user') || localStorage.getItem('grading_platform_user'));
+        if (!isAuthEndpoint && hadSession) {
+          sessionStorage.removeItem('grading_platform_user');
+          localStorage.removeItem('grading_platform_user');
+          window.location.href = '/login?sessionExpired=1';
+        }
+      }
+      return response;
+    };
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
+
   const saveUserData = (userData: User, rememberMe: boolean = true) => {
     setUser(userData);
     sessionStorage.setItem('grading_platform_user', JSON.stringify(userData));

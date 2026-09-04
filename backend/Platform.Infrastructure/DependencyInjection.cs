@@ -33,6 +33,9 @@ public static class DependencyInjection
         services.AddSingleton(new HttpClient());
         services.AddScoped<IExecutionService, Judge0ExecutionService>();
 
+        // AI Task Generator (Groq)
+        services.AddScoped<IAiTaskGeneratorService, GroqTaskGeneratorService>();
+
         services.AddScoped<DatabaseHealthService>();
 
         return services;
