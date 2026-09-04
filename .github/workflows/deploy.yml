@@ -45,6 +45,7 @@ jobs:
         env:
           DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           $path = "backend/Platform.Api/appsettings.Production.json"
           $json = Get-Content $path -Raw | ConvertFrom-Json
@@ -53,6 +54,10 @@ jobs:
             $json | Add-Member -NotePropertyName Jwt -NotePropertyValue ([pscustomobject]@{})
           }
           $json.Jwt | Add-Member -NotePropertyName Secret -NotePropertyValue $env:JWT_SECRET -Force
+          if (-not $json.PSObject.Properties['Groq']) {
+            $json | Add-Member -NotePropertyName Groq -NotePropertyValue ([pscustomobject]@{})
+          }
+          $json.Groq | Add-Member -NotePropertyName ApiKey -NotePropertyValue $env:GROQ_API_KEY -Force
           $json | ConvertTo-Json -Depth 10 | Set-Content $path
 
       - name: Publish to MonsterASP via WebDeploy
