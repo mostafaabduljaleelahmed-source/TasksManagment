@@ -23,7 +23,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         var secretKey = _configuration["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret key not configured");
         var issuer = _configuration["Jwt:Issuer"] ?? "GradingPlatform";
         var audience = _configuration["Jwt:Audience"] ?? "GradingPlatform";
-        var expiryMinutes = double.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "1440");
+        var expiryMinutes = double.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "43200");
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
