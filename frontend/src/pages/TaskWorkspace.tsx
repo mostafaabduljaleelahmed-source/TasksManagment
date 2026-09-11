@@ -5,6 +5,8 @@ import { useToast } from '../context/ToastContext';
 import Editor from '@monaco-editor/react';
 import { ArrowLeft, Send, History, Loader2, Code, Clock, Award, ShieldAlert, Sparkles, Upload, Terminal, Trash2 } from 'lucide-react';
 import { RichTextViewer } from '../components/RichTextEditor';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { GradeRevealOverlay } from '../components/GradeRevealOverlay';
 
 
 interface Task {
@@ -97,6 +99,8 @@ export const TaskWorkspace: React.FC = () => {
   } | null>(null);
 
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [gradeReveal, setGradeReveal] = useState<{ grade: number; maxGrade: number } | null>(null);
   const [fontSize] = useState<number>(14);
   const [editorTheme] = useState<string>('vs-dark');
 
@@ -288,6 +292,10 @@ export const TaskWorkspace: React.FC = () => {
 
       toast.success(`Submission Attempt #${data.attemptNumber} turned in successfully!`);
 
+      if (task?.evaluationMode === 'AutomaticGrading') {
+        setGradeReveal({ grade: data.grade, maxGrade: task.maxGrade });
+      }
+
       // Refresh Stats and History list
       const statsRes = await fetch(`${API_URL}/submissions/task/${taskId}/student-stats`, {
         headers: { Authorization: `Bearer ${user?.token}` },
@@ -310,6 +318,14 @@ export const TaskWorkspace: React.FC = () => {
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const requestSubmit = () => {
+    if (task?.evaluationMode === 'AutomaticGrading') {
+      setShowSubmitConfirm(true);
+    } else {
+      handleSubmitCode();
     }
   };
 
@@ -718,7 +734,7 @@ export const TaskWorkspace: React.FC = () => {
               </button>
 
               <button
-                onClick={handleSubmitCode}
+                onClick={requestSubmit}
                 disabled={running || submitting || attemptsDisabled || deadlinePassed}
                 className="hidden sm:flex items-center gap-1.5 bg-primary-600 hover:bg-primary-500 text-white font-bold py-1.5 px-4 rounded-xl text-xs shadow-lg transition-all min-h-[38px] disabled:opacity-50"
               >
@@ -911,6 +927,28 @@ export const TaskWorkspace: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      <ConfirmModal
+        isOpen={showSubmitConfirm}
+        title="Confirm Final Submission"
+        message="This task is auto-graded and allows only a single attempt. Once you submit, your code will be run against the test cases immediately and you won't be able to resubmit. Are you sure you want to submit?"
+        confirmText="Yes, Submit"
+        danger={false}
+        loading={submitting}
+        onConfirm={() => {
+          setShowSubmitConfirm(false);
+          handleSubmitCode();
+        }}
+        onClose={() => setShowSubmitConfirm(false)}
+      />
+
+      {gradeReveal && (
+        <GradeRevealOverlay
+          grade={gradeReveal.grade}
+          maxGrade={gradeReveal.maxGrade}
+          onDone={() => setGradeReveal(null)}
+        />
       )}
     </div>
   );

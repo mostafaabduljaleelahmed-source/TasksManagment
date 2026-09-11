@@ -70,6 +70,10 @@ public class TaskService : ITaskService
         var hiddenTestCases = string.IsNullOrWhiteSpace(dto.HiddenTestCasesJson) ? "[]" : dto.HiddenTestCasesJson;
         var runHidden = dto.RunHiddenTestCases;
 
+        // Automatic Grading is a single-shot submission: the grade is final and immediate,
+        // so letting students retry until the test cases pass would defeat the point.
+        var maxAttempts = evalMode == EvaluationMode.AutomaticGrading ? 1 : dto.MaxAttempts;
+
         var task = new ProgrammingTask
         {
             Id = Guid.NewGuid(),
@@ -83,7 +87,7 @@ public class TaskService : ITaskService
             Deadline = dto.Deadline,
             MaxGrade = dto.MaxGrade,
             Mode = taskMode,
-            MaxAttempts = dto.MaxAttempts,
+            MaxAttempts = maxAttempts,
             RunHiddenTestCases = runHidden,
             Type = taskType,
             TimeLimitMs = dto.TimeLimitMs <= 0 ? 3000 : dto.TimeLimitMs,
