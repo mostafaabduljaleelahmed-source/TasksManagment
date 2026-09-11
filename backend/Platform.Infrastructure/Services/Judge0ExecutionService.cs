@@ -24,7 +24,7 @@ public class Judge0ExecutionService : IExecutionService
         _httpClient = httpClient;
         _configuration = configuration;
         _logger = logger;
-        _baseUrl = configuration["Judge0:BaseUrl"] ?? "http://localhost:2358";
+        _baseUrl = configuration["Judge0:BaseUrl"] ?? "https://ce.judge0.com";
         _apiKey = configuration["Judge0:ApiKey"];
     }
 
