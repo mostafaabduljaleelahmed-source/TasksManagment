@@ -408,11 +408,17 @@ export const CourseDetails: React.FC = () => {
       toast.error('Task description is required');
       return;
     }
-    if (!selectedSessionId || !user) return;
-    setTaskLoading(true);
 
     const publicJson = JSON.stringify(publicTestCases.filter(c => c.input || c.expectedOutput));
     const hiddenJson = JSON.stringify(hiddenTestCases.filter(c => c.input || c.expectedOutput));
+
+    if (taskEvaluationMode === 'AutomaticGrading' && JSON.parse(publicJson).length === 0 && JSON.parse(hiddenJson).length === 0) {
+      toast.error('Automatic Grading needs at least one test case with an expected output.');
+      return;
+    }
+
+    if (!selectedSessionId || !user) return;
+    setTaskLoading(true);
 
     try {
       const response = await fetch(`${API_URL}/tasks/session/${selectedSessionId}`, {
@@ -1583,11 +1589,12 @@ export const CourseDetails: React.FC = () => {
                 <div>
                   <label className="block text-xs font-bold text-primary-400 uppercase tracking-wider mb-2">Grading Evaluation Mode</label>
                   <select
-                    value="ManualReview"
-                    disabled
-                    className="w-full bg-[#12160F] border border-[#37452E] text-white font-semibold rounded-lg px-3 py-2 text-xs opacity-90 cursor-not-allowed"
+                    value={taskEvaluationMode}
+                    onChange={(e) => setTaskEvaluationMode(e.target.value as any)}
+                    className="w-full bg-[#12160F] border border-[#37452E] text-white font-semibold rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="ManualReview">Manual Teacher Evaluation (v1.0)</option>
+                    <option value="ManualReview">Manual Teacher Evaluation</option>
+                    <option value="AutomaticGrading">Automatic Grading (Run against test cases)</option>
                   </select>
                 </div>
                 <div>
@@ -1645,6 +1652,104 @@ export const CourseDetails: React.FC = () => {
                     onChange={(e) => setTaskDeadline(e.target.value)}
                     className="w-full bg-[#1A2016] border border-[#37452E] text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
+                </div>
+              )}
+
+              {taskEvaluationMode === 'AutomaticGrading' && (
+                <div className="space-y-4 bg-[#1A2016] p-4 rounded-xl border border-[#37452E]">
+                  <p className="text-xs text-sage-400">
+                    The student's code runs against every test case below; the grade is the fraction that passes × Max Grade.
+                  </p>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-primary-400 uppercase tracking-wider">Public Test Cases</label>
+                      <button
+                        type="button"
+                        onClick={() => setPublicTestCases((prev) => [...prev, { input: '', expectedOutput: '' }])}
+                        className="text-xs text-primary-400 hover:text-white font-semibold"
+                      >
+                        + Add Case
+                      </button>
+                    </div>
+                    {publicTestCases.map((tc, i) => (
+                      <div key={i} className="flex gap-2 items-start">
+                        <input
+                          type="text"
+                          placeholder="Input (stdin)"
+                          value={tc.input}
+                          onChange={(e) => setPublicTestCases((prev) => prev.map((c, idx) => idx === i ? { ...c, input: e.target.value } : c))}
+                          className="w-1/2 bg-[#12160F] border border-[#37452E] text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Expected Output"
+                          value={tc.expectedOutput}
+                          onChange={(e) => setPublicTestCases((prev) => prev.map((c, idx) => idx === i ? { ...c, expectedOutput: e.target.value } : c))}
+                          className="w-1/2 bg-[#12160F] border border-[#37452E] text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                        {publicTestCases.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setPublicTestCases((prev) => prev.filter((_, idx) => idx !== i))}
+                            className="p-2 text-sage-500 hover:text-red-400"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 text-xs font-bold text-primary-400 uppercase tracking-wider">
+                        <input
+                          type="checkbox"
+                          checked={taskRunHiddenTestCases}
+                          onChange={(e) => setTaskRunHiddenTestCases(e.target.checked)}
+                          className="rounded border-[#37452E]"
+                        />
+                        Hidden Test Cases
+                      </label>
+                      {taskRunHiddenTestCases && (
+                        <button
+                          type="button"
+                          onClick={() => setHiddenTestCases((prev) => [...prev, { input: '', expectedOutput: '' }])}
+                          className="text-xs text-primary-400 hover:text-white font-semibold"
+                        >
+                          + Add Case
+                        </button>
+                      )}
+                    </div>
+                    {taskRunHiddenTestCases && hiddenTestCases.map((tc, i) => (
+                      <div key={i} className="flex gap-2 items-start">
+                        <input
+                          type="text"
+                          placeholder="Input (stdin)"
+                          value={tc.input}
+                          onChange={(e) => setHiddenTestCases((prev) => prev.map((c, idx) => idx === i ? { ...c, input: e.target.value } : c))}
+                          className="w-1/2 bg-[#12160F] border border-[#37452E] text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Expected Output"
+                          value={tc.expectedOutput}
+                          onChange={(e) => setHiddenTestCases((prev) => prev.map((c, idx) => idx === i ? { ...c, expectedOutput: e.target.value } : c))}
+                          className="w-1/2 bg-[#12160F] border border-[#37452E] text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                        {hiddenTestCases.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setHiddenTestCases((prev) => prev.filter((_, idx) => idx !== i))}
+                            className="p-2 text-sage-500 hover:text-red-400"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
