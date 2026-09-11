@@ -173,10 +173,7 @@ export const TaskWorkspace: React.FC = () => {
     }
   };
 
-  // Reserved for future re-activation of Run Code feature once execution engine URL is configured
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleRunCode = async () => {
-    void handleRunCode;
     if (!taskId || running) return;
     setRunning(true);
     setConsoleOutput(null);
@@ -706,6 +703,21 @@ export const TaskWorkspace: React.FC = () => {
               </label>
 
               <button
+                onClick={handleRunCode}
+                disabled={running || submitting || !code.trim()}
+                className="hidden sm:flex items-center gap-1.5 bg-[#1A2016] hover:bg-sage-800 border border-[#37452E] text-sage-200 font-bold py-1.5 px-4 rounded-xl text-xs transition-all min-h-[38px] disabled:opacity-50"
+              >
+                {running ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <>
+                    <Terminal className="w-3.5 h-3.5 text-primary-400" />
+                    Run
+                  </>
+                )}
+              </button>
+
+              <button
                 onClick={handleSubmitCode}
                 disabled={running || submitting || attemptsDisabled || deadlinePassed}
                 className="hidden sm:flex items-center gap-1.5 bg-primary-600 hover:bg-primary-500 text-white font-bold py-1.5 px-4 rounded-xl text-xs shadow-lg transition-all min-h-[38px] disabled:opacity-50"
@@ -783,7 +795,7 @@ export const TaskWorkspace: React.FC = () => {
               {!consoleOutput ? (
                 <div className="text-sage-500 flex flex-col items-center justify-center h-full">
                   <Terminal className="w-8 h-8 text-sage-700 mb-2" />
-                  <p className="text-xs">Click Submit Code to turn in your solution.</p>
+                  <p className="text-xs">Click Run to test your code, or Submit to turn in your solution.</p>
                 </div>
               ) : consoleOutput.type === 'error' ? (
                 <div className="text-red-400 space-y-2">
@@ -809,18 +821,25 @@ export const TaskWorkspace: React.FC = () => {
       </div>
 
       {/* Sticky Mobile Bottom Submit Bar */}
-      <div className="md:hidden sticky bottom-0 z-30 bg-[#12160F] border-t border-[#212B1E] p-3 flex items-center justify-between gap-3 shadow-2xl">
+      <div className="md:hidden sticky bottom-0 z-30 bg-[#12160F] border-t border-[#212B1E] p-3 flex items-center gap-2 shadow-2xl">
+        <button
+          onClick={handleRunCode}
+          disabled={running || submitting || !code.trim()}
+          className="flex items-center justify-center gap-2 bg-[#1A2016] border border-[#37452E] text-sage-200 font-bold py-3 px-4 rounded-xl text-sm min-h-[52px] shrink-0 active:scale-[0.98] disabled:opacity-50"
+        >
+          {running ? <Loader2 className="w-5 h-5 animate-spin" /> : <Terminal className="w-5 h-5 text-primary-400" />}
+        </button>
         <button
           onClick={handleSubmitCode}
           disabled={running || submitting || attemptsDisabled || deadlinePassed}
-          className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-500 text-white font-bold py-3 px-4 rounded-xl text-sm min-h-[52px] shadow-lg active:scale-[0.98] disabled:opacity-50"
+          className="flex-1 flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-500 text-white font-bold py-3 px-4 rounded-xl text-sm min-h-[52px] shadow-lg active:scale-[0.98] disabled:opacity-50"
         >
           {submitting ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <>
               <Send className="w-5 h-5" />
-              <span>Submit Code Assignment</span>
+              <span>Submit</span>
             </>
           )}
         </button>
