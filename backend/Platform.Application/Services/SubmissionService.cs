@@ -187,9 +187,9 @@ public class SubmissionService : ISubmissionService
             ConsoleOutput = gradingResult.ConsoleOutput,
             ExpectedOutput = gradingResult.ExpectedOutput,
             TeacherNotes = string.Empty,
-            Status = SubmissionStatus.Pending,
-            IsReviewed = false,
-            ReviewedAt = null
+            Status = task.EvaluationMode == EvaluationMode.AutomaticGrading ? SubmissionStatus.Graded : SubmissionStatus.Pending,
+            IsReviewed = task.EvaluationMode == EvaluationMode.AutomaticGrading,
+            ReviewedAt = task.EvaluationMode == EvaluationMode.AutomaticGrading ? DateTime.UtcNow : null
         };
 
         _context.Submissions.Add(submission);
