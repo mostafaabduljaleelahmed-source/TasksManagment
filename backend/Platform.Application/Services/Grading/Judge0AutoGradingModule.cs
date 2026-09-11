@@ -12,7 +12,7 @@ namespace Platform.Application.Services.Grading;
 public class TestCaseItem
 {
     public string Input { get; set; } = string.Empty;
-    public string Output { get; set; } = string.Empty;
+    public string ExpectedOutput { get; set; } = string.Empty;
 }
 
 public class Judge0AutoGradingModule : IGradingModule
@@ -60,7 +60,7 @@ public class Judge0AutoGradingModule : IGradingModule
                 SourceCode = context.Code,
                 LanguageId = langDef.Judge0LanguageId,
                 Stdin = tc.Input,
-                ExpectedOutput = tc.Output,
+                ExpectedOutput = tc.ExpectedOutput,
                 CpuTimeLimitSeconds = context.Task.TimeLimitMs > 0 ? context.Task.TimeLimitMs / 1000.0 : 3.0,
                 MemoryLimitKb = context.Task.MemoryLimitMb > 0 ? context.Task.MemoryLimitMb * 1024 : 256000
             };
@@ -84,7 +84,7 @@ public class Judge0AutoGradingModule : IGradingModule
 
             // Output Normalization Comparison (Trim trailing spaces, normalize line endings, ignore final empty line)
             string normActual = OutputNormalizer.Normalize(execRes.Stdout);
-            string normExpected = OutputNormalizer.Normalize(tc.Output);
+            string normExpected = OutputNormalizer.Normalize(tc.ExpectedOutput);
 
             bool passed = execRes.Passed || string.Equals(normActual, normExpected, StringComparison.Ordinal);
             if (passed) passedPublic++;
@@ -101,7 +101,7 @@ public class Judge0AutoGradingModule : IGradingModule
                 CaseNumber = caseCounter++,
                 IsHidden = false,
                 Input = tc.Input,
-                ExpectedOutput = tc.Output,
+                ExpectedOutput = tc.ExpectedOutput,
                 ActualOutput = execRes.Stdout,
                 Passed = passed,
                 StatusDescription = passed ? "Passed" : (string.IsNullOrEmpty(execRes.StatusDescription) ? "Wrong Answer" : execRes.StatusDescription),
@@ -117,7 +117,7 @@ public class Judge0AutoGradingModule : IGradingModule
                 SourceCode = context.Code,
                 LanguageId = langDef.Judge0LanguageId,
                 Stdin = tc.Input,
-                ExpectedOutput = tc.Output,
+                ExpectedOutput = tc.ExpectedOutput,
                 CpuTimeLimitSeconds = context.Task.TimeLimitMs > 0 ? context.Task.TimeLimitMs / 1000.0 : 3.0,
                 MemoryLimitKb = context.Task.MemoryLimitMb > 0 ? context.Task.MemoryLimitMb * 1024 : 256000
             };
@@ -140,7 +140,7 @@ public class Judge0AutoGradingModule : IGradingModule
             if (execRes.MemoryKb > maxMemoryKb) maxMemoryKb = execRes.MemoryKb;
 
             string normActual = OutputNormalizer.Normalize(execRes.Stdout);
-            string normExpected = OutputNormalizer.Normalize(tc.Output);
+            string normExpected = OutputNormalizer.Normalize(tc.ExpectedOutput);
 
             bool passed = execRes.Passed || string.Equals(normActual, normExpected, StringComparison.Ordinal);
             if (passed) passedHidden++;
